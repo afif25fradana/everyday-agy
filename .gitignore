@@ -1,0 +1,21 @@
+# Secret & Credential Guards
+mcp_config.json
+*.env
+*.env.*
+*.secret
+
+# Cache and Runtime Logs
+*.log
+*.bak
+*.tmp
+node_modules/
+.DS_Store
+Thumbs.db
+
+# Antigravity session and database stores
+brain/
+cache/
+crashes/
+presence/
+annotations/
+conversation_summaries.db*

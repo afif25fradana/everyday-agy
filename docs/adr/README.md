@@ -9,3 +9,4 @@ This directory contains the immutable record of significant technical and struct
 | [ADR-0003](./0003-ponytail-5-suite-architecture.md) | Preservation of Ponytail 5 Discrete Modal Architecture | Accepted | 2026-10-22 |
 | [ADR-0004](./0004-subagent-model-tiering-inherit.md) | Subagent Cognitive Model Tiering (`model: inherit`) | Accepted | 2026-10-22 |
 | [ADR-0005](./0005-spec-kit-and-ast-grep-tooling.md) | Spec-Kit, GitHub Workflow & AST-Grep Integration | Accepted | 2026-10-22 |
+| [ADR-0006](./0006-marketplace-plugin-decoupling-and-security-adaptation.md) | Marketplace Plugin Decoupling and Security Skill Adaptation | Accepted | 2026-10-22 |

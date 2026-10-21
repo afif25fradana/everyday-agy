@@ -32,4 +32,5 @@
 - Context7 MCP: Keep token directly in `mcp_config.json`. Streamable HTTP headers do not support env var interpolation; moving to env vars breaks authentication (see ADR-0001).
 - Modular Skills: Keep domain skills partitioned (e.g. `antislop-*`, Ponytail 5 suite). Do not merge into monolithic skills with reference folders to prevent greedy LLM retrieval (see ADR-0002, ADR-0003).
 - Subagent Tiering: Analytical agents (`system-architect`, `database-reviewer`, `code-auditor`, `silent-failure-hunter`) use `model: inherit` (see ADR-0004).
+- Plugin Decoupling: Do not bundle official marketplace plugins in Git. Maintain only bespoke configurations in config/plugins/ and install official tooling via Antigravity Marketplace (see ADR-0006).
 <!-- architecture-invariants -->

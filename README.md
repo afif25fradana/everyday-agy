@@ -15,7 +15,7 @@ everyday-agy/
 │   ├── skills/          # Custom workflow skills (spec-kit, gh-workflow, ponytail, etc.)
 │   └── plugins/         # Bundled custom plugins (antislop)
 ├── docs/
-│   └── adr/             # Architectural Decision Records (ADR-0001 through ADR-0005)
+│   └── adr/             # Architectural Decision Records (ADR-0001 through ADR-0006)
 ├── sync.ps1             # Pull active configs from ~/.gemini/ into this repo
 └── restore.ps1          # Deploy this configuration to ~/.gemini/ on a fresh machine
 ```
@@ -61,6 +61,7 @@ everyday-agy/
 - [ADR-0003](./docs/adr/0003-ponytail-5-suite-architecture.md): Preservation of Ponytail 5 Discrete Modal Architecture.
 - [ADR-0004](./docs/adr/0004-subagent-model-tiering-inherit.md): Subagent Cognitive Model Tiering (`model: inherit`).
 - [ADR-0005](./docs/adr/0005-spec-kit-and-ast-grep-tooling.md): Spec-Kit, GitHub Workflow & AST-Grep Integration.
+- [ADR-0006](./docs/adr/0006-marketplace-plugin-decoupling-and-security-adaptation.md): Marketplace Plugin Decoupling & Security Skill Adaptation.
 
 ---
 

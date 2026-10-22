@@ -4,7 +4,7 @@ This specification defines the numerical evaluation rubric, mathematical reconci
 
 ---
 
-## 1. The Four-Dimensional Rubric (Scale 1.0 – 5.0)
+## 1. The Four-Dimensional Rubric (Scale 1.0 - 5.0)
 
 Every Council seat independently evaluates the subject across four standard axes:
 
@@ -25,7 +25,7 @@ Every Council seat independently evaluates the subject across four standard axes
 ### Axis 3: Token & Context Efficiency (Anti-Slop)
 - **5.0**: Perfectly modular progressive disclosure, zero redundant text, concise plain-spoken prose, optimal context utilization.
 - **4.0**: Good brevity, minor narrative padding (<1 KB), well-partitioned references.
-- **3.0**: Noticeable text repetition (1–3 KB duplicate checklists), moderate greedy retrieval risk.
+- **3.0**: Noticeable text repetition (1-3 KB duplicate checklists), moderate greedy retrieval risk.
 - **2.0**: Severe text duplication (>5 KB), heavy prompt templates, repetitive guidelines burning context.
 - **1.0**: Monolithic prompt bloat, high token burn on every turn, severe context window dilution.
 
@@ -50,10 +50,10 @@ To prevent arbitrary or hallucinated scoring, the Chairman synthesis must satisf
    The Overall Council Composite Average must match both the mean of row composites and the mean of column averages:
    $$\text{Grand Mean} = \frac{\sum \text{All 16 Cells}}{16} = \frac{\sum \text{Seat Composites}}{N_{\text{seats}}} = \frac{\sum \text{Column Averages}}{4}$$
 4. **Grading Scale**:
-   - `4.50 – 5.00`: **Grade A+ (Exemplary)**
-   - `4.00 – 4.49`: **Grade A (High Distinction)**
-   - `3.50 – 3.99`: **Grade B+ (Conditional Pass / Approved with Optimizations)**
-   - `3.00 – 3.49`: **Grade B (Acceptable / Requires Refactoring)**
+   - `4.50 - 5.00`: **Grade A+ (Exemplary)**
+   - `4.00 - 4.49`: **Grade A (High Distinction)**
+   - `3.50 - 3.99`: **Grade B+ (Conditional Pass / Approved with Optimizations)**
+   - `3.00 - 3.49`: **Grade B (Acceptable / Requires Refactoring)**
    - `< 3.00`: **Grade C or Below (Reject / Fundamental Redesign Needed)**
 
 ---

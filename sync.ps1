@@ -2,7 +2,7 @@
 # Pulls active live configurations from ~/.gemini/ into this repository
 $ErrorActionPreference = "Stop"
 
-Write-Host ">>> Syncing active Antigravity configurations into everyday-agy..." -ForegroundColor Cyan
+Write-Host ">>> Starting Everyday-AGY pre-flight sync..." -ForegroundColor Cyan
 
 $scriptRoot = $PSScriptRoot
 if (-not $scriptRoot) { $scriptRoot = (Get-Location).Path }
@@ -12,11 +12,19 @@ $userHome = if ($env:USERPROFILE) { $env:USERPROFILE } else { $HOME }
 $geminiHome = Join-Path $userHome ".gemini"
 $configHome = Join-Path $geminiHome "config"
 
+if (-not (Test-Path $geminiHome)) {
+    Write-Error "Antigravity home directory not found at $geminiHome! Aborting sync."
+    exit 1
+}
+
 # 1. Credential Scanner Definition
 $secretPatterns = @(
     @{ Kind = "Bearer token"; Pattern = 'Bearer\s+(?!<)[A-Za-z0-9_\-\.]{12,}' },
     @{ Kind = "Credential assignment"; Pattern = '["'']?(?:api[_-]?key|access[_-]?token|secret[_-]?key|token)["'']?\s*[:=]\s*["''](?!<)[^\s"'']{16,}["'']' }
 )
+
+# Plugins excluded from sync (maintained by official Antigravity Marketplace)
+$officialPlugins = @("chrome-devtools-plugin", "modern-web-guidance-plugin", "android-cli-plugin")
 
 function Assert-NoCredentialsInFile($filePath) {
     if (-not (Test-Path $filePath)) { return }
@@ -24,16 +32,52 @@ function Assert-NoCredentialsInFile($filePath) {
     foreach ($line in $lines) {
         foreach ($sp in $secretPatterns) {
             if ($line -match $sp.Pattern) {
-                Write-Error "Credential leak detected in $filePath! ($($sp.Kind)). Aborting sync."
+                Write-Error "Credential leak detected at source: $filePath! ($($sp.Kind)). Sync aborted before copying."
                 exit 1
             }
         }
     }
 }
 
-# 2. Sync Global Prompt & Rules
+# ==============================================================================
+# PHASE 1: PRE-FLIGHT CREDENTIAL SCAN AT SOURCE (~/.gemini/)
+# Scans all source candidate files BEFORE touching repository disk
+# ==============================================================================
+Write-Host ">>> Running pre-flight credential audit on source files ($geminiHome)..." -ForegroundColor Cyan
+
+# 1a. Scan GEMINI.md at source
 if (Test-Path "$geminiHome\GEMINI.md") {
     Assert-NoCredentialsInFile "$geminiHome\GEMINI.md"
+}
+
+# 1b. Scan custom plugins at source (excluding official marketplace plugins)
+$customPluginDirs = if (Test-Path "$configHome\plugins") {
+    Get-ChildItem -Path "$configHome\plugins" -Directory | Where-Object { $_.Name -notin $officialPlugins } | Select-Object -ExpandProperty FullName
+} else { @() }
+
+# 1c. Scan all custom text files across candidate source directories
+$sourceScanTargets = @(
+    "$configHome\agents",
+    "$configHome\skills",
+    "$configHome\docs\adr"
+) + $customPluginDirs | Where-Object { $_ -and (Test-Path $_) }
+
+if ($sourceScanTargets) {
+    $sourceFiles = Get-ChildItem -Path $sourceScanTargets -Recurse -File -Include "*.md", "*.json", "*.ps1", "*.mjs", "*.py", "*.yml", "*.yaml"
+    foreach ($sf in $sourceFiles) {
+        Assert-NoCredentialsInFile $sf.FullName
+    }
+}
+
+Write-Host "[PASS] Pre-flight audit clean: zero secrets detected in candidate source files." -ForegroundColor Green
+Write-Host ">>> Proceeding to copy configurations into everyday-agy repository..." -ForegroundColor Cyan
+
+# ==============================================================================
+# PHASE 2: SYNCHRONIZATION
+# ==============================================================================
+
+# 2. Sync Global Prompt & Rules
+if (Test-Path "$geminiHome\GEMINI.md") {
     Copy-Item "$geminiHome\GEMINI.md" "$scriptRoot\GEMINI.md" -Force
     Write-Host "[OK] Synced GEMINI.md" -ForegroundColor Green
 }
@@ -57,7 +101,6 @@ if (Test-Path "$configHome\skills") {
 }
 
 # 5. Sync Custom Plugins (exclude official marketplace plugins)
-$officialPlugins = @("chrome-devtools-plugin", "modern-web-guidance-plugin", "android-cli-plugin")
 if (Test-Path "$configHome\plugins") {
     $dstPlugins = "$scriptRoot\config\plugins"
     New-Item -ItemType Directory -Force -Path $dstPlugins | Out-Null
@@ -80,13 +123,5 @@ if (Test-Path "$configHome\docs\adr") {
     $adrCount = (Get-ChildItem -Path $dstAdr -Filter "*.md" | Where-Object { $_.Name -ne "README.md" }).Count
     Write-Host "[OK] Synced $adrCount Architectural Decision Records (ADRs)" -ForegroundColor Green
 }
-
-# 7. Comprehensive Recursive Credential Scan across all tracked file types
-Write-Host ">>> Running recursive credential scanner across all synchronized files..." -ForegroundColor Cyan
-$scanTargets = Get-ChildItem -Path "$scriptRoot\config", "$scriptRoot\docs" -Recurse -File -Include "*.md", "*.json", "*.ps1", "*.mjs", "*.py", "*.yml", "*.yaml"
-foreach ($target in $scanTargets) {
-    Assert-NoCredentialsInFile $target.FullName
-}
-Write-Host "[PASS] All synchronized files clean: zero credentials or secrets detected." -ForegroundColor Green
 
 Write-Host ">>> Everyday-AGY sync completed successfully!" -ForegroundColor Green

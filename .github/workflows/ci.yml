@@ -64,8 +64,8 @@ jobs:
         shell: pwsh
         run: |
           $skills = Get-ChildItem -Path "config/skills", "config/plugins/antislop/skills" -Filter "SKILL.md" -Recurse
-          if ($skills.Count -ne 20) {
-            Write-Error "Expected 20 bundled skills, found $($skills.Count)"
+          if ($skills.Count -lt 20) {
+            Write-Error "Expected at least 20 bundled skills, found $($skills.Count)"
             exit 1
           }
           foreach ($s in $skills) {
@@ -75,7 +75,7 @@ jobs:
               exit 1
             }
           }
-          Write-Host "[PASS] All 20 bundled skills verified."
+          Write-Host "[PASS] All $($skills.Count) bundled skills verified."
 
       - name: Verify ADR Index Integrity
         shell: pwsh

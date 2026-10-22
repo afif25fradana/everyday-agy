@@ -23,7 +23,7 @@ Enforces strict size limits (target: **<= 8,192 bytes** and **<= 100 lines**) wh
   - Major historical research, native GUI deep-dives, or retired planning specs belong in `docs/archive/`.
 - **Gotchas vs. ADR Boundary**:
   - **Tactical Gotchas**: Immediate pitfalls, OS quirks, or concurrency locks belong in `## Known Edge Cases` in `task_state.md` (or inline code comments per `antislop-code`).
-  - **Architectural Decisions**: Decisions that choose dependencies, protocols, security policies, or data models must be documented in `docs/adr/000x-...md` per `documentation-and-adrs`. Edge cases that inspired an ADR should simply include a link: `[ADR-0004: Thread-safe PDFium](docs/adr/0004-thread-safe-pdfium-rasterization-and-pipeline-guards.md)`.
+  - **Architectural Decisions**: Decisions that choose dependencies, protocols, security policies, or data models must be documented in `docs/adr/000x-...md` per `documentation-and-adrs`. Edge cases that inspired an ADR should simply include a link: `[ADR-0004: Subagent Cognitive Model Tiering](../../../docs/adr/0004-subagent-model-tiering-inherit.md)`.
 - **Atomic Git Tracking**: Always stage and commit files explicitly with `rtk git add task_state.md` in the target context repository (or code repo in Single-Repo mode). Never accidentally leak confidential planning notes into public releases.
 
 ---

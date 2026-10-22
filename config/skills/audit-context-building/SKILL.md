@@ -17,7 +17,7 @@ together.
 
 Do not name vulnerabilities, suggest fixes, write proofs-of-concept, or rate severity. Those belong to the
 hunting phase, which runs next and with the whole picture in hand. When the code counts on something and
-nothing checks it, record that plainly and move on — whether it matters is decided later.
+nothing checks it, record that plainly and move on - whether it matters is decided later.
 
 Not worth the tokens on code you already understand.
 
@@ -25,8 +25,8 @@ Not worth the tokens on code you already understand.
 
 The analysis is long, and this context needs to survive to use it. Dispatch it:
 
-- **A codebase, or more than one function** — invoke a read-only research subagent (`invoke_subagent` with `TypeName: "research"`, `Role: "Codebase Context Auditor"`). The subagent inspects functions using `view_file` and `rtk rg`, records findings under `$HOME/.gemini/antigravity/scratch/<task>/audit-context/`, and returns compact records via `send_message`.
-- **A single function** — delegate to a read-only research subagent, or inspect inline using `read_file` if context is lean.
+- **A codebase, or more than one function** - invoke a read-only research subagent (`invoke_subagent` with `TypeName: "research"`, `Role: "Codebase Context Auditor"`). The subagent inspects functions using `view_file` and `rtk rg`, records findings under `$HOME/.gemini/antigravity/scratch/<task>/audit-context/`, and returns compact records via `send_message`.
+- **A single function** - delegate to a read-only research subagent, or inspect inline using `read_file` if context is lean.
 
 Then work from what comes back: the index, the unenforced assumptions, the open questions. Read a function's
 record when you need its detail.
@@ -62,3 +62,11 @@ another function does, and you cannot see that from the caller alone. A limit lo
 value came back from a function whose name suggests it was checked. So read the function being called, follow
 every path through it rather than only the one that succeeds, and say what makes each assumption true. When
 nothing does, use those words: `nothing found`. Every claim cites a line, or becomes an open question.
+
+---
+
+## License & Attribution
+
+Adapted from [trailofbits/skills](https://github.com/trailofbits/skills) by Trail of Bits, Inc.  
+Licensed under the [Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](./LICENSE).  
+Modifications made for Google Antigravity runtime by everyday-agy contributors.

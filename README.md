@@ -65,7 +65,7 @@ everyday-agy/
 ├── TOOLKIT.md           # Catalog of CLI tools, MCP snippets, and skill upstream links
 ├── config/
 │   ├── agents/          # 9 specialized subagents configured with model: inherit
-│   ├── skills/          # 21 custom workflow skills (council-review, spec-kit, ponytail, etc.)
+│   ├── skills/          # 21 curated, adapted, and bespoke workflow skills
 │   └── plugins/         # Bespoke plugins (antislop design and code filters)
 ├── docs/
 │   └── adr/             # Architectural Decision Records (ADR-0001 through ADR-0008)
@@ -92,16 +92,25 @@ Nine specialized agents handle task delegation. Analytical roles run on `model: 
 - `docs-architect`: Technical documentation maintenance and AI context synchronization.
 - `maintenance-bot`: Dependabot PR triage, CI failure diagnosis, and CVE remediation.
 
-### Custom Skills (`config/skills/`)
-Twenty-one modular skills load on-demand through Antigravity's progressive disclosure engine:
+### Workflow Skills and Provenance (`config/skills/` & `config/plugins/`)
+
+Twenty-one modular skills load on-demand through Antigravity's progressive disclosure engine. They are partitioned transparently by origin and licensing:
+
+| Category | Count | Included Skills | Origin / Licensing |
+|---|:---:|---|---|
+| **Bespoke Architectures** | 3 | `council-review`, `audit-dev-workflow`, `sync-task-state` | Original works authored for Antigravity (MIT) |
+| **Engine-Adapted Ports** | 4 | `spec-kit`, `gh-workflow`, `audit-context-building`, `differential-review` | Adapted from community tools and Trail of Bits (MIT & CC BY-SA 4.0) |
+| **Curated Community Suites** | 14 | `ponytail` suite (6), `antislop` suite (6), `design-taste-frontend`, `documentation-and-adrs` | Bundled from DietrichGebert, miqdadbadjuber, Leonxlnx, and standards (MIT) |
+
+#### Core Workflows
 - `council-review`: Multi-agent deliberative review panel synthesizing context grounding, socratic scoping, and teamwork peer reviews (high token consumption; spawns 15 to 20+ subagents via `teamwork_preview`).
 - `audit-dev-workflow`: Defensive development runbook with caller tracing, checkpoints, testless fallbacks, and automated rollback scripts.
 - `spec-kit`: Spec-Driven Development framework (`/speckit.specify`, `/speckit.plan`, `/speckit.tasks`).
 - `gh-workflow`: Non-interactive CI monitoring and PR lifecycle automation via authenticated `gh`.
-- `ponytail` (suite of 6): Minimal diff enforcement, repo quality audits, technical debt ledgers, and PR reviews.
-- `audit-context-building`: Invariant mapping and assumption tracing before code audits.
-- `differential-review`: Security differential analysis for commits and pull requests.
-- `design-taste-frontend`: Anti-slop frontend art direction distilled from curated design galleries.
+- `ponytail` (suite of 6): Minimal diff enforcement, repo quality audits, technical debt ledgers, and PR reviews (DietrichGebert, MIT).
+- `audit-context-building`: Invariant mapping and assumption tracing before code audits (Trail of Bits, CC BY-SA 4.0).
+- `differential-review`: Security differential analysis for commits and pull requests (Trail of Bits, CC BY-SA 4.0).
+- `design-taste-frontend`: Anti-slop frontend art direction distilled from curated design galleries (Leonxlnx, MIT).
 - `documentation-and-adrs`: Standardized Nygard ADR authoring.
 - `sync-task-state`: Lightweight context synchronization (`task_state.md`) for Twin-Repo workflows.
 
@@ -125,4 +134,7 @@ Technical decisions, constraints, and trade-offs are recorded as permanent Nygar
 
 ## License
 
-MIT License. See [LICENSE](./LICENSE) for details.
+Dual-licensed under MIT and CC BY-SA 4.0:
+- Repository scripts, custom subagents, and bespoke skills (`council-review`, `audit-dev-workflow`, `sync-task-state`) are licensed under the [MIT License](./LICENSE).
+- Adapted Trail of Bits security skills (`audit-context-building`, `differential-review`) are licensed under [Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](./config/skills/audit-context-building/LICENSE).
+- Bundled third-party community skills (`ponytail`, `design-taste-frontend`, `antislop`) retain their respective upstream MIT licenses (see subfolder `LICENSE` files).

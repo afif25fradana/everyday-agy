@@ -97,7 +97,7 @@ Phase 3: Blast Radius → Phase 4: Deep Context → Phase 5: Adversarial → Pha
 
 ## Agents
 
-**Adversarial Security Modeler** — Models attacker perspectives and builds exploit
+**Adversarial Security Modeler** - Models attacker perspectives and builds exploit
 scenarios for HIGH RISK code changes. Follows the 5-step adversarial methodology in
 `adversarial.md` (attacker model, attack vectors, exploitability rating, exploit
 scenario, baseline cross-reference) and produces structured vulnerability reports.
@@ -222,3 +222,11 @@ These patterns require adversarial analysis even in quick triage.
 **For first-time users:** Start with [methodology.md](methodology.md) to understand the complete workflow.
 
 **For experienced users:** Use this page's Quick Reference and Decision Tree to navigate directly to needed content.
+
+---
+
+## License & Attribution
+
+Adapted from [trailofbits/skills](https://github.com/trailofbits/skills) by Trail of Bits, Inc.  
+Licensed under the [Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](./LICENSE).  
+Modifications made for Google Antigravity runtime by everyday-agy contributors.

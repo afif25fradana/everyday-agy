@@ -63,7 +63,7 @@ $sourceScanTargets = @(
 ) + $customPluginDirs | Where-Object { $_ -and (Test-Path $_) }
 
 if ($sourceScanTargets) {
-    $sourceFiles = Get-ChildItem -Path $sourceScanTargets -Recurse -File -Include "*.md", "*.json", "*.ps1", "*.mjs", "*.py", "*.yml", "*.yaml"
+    $sourceFiles = Get-ChildItem -Path $sourceScanTargets -Recurse -File -Include "*.md", "*.json", "*.ps1", "*.mjs", "*.py", "*.yml", "*.yaml", "LICENSE*"
     foreach ($sf in $sourceFiles) {
         Assert-NoCredentialsInFile $sf.FullName
     }

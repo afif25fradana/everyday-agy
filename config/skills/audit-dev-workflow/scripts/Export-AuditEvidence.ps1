@@ -12,12 +12,21 @@ if (-not (Test-Path -Path $scratchDir)) {
     New-Item -ItemType Directory -Path $scratchDir -Force | Out-Null
 }
 
+function Invoke-GitCmd {
+    param([string[]]$Arguments)
+    if (Get-Command rtk -ErrorAction SilentlyContinue) {
+        rtk git @Arguments
+    } else {
+        git @Arguments
+    }
+}
+
 $diffPath = Join-Path $scratchDir "$Task.diff"
-git -C $RepoPath diff HEAD > $diffPath
+Invoke-GitCmd @("-C", $RepoPath, "diff", "HEAD") | Out-File -FilePath $diffPath -Encoding utf8
 
 if (-not (Test-Path -Path $diffPath) -or ((Get-Item $diffPath).Length -eq 0)) {
     # If no git diff HEAD, check unstaged git diff
-    git -C $RepoPath diff > $diffPath
+    Invoke-GitCmd @("-C", $RepoPath, "diff") | Out-File -FilePath $diffPath -Encoding utf8
 }
 
 $lineCount = 0

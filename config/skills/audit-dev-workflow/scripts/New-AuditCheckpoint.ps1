@@ -12,6 +12,15 @@ if (-not (Test-Path -Path $scratchDir)) {
     New-Item -ItemType Directory -Path $scratchDir -Force | Out-Null
 }
 
+function Invoke-GitCmd {
+    param([string[]]$Arguments)
+    if (Get-Command rtk -ErrorAction SilentlyContinue) {
+        rtk git @Arguments
+    } else {
+        git @Arguments
+    }
+}
+
 if ($FilePath) {
     if (-not (Test-Path -Path $FilePath)) {
         Write-Error "Target file not found: $FilePath"
@@ -26,11 +35,11 @@ if ($FilePath) {
     "$fullHash  $backupPath" | Add-Content -Path (Join-Path $scratchDir "hashes.txt")
     Write-Output "Checkpoint created: $backupPath (sha $shortHash)"
 } else {
-    $gitCheck = git rev-parse --is-inside-work-tree 2>$null
+    $gitCheck = Invoke-GitCmd @("rev-parse", "--is-inside-work-tree") 2>$null
     if ($gitCheck -eq "true") {
         $branchName = "checkpoint-$Task"
-        git branch $branchName 2>$null | Out-Null
-        $headSha = (git rev-parse HEAD).Substring(0, 12)
+        Invoke-GitCmd @("branch", "-f", $branchName) 2>$null | Out-Null
+        $headSha = (Invoke-GitCmd @("rev-parse", "HEAD")).Substring(0, 12)
         Write-Output "Checkpoint created: git branch $branchName (sha $headSha)"
     } else {
         Write-Output "Checkpoint notice: outside git repository and no FilePath specified. Scratch directory prepared at $scratchDir"

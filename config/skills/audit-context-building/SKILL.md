@@ -26,7 +26,7 @@ Not worth the tokens on code you already understand.
 The analysis is long, and this context needs to survive to use it. Dispatch it:
 
 - **A codebase, or more than one function** — invoke a read-only research subagent (`invoke_subagent` with `TypeName: "research"`, `Role: "Codebase Context Auditor"`). The subagent inspects functions using `view_file` and `rtk rg`, records findings under `$HOME/.gemini/antigravity/scratch/<task>/audit-context/`, and returns compact records via `send_message`.
-- **A single function** — delegate to a read-only research subagent, or inspect inline using `view_file` if context is lean.
+- **A single function** — delegate to a read-only research subagent, or inspect inline using `read_file` if context is lean.
 
 Then work from what comes back: the index, the unenforced assumptions, the open questions. Read a function's
 record when you need its detail.

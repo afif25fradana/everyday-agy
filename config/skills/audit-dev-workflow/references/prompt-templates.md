@@ -1,91 +1,168 @@
-# Prompt Templates for Antigravity (Gemini 3.8 Flash Native)
+# Prompt Templates for Antigravity
+**Operational Alignment with Human Operator & External Reviewers (Claude, Gemini Web, etc.)**
 
-All templates are designed to be pasted directly into Antigravity sessions. Powered by Gemini 3.8 Flash (High), these prompts leverage native high reasoning, thinking tokens, and direct tool calling while upholding strict defensive guardrails (investigate first, checkpoints, explicit approval, and zero slop).
+Ready-to-paste atomic prompts for Antigravity sessions. Governed by the payload schemas in [`handoff-spec.md`](./handoff-spec.md) and the operational runbook in [`SKILL.md`](../SKILL.md).
 
 ---
 
-## 1. Phase 1: Diagnostic Audit (Read-Only Investigation)
+## 1. Phase 1 & 2: Diagnostic Audit & Gate 1 Proposal Packaging
 
-Use when investigating a bug, auditing a module/config, or checking blast radius before proposing changes.
+Use when investigating a bug or planning a feature to produce a compliant `# Review Request: Gate 1 (Pre-Execution Proposal)` before touching any code.
 
 ```markdown
 # Phase
-Phase 1: Diagnostic Audit (Read-Only - zero file edits)
+Phase 1-2: Diagnostic Audit & Gate 1 Proposal Packaging (Read-Only)
 
 # Scope
 [exact files, directories, or config files]
 
 # Context / Symptom
-[concise technical description of the bug, behavior, or audit target]
+[concise technical description of the bug, behavior, or feature target]
 
-# Questions to Answer in Findings (Answer Q1-Q3 sequentially)
-1. **Q1 (Root Cause & Invariant Analysis)**: Inspect `[file/function]`. Trace the logic flow, identify the root cause, and cite relevant code coordinates `[file.ext#L10-L20]`.
-2. **Q2 (Caller & Blast Radius Sweep)**: Trace callers across the repo using `rtk rg` and map affected boundaries, tests, and consumers.
-3. **Q3 (Edge Cases & Minimal Fix Direction)**: Compare against `[working path / invariant]`, evaluate trade-offs, and outline the minimal fix per `ponytail` (shortest working diff, reuse existing helpers).
+# Instructions
+1. **Root Cause & Invariants**: Inspect target code via `read_file`. Trace logic flow, identify root cause, and cite exact target coordinates (`file.ext#Lxx-Lyy`) and function signatures.
+2. **Blast Radius (rtk rg)**: Trace callers across the repo using `rtk rg` and map affected boundaries, consumers, and tests.
+3. **Repro Test**: For bug fixes, create a minimal failing test script (RED) capturing the issue.
+4. **Minimal Proposal**: Formulate the shortest working diff, reusing existing helpers with zero speculative abstractions.
+5. **Gate 1 Packaging**: Package proposal per schema in [`handoff-spec.md`](./handoff-spec.md):
+
+# Review Request: Gate 1 (Pre-Execution Proposal)
+- **Task**: [Task Title]
+- **Target Coordinates**: [file.ext#Lxx-Lyy]
+- **Function Signature(s)**: [exact signature(s)]
+- **Git HEAD SHA**: [sha]
+
+## Root Cause & Invariant Analysis
+[analysis]
+
+## Caller Context & Blast Radius (rtk rg)
+[callers and modules]
+
+## Minimal Implementation Proposal (Ponytail)
+[plan and target files]
 
 # Stop Condition
-Stop after presenting findings and proposed direction. Do not modify any repository files.
+Stop immediately after presenting Gate 1. Await explicit approval (or UI "Proceed") before modifying files.
 ```
 
 ---
 
-## 2. Phase 2: Implementation Proposal & Diff Preview
+## 2. Tier 0: Trivial Fast-Path Execution (`[TRIVIAL REVIEW]`)
 
-Use when the root cause is confirmed and you want the agent to prepare the exact plan and diff preview before execution.
+Use ONLY for cosmetic changes, docs, typos, or metadata updates modifying `<= 2` files and `<= 3` executable lines (or `<= 5` comment/doc lines) with ZERO logic mutations per [`handoff-spec.md`](./handoff-spec.md#21-tier-0-trivial-fast-path).
 
 ```markdown
 # Phase
-Phase 2: Implementation Proposal (Read-Only - awaiting approval)
+Tier 0: Trivial Fast-Path (Cosmetic / Non-Logic Change)
+
+# Scope Lock (<= 2 files, <= 3 executable or <= 5 doc lines)
+[exact file paths]
+
+# Task
+[concise description of typo, comment, or metadata fix]
+
+# Execution Instructions
+1. Verify change touches zero logic, conditionals, loops, state transitions, or security checks.
+2. Apply edit directly using `edit_file`.
+3. Package output strictly as:
+
+[TRIVIAL REVIEW]
+- **Task**: [Task Description]
+- **Scope**: [files changed]
+- **Rationale**: [Explain non-logic nature]
+
+### Diffstat & Unified Diff
+[inline diffstat and diff]
+
+# Stop Condition
+Stop after presenting [TRIVIAL REVIEW]. Await approval before commit.
+```
+
+---
+
+## 3. Phase 3–5: Execution, Local Verification & Gate 2 Handoff Packaging
+
+Use when Gate 1 is approved to execute changes, run tests, capture real evidence, and package the Gate 2 payload per [`handoff-spec.md`](./handoff-spec.md#23-gate-2-post-execution-handoff--diff).
+
+```markdown
+# Phase
+Phase 3-5: Execution, Local Verification & Gate 2 Handoff Packaging
 
 # Approved Direction
-Implement Option `[X]`: `[1-2 sentence summary of the chosen minimal approach]`.
+Approved Gate 1 plan: [1-2 sentence summary of approved proposal]
 
-# Scope Lock
-Allowed files:
-- `[file 1]`
-- `[file 2]`
+# Allowed Scope
+- [exact file paths]
 
-# Requirements
-1. **Minimalist Diff (`ponytail`)**: Reuse existing helpers/types; no unrequested abstractions or out-of-scope cleanups.
-2. **Code Hygiene (`antislop-code`)**: Zero narrative comments; preserve non-obvious *why* explanations and known gotchas.
-3. **Proposed Diff Preview**: Present the exact unified diff for review.
+# Execution Instructions
+1. Checkpoint: Ensure git working tree is clean or create a checkpoint via `New-AuditCheckpoint.ps1`.
+2. Execution: Apply changes using `edit_file`/`write_file`. Shortest working diff wins. Use `<...>` bracketed placeholders for any secret tokens.
+3. Verification: Execute test suite `[command]`. Capture exit code 0 and verbatim stdout turning RED test to GREEN (or annotate `[TEST HARNESS: NONE]` with static evidence if repo is testless).
+4. Five-Axis Self-Audit: Confirm compliance with the 5 axes defined in [`SKILL.md`](../SKILL.md#3-five-axis-pre-flight-rubric).
+5. Packaging: If diff > 800 lines, chunk per [`handoff-spec.md`](./handoff-spec.md#4-the--800-line-module-chunking-protocol). Otherwise package:
+
+# Review Request: Gate 2 (Post-Execution Handoff & Diff)
+- **Task**: [Task Title]
+- **Git HEAD SHA**: [sha]
+
+## Summary of Outcome & Root Cause Fix
+[summary]
+
+## Diff & Impact
+### Diffstat & Full Unified Diff
+[diffstat and diff]
+
+## Mandatory Verification Evidence
+- **CLI Command**: [exact command, e.g., rtk npm test]
+- **Exit Code**: 0
+- **Verbatim Output**:
+[verbatim stdout/stderr snippet showing passed assertions with mock tokens scrubbed to <TEST_HASH_SANITIZED>]
+
+## Five-Axis Pre-Flight Self-Audit
+- All 5 axes verified (Correctness, Security, Ponytail/YAGNI, Edge Cases, Test Integrity).
 
 # Stop Condition
-Stop after presenting the proposed diff. Await explicit user approval before modifying files.
+Stop immediately after presenting Gate 2. Do not commit or push until review approval is received.
 ```
 
 ---
 
-## 3. Phase 3–5: Approve, Execute & Verify
+## 4. Return Loop: Dispute Resolution & Factual Queries
 
-Use when approving a verified proposal to execute changes, run tests, and complete verification.
+Use when a Reviewer issues `QUESTIONS FOR IMPLEMENTER` or asks to verify a symbol, caller, or invariant per [`handoff-spec.md`](./handoff-spec.md#62-factual-code-dispute-format).
 
 ```markdown
 # Phase
-Phase 3-5: Execution, Verification & Local Review
+Return Loop: Factual Code Dispute Resolution
 
-# Explicit Approval
-Approved to execute the following items within the allowed scope:
-1. `[Specific change #1 in exact file]`
-2. `[Specific change #2 in exact file]`
+# Reviewer Question / Target Symbol
+[paste reviewer question or symbol name]
 
-# Allowed Scope
-- `[exact file path(s)]`
+# Instructions
+1. Execute `rtk rg "[symbol]"` across the repository to locate definition and caller sites.
+2. Package findings per [`handoff-spec.md`](./handoff-spec.md#62-factual-code-dispute-format):
 
-# Execution & Verification Focus
-1. Ensure git working tree is clean (`rtk git status --short`) or create a checkpoint commit via `rtk git`.
-2. Apply changes directly using shortest working diff.
-3. Execute relevant unit/integration test suites to confirm clean exit code (0).
-4. Run Five-Axis sanity check (Correctness, Security, Performance, Maintainability, Tests).
-5. Report concise outcome: diffstat, test results, and next steps.
+# Implementer Response: Factual Code Resolution
+- **Target Question / Symbol**: [symbol]
+- **Command Executed**: `rtk rg "[symbol]"`
+
+### Verified Code Coordinates
+[file.ext#Lxx-Lyy]
+
+```[lang]
+[verbatim code snippet]
+```
+
+### Clarification
+[1-2 direct sentences resolving the inquiry from evidence]
 
 # Stop Condition
-Stop immediately on any unexpected test failure or build error.
+Stop after providing code evidence. Await reviewer's updated verdict.
 ```
 
 ---
 
-## 4. Global Config or Skill Patch (`GEMINI.md`, `.gemini\`, Skills)
+## 5. Global Config or Skill Patch (`GEMINI.md`, `.gemini\`, Skills)
 
 Use when updating Antigravity's own rules, global config, or installed skills. Never dictate line numbers, block names, or exact wording from memory—have the agent inspect its live file first.
 
@@ -97,17 +174,17 @@ Phase 1-2: Config / Skill Inspection & Minimal Patch Proposal (Read-Only)
 Refine `[target file/skill, e.g., GEMINI.md or skill X]` to address `[concrete problem or behavior observed]`.
 
 # Questions to Answer Before Editing
-1. **Q1 (Live File Inspection)**: Read the current `[target file]` via `view_file`. Which existing section or rule already covers or overlaps with this concept?
-2. **Q2 (Collision & Redundancy Check)**: Verify that adding or adjusting this rule does not contradict `GEMINI.md` or duplicate an existing instruction.
-3. **Q3 (Minimal Patch Proposal)**: Propose the smallest possible patch (updating existing lines in place rather than rewriting the file) and show the proposed unified diff.
+1. **Q1 (Live File Inspection)**: Read current `[target file]` via `read_file`. Which existing section or rule already covers or overlaps with this concept?
+2. **Q2 (Collision & Redundancy Check)**: Verify that adjusting this rule does not contradict `GEMINI.md` or duplicate an existing instruction.
+3. **Q3 (Minimal Patch Proposal)**: Propose the smallest possible patch (updating existing lines in place) and show proposed unified diff.
 
 # Stop Condition
-Stop after presenting findings and proposed diff. Await explicit user approval before applying changes.
+Stop after presenting findings and proposed diff. Await explicit approval before applying changes.
 ```
 
 ---
 
-## 5. Bootstrap & Context Sync (`architecture.md` / `sync-task-state`)
+## 6. Bootstrap & Context Sync (`architecture.md` / `sync-task-state`)
 
 Use when opening a new chat on an existing codebase or rotating stale `*-AI-Context` files.
 

@@ -7,6 +7,7 @@ tools:
   - write_to_file
   - run_command
 skills:
+  # Repository Custom Skills
   - audit-dev-workflow
   - ponytail
   - differential-review
@@ -14,6 +15,7 @@ skills:
   - antislop-code
   - antislop-copywriting
   - audit-context-building
+  # Optional Marketplace Extension (Chrome DevTools Plugin)
   - memory-leak-debugging
 ---
 

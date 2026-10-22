@@ -5,10 +5,12 @@ $ErrorActionPreference = "Stop"
 Write-Host ">>> Restoring Antigravity configuration to ~/.gemini/..." -ForegroundColor Cyan
 
 $scriptRoot = $PSScriptRoot
-if (-not $scriptRoot) { $scriptRoot = Get-Location }
+if (-not $scriptRoot) { $scriptRoot = (Get-Location).Path }
 
-$geminiHome = "$env:USERPROFILE\.gemini"
-$configHome = "$geminiHome\config"
+# Cross-platform ~/.gemini/ directory resolution (Windows, macOS, Linux pwsh)
+$userHome = if ($env:USERPROFILE) { $env:USERPROFILE } else { $HOME }
+$geminiHome = Join-Path $userHome ".gemini"
+$configHome = Join-Path $geminiHome "config"
 
 # Ensure target directories exist
 New-Item -ItemType Directory -Force -Path $geminiHome | Out-Null
@@ -45,7 +47,8 @@ if (Test-Path "$scriptRoot\config\agents") {
     $dstAgents = "$configHome\agents"
     New-Item -ItemType Directory -Force -Path $dstAgents | Out-Null
     Copy-Item -Path "$scriptRoot\config\agents\*" -Destination $dstAgents -Recurse -Force
-    Write-Host "[OK] Restored Custom Agents" -ForegroundColor Green
+    $agentCount = (Get-ChildItem -Path $dstAgents -Directory).Count
+    Write-Host "[OK] Restored $agentCount Custom Agents" -ForegroundColor Green
 }
 
 # 3. Restore Custom Skills
@@ -53,7 +56,8 @@ if (Test-Path "$scriptRoot\config\skills") {
     $dstSkills = "$configHome\skills"
     New-Item -ItemType Directory -Force -Path $dstSkills | Out-Null
     Copy-Item -Path "$scriptRoot\config\skills\*" -Destination $dstSkills -Recurse -Force
-    Write-Host "[OK] Restored Custom Skills" -ForegroundColor Green
+    $skillCount = (Get-ChildItem -Path $dstSkills -Directory).Count
+    Write-Host "[OK] Restored $skillCount Custom Skills" -ForegroundColor Green
 }
 
 # 4. Restore Plugins
@@ -61,7 +65,8 @@ if (Test-Path "$scriptRoot\config\plugins") {
     $dstPlugins = "$configHome\plugins"
     New-Item -ItemType Directory -Force -Path $dstPlugins | Out-Null
     Copy-Item -Path "$scriptRoot\config\plugins\*" -Destination $dstPlugins -Recurse -Force
-    Write-Host "[OK] Restored Plugins" -ForegroundColor Green
+    $pluginCount = (Get-ChildItem -Path $dstPlugins -Directory).Count
+    Write-Host "[OK] Restored $pluginCount Custom Plugins" -ForegroundColor Green
 }
 
 # 5. Restore Architectural Decision Records (ADRs)
@@ -69,8 +74,10 @@ if (Test-Path "$scriptRoot\docs\adr") {
     $dstAdr = "$configHome\docs\adr"
     New-Item -ItemType Directory -Force -Path $dstAdr | Out-Null
     Copy-Item -Path "$scriptRoot\docs\adr\*" -Destination $dstAdr -Recurse -Force
-    Write-Host "[OK] Restored Architectural Decision Records (ADRs)" -ForegroundColor Green
+    $adrCount = (Get-ChildItem -Path $dstAdr -Filter "*.md" | Where-Object { $_.Name -ne "README.md" }).Count
+    Write-Host "[OK] Restored $adrCount Architectural Decision Records (ADRs)" -ForegroundColor Green
 }
 
 Write-Host ">>> Everyday-AGY restoration completed successfully!" -ForegroundColor Green
 Write-Host ">>> Note: For Context7 MCP setup, refer to README.md and TOOLKIT.md." -ForegroundColor Yellow
+Write-Host ">>> Tip: For full browser automation in ui-crafter and code-auditor, install 'Chrome DevTools' and 'Modern Web Guidance' from Antigravity Marketplace." -ForegroundColor Cyan

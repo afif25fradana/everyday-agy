@@ -62,7 +62,7 @@ npm install -g @ast-grep/cli
 
 ## 3. Custom Skills Catalog
 
-Custom skills shipped directly within this repository (`config/skills/` and `config/plugins/`).
+20 modular skills shipped directly within this repository (`config/skills/` and `config/plugins/antislop`), plus 9 recommended official marketplace skills documented in Section 4.
 
 ### A. Spec-Driven & Development Workflows
 | Skill Name | Trigger / Command | Description | Upstream / Origin |

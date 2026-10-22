@@ -44,7 +44,7 @@ everyday-agy/
 - `maintenance-bot`: Dependabot triage, CVE mitigation, and CI failure diagnostics.
 - `ui-crafter`: Modern web primitives, WCAG AA accessibility, Generative UI widgets.
 
-### 3. Custom Skills (`config/skills/`)
+### 3. Custom Skills (20 bundled modular skills)
 - `spec-kit`: Spec-Driven Development (`/speckit.specify`, `/speckit.plan`, `/speckit.tasks`).
 - `gh-workflow`: Automated PR lifecycle and non-interactive CI monitoring via authenticated `gh`.
 - `ponytail` (suite of 6): Lazy senior developer mode, one-shot repo audits, debt ledger, and PR reviews.

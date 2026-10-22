@@ -9,16 +9,19 @@ tools:
   - run_command
   - ask_question
 skills:
-  - modern-web-guidance
-  - a11y-debugging
+  # Antigravity Built-in Skills
   - generative_ui
-  - debug-optimize-lcp
-  - chrome-devtools
+  # Repository Custom Skills
   - antislop-ui
   - antislop-copywriting
   - design-taste-frontend
   - antislop-human
   - antislop-layoutmobile
+  # Optional Marketplace Extensions (Chrome DevTools & Web Guidance)
+  - modern-web-guidance
+  - a11y-debugging
+  - debug-optimize-lcp
+  - chrome-devtools
 ---
 
 # Identity & Core Mission

@@ -15,7 +15,7 @@ Empirical testing confirmed that Antigravity's Streamable HTTP parser does not p
 Keep the Bearer token directly defined in `~/.gemini/config/mcp_config.json` for local machine runtime.
 To prevent public credential leaks:
 1. `mcp_config.json` is strictly added to `.gitignore`.
-2. A sanitized template `config/mcp_config.example.json` with `<YOUR_CONTEXT7_API_KEY>` is committed to version control.
+2. A sanitized configuration snippet with `<YOUR_CONTEXT7_API_KEY>` is documented in `README.md` and `TOOLKIT.md` for direct copy-paste setup.
 3. Automated credential scanners in `sync.ps1` verify no real tokens are copied into repository tracking.
 
 ## Alternatives Considered & Rejected

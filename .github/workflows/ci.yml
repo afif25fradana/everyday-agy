@@ -1,0 +1,116 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    name: Validate Repository Integrity
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify essential root files
+        run: |
+          for file in GEMINI.md README.md TOOLKIT.md LICENSE sync.ps1 restore.ps1; do
+            if [ ! -f "$file" ]; then
+              echo "Error: Required file $file is missing!" >&2
+              exit 1
+            fi
+          done
+          echo "All essential root files present."
+
+      - name: Verify PowerShell script syntax
+        shell: pwsh
+        run: |
+          Get-ChildItem -Path . -Filter "*.ps1" -Recurse | ForEach-Object {
+            $err = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$null, [ref]$err) | Out-Null
+            if ($err) {
+              Write-Error "Syntax error in $($_.FullName): $err"
+              exit 1
+            }
+            Write-Host "[PASS] Syntax verified: $($_.Name)"
+          }
+
+      - name: Verify 9 Custom Agents
+        shell: pwsh
+        run: |
+          $agents = Get-ChildItem -Path "config/agents" -Directory
+          if ($agents.Count -ne 9) {
+            Write-Error "Expected 9 agents, found $($agents.Count)"
+            exit 1
+          }
+          foreach ($a in $agents) {
+            $agentFile = Join-Path $a.FullName "agent.md"
+            if (-not (Test-Path $agentFile)) {
+              Write-Error "Missing agent.md in $($a.Name)"
+              exit 1
+            }
+            $content = Get-Content $agentFile -Raw
+            if ($content -notmatch '(?m)^name:\s+' -or $content -notmatch '(?m)^model:\s+' -or $content -notmatch '(?m)^tools:\s+') {
+              Write-Error "Invalid frontmatter in $agentFile"
+              exit 1
+            }
+          }
+          Write-Host "[PASS] All 9 custom agents verified."
+
+      - name: Verify 20 Bundled Skills
+        shell: pwsh
+        run: |
+          $skills = Get-ChildItem -Path "config/skills", "config/plugins/antislop/skills" -Filter "SKILL.md" -Recurse
+          if ($skills.Count -ne 20) {
+            Write-Error "Expected 20 bundled skills, found $($skills.Count)"
+            exit 1
+          }
+          foreach ($s in $skills) {
+            $content = Get-Content $s.FullName -Raw
+            if ($content -notmatch '(?m)^name:\s+' -or $content -notmatch '(?m)^description:\s+') {
+              Write-Error "Invalid frontmatter in $($s.FullName)"
+              exit 1
+            }
+          }
+          Write-Host "[PASS] All 20 bundled skills verified."
+
+      - name: Verify ADR Index Integrity
+        shell: pwsh
+        run: |
+          $adrs = Get-ChildItem -Path "docs/adr" -Filter "*.md" | Where-Object { $_.Name -ne "README.md" }
+          if ($adrs.Count -lt 6) {
+            Write-Error "Expected at least 6 ADRs, found $($adrs.Count)"
+            exit 1
+          }
+          $adrReadme = Get-Content "docs/adr/README.md" -Raw
+          foreach ($adr in $adrs) {
+            if ($adrReadme -notmatch [regex]::Escape($adr.Name)) {
+              Write-Error "ADR $($adr.Name) is not indexed in docs/adr/README.md"
+              exit 1
+            }
+          }
+          Write-Host "[PASS] All $($adrs.Count) ADRs indexed and verified."
+
+      - name: Run Secret / Credential Leak Scanner
+        shell: pwsh
+        run: |
+          $secretPatterns = @(
+            'Bearer\s+(?!<)[A-Za-z0-9_\-\.]{12,}',
+            '["'']?(?:api[_-]?key|access[_-]?token|secret[_-]?key|token)["'']?\s*[:=]\s*["''](?!<)[^\s"'']{16,}["'']'
+          )
+          $files = Get-ChildItem -Path "GEMINI.md", "README.md", "TOOLKIT.md", "config", "docs" -Recurse -File -Include "*.md", "*.json", "*.ps1", "*.mjs", "*.py"
+          foreach ($f in $files) {
+            $content = Get-Content $f.FullName
+            foreach ($line in $content) {
+              foreach ($p in $secretPatterns) {
+                if ($line -match $p) {
+                  Write-Error "Credential leak detected in $($f.FullName): $line"
+                  exit 1
+                }
+              }
+            }
+          }
+          Write-Host "[PASS] Zero unmasked credentials found across all tracked files."

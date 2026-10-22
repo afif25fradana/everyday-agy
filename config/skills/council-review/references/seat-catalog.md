@@ -55,14 +55,22 @@ This catalog maps evaluation domains to specialized Antigravity custom subagents
 - **Domain Focus**: Package dependency hygiene, CVE vulnerability mitigation, Dependabot PR triage, and CI failure diagnosis.
 - **Evaluation Mandate**: Spots deprecated runtime targets (EOL Node/Python) and broken CI actions.
 
+### Seat 10: Official Spec & Remediation Verifier
+- **Domain Focus**: Cross-checking proposed remediation roadmaps, refactoring patterns, third-party library integrations, and architectural fixes against authoritative vendor documentation.
+- **Verification Tooling Hierarchy**:
+  1. **Primary Tool**: Context7 MCP (`resolve-library-id` -> `query-docs`) to pull authoritative, up-to-date library API signatures and guidelines.
+  2. **Secondary Fallback**: Targeted web search (`search_web` focusing on official documentation domains) when Context7 lacks library coverage.
+- **Evaluation Mandate**: Validates every action item in the proposed roadmap. Rejects hallucinated APIs, deprecated signatures, obsolete configuration flags, or unverified workarounds before final Chairman certification.
+
 ---
 
 ## 3. Recommended Seat Bundles by Task Type
 
 | Task Type | Recommended Council Composition |
 | :--- | :--- |
-| **Architectural / Refactoring Audit** | `system-architect` + `code-auditor` + `docs-architect` + `silent-failure-hunter` |
+| **Architectural / Refactoring Audit** | `system-architect` + `code-auditor` + `docs-architect` + `silent-failure-hunter` + Spec Verifier |
 | **Security & Vulnerability Audit** | `code-auditor` + `silent-failure-hunter` + `maintenance-bot` |
-| **New Feature / Greenfield PR Review** | `system-architect` + `tdd-guide` + `code-auditor` + `ui-crafter` |
+| **New Feature / Greenfield PR Review** | `system-architect` + `tdd-guide` + `code-auditor` + `ui-crafter` + Spec Verifier |
 | **Database & Schema Modification** | `database-reviewer` + `system-architect` + `silent-failure-hunter` |
+| **Library Upgrade / Modernization** | `maintenance-bot` + `build-error-resolver` + Spec Verifier |
 | **Skill & Workflow Tooling Audit** | `system-architect` + `code-auditor` + `docs-architect` + Community Benchmark |

@@ -101,6 +101,7 @@ Engage the operator interactively using `ask_question` (one question at a time) 
    - Documentation & ADRs (`docs-architect`)
    - Compiler & Typing (`build-error-resolver`)
    - Infrastructure & CI (`maintenance-bot`)
+   - Official Spec & Remediation Verifier (Context7 MCP + Official Web Search)
 2. **Evaluation Depth & Focus**: Select primary dimensions:
    - Antigravity Spec Alignment
    - Developer Ergonomics & Operational Friction
@@ -154,21 +155,25 @@ Hunt swallowed exceptions, silent defaults, masking catches, and resource leaks.
 ### R4. <Domain 4 Audit> (Council Seat 4 - e.g. Community Benchmarking)
 Benchmark against top GitHub repositories and state-of-the-art patterns.
 
-### R5. Strictly Read-Only Execution & Infrastructure
+### R5. Official Spec & Remediation Verification (Council Seat: Spec Verifier)
+Cross-check all proposed remediation plans, code snippets, and third-party library recommendations against live authoritative documentation. Use Context7 MCP (`resolve-library-id` -> `query-docs`) as primary verification; fallback to `search_web` targeting official documentation domains if Context7 lacks coverage. Veto deprecated APIs, unverified syntax, or speculative abstractions.
+
+### R6. Strictly Read-Only Execution & Infrastructure
 The evaluation must remain strictly read-only. Zero mutating file edits, package installations, or system changes are permitted outside the scratch workspace.
 
-### R6. Structured Deliverable & Chairman Synthesis
+### R7. Structured Deliverable & Chairman Synthesis
 Generate a comprehensive evaluation report saved to `<appDataDir>\scratch\<project>\council_evaluation_report.md`. The report must include:
 1. Executive Summary & Final Verdict from the Chairman.
-2. 4-Seat Numerical Scorecards (scale 1.0 to 5.0 for Rigor, Ergonomics, Token Efficiency, and Spec Alignment).
+2. Numerical Scorecards (scale 1.0 to 5.0 for Rigor, Ergonomics, Token Efficiency, and Spec Alignment across all active seats).
 3. Prioritized Gap Matrix (Critical / High / Medium / Low).
-4. Non-breaking actionable optimization roadmap.
+4. Non-breaking actionable optimization roadmap grounded in verified documentation.
 
 ## Acceptance Criteria & Adversarial Verification
 - [ ] Evaluation report exists at `<appDataDir>\scratch\<project>\council_evaluation_report.md`
 - [ ] Report contains numerical scorecards (1.0 to 5.0) across all seats with normalized 16-cell arithmetic closure
 - [ ] Report lists concrete line-number citations for every identified discrepancy (`file.ext#Lxx-Lyy`)
 - [ ] Anti-Sycophancy Mandate: Scores >= 4.50 are prohibited unless backed by automated fault injection or rigorous proof. Every seat must surface at least 2 critical/high gap observations
+- [ ] Remediation Verification: Every action item in the optimization roadmap is cross-checked against Context7 or official documentation
 - [ ] Adversarial Challengers independently verify all line references against codebase HEAD
 - [ ] Zero mutating file edits or package installations were performed during the run
 ```

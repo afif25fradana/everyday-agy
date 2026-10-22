@@ -118,6 +118,7 @@ Identified deficiencies must be mapped to four discrete urgency tiers:
 - **Phase 2: Ergonomics & Friction**
 - **Phase 3: Token Hygiene & Progressive Disclosure**
 - **Phase 4: Community Upgrades**
+*(Note: All remediation actions, library recommendations, and API signatures must be verified against Context7 MCP or official documentation by Seat 10 before inclusion.)*
 
 ---
 

@@ -38,7 +38,7 @@ jobs:
             Write-Host "[PASS] Syntax verified: $($_.Name)"
           }
 
-      - name: Verify 9 Custom Agents
+      - name: Verify Custom Agent Manifests
         shell: pwsh
         run: |
           $agents = Get-ChildItem -Path "config/agents" -Directory
@@ -60,7 +60,7 @@ jobs:
           }
           Write-Host "[PASS] All 9 custom agents verified."
 
-      - name: Verify 20 Bundled Skills
+      - name: Verify Bundled Skill Manifests
         shell: pwsh
         run: |
           $skills = Get-ChildItem -Path "config/skills", "config/plugins/antislop/skills" -Filter "SKILL.md" -Recurse

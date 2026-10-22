@@ -62,11 +62,12 @@ npm install -g @ast-grep/cli
 
 ## 3. Custom Skills Catalog
 
-20 modular skills shipped directly within this repository (`config/skills/` and `config/plugins/antislop`), plus 9 recommended official marketplace skills documented in Section 4.
+21 modular skills shipped directly within this repository (`config/skills/` and `config/plugins/antislop`), plus 9 recommended official marketplace skills documented in Section 4.
 
 ### A. Spec-Driven & Development Workflows
 | Skill Name | Trigger / Command | Description | Upstream / Origin |
 |---|---|---|---|
+| **council-review** | `/council`<br>`/council-review` | Deliberative multi-agent council review panel: fact grounding, socratic alignment, and adversarial peer review. | **Original Work (@afif25fradana)** /<br>Inspired by Anthropic & Karpathy |
 | **spec-kit** | `/speckit.specify`<br>`/speckit.plan`<br>`/speckit.tasks` | Spec-Driven Development (SDD) framework to specify, architect, and generate task lists before coding. | [github/spec-kit](https://github.com/github/spec-kit) |
 | **gh-workflow** | `/gh-workflow` | GitHub CLI automation for PR creation, non-interactive CI monitoring, and PR review comments. | Antigravity Native / [cli/cli](https://github.com/cli/cli) |
 | **audit-dev-workflow** | `/audit-dev-workflow`<br>`/audit-first` | Defensive audit-first workflow: caller tracing, checkpoints, explicit approvals, and verification. | **Original Work (@afif25fradana)** |

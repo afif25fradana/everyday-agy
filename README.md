@@ -2,6 +2,12 @@
 
 Everyday configuration, custom subagents, workflow skills, and safety guardrails for Google Antigravity. It equips local pair-programming sessions with automated caller tracing, multi-agent council reviews, spec-driven development, and git checkpoints.
 
+> [!WARNING]
+> **Token Consumption Warning: `council-review` & `teamwork_preview`**
+> Running the deliberative `council-review` skill triggers Antigravity's experimental `teamwork_preview` engine. A full council run spawns 15 to 20+ autonomous subagents in discrete phases (Sentinel, Orchestrator, Parallel Domain Explorers, Adversarial Challengers, and Victory Auditor).
+>
+> This multi-agent deliberation consumes significant tokens. Reserve `council-review` for high-stakes architectural evaluations, comprehensive security audits, and critical pre-release reviews rather than routine, minor code edits.
+
 ## Quick Start
 
 1. Clone the repository:
@@ -88,7 +94,7 @@ Nine specialized agents handle task delegation. Analytical roles run on `model: 
 
 ### Custom Skills (`config/skills/`)
 Twenty-one modular skills load on-demand through Antigravity's progressive disclosure engine:
-- `council-review`: Multi-agent deliberative review panel synthesizing context grounding, socratic scoping, and teamwork peer reviews.
+- `council-review`: Multi-agent deliberative review panel synthesizing context grounding, socratic scoping, and teamwork peer reviews (high token consumption; spawns 15 to 20+ subagents via `teamwork_preview`).
 - `audit-dev-workflow`: Defensive development runbook with caller tracing, checkpoints, testless fallbacks, and automated rollback scripts.
 - `spec-kit`: Spec-Driven Development framework (`/speckit.specify`, `/speckit.plan`, `/speckit.tasks`).
 - `gh-workflow`: Non-interactive CI monitoring and PR lifecycle automation via authenticated `gh`.

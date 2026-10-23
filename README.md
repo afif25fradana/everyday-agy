@@ -1,8 +1,10 @@
 # everyday-agy
 
-Everyday configuration, custom subagents, workflow skills, and defensive guardrails for Google Antigravity.
+My personal configuration for Google Antigravity, built around the coding workflows and pair-programming habits I use in everyday development.
 
-This is my personal, battle-tested pair-programming harness for Antigravity—engineered to stop AI hallucination, sloppy abstractions, and context drift in their tracks. It bundles automated caller tracing, spec-driven development, native PowerShell AST safety boundaries, and a multi-agent council review board designed to be deliberately unforgiving on subtle defects.
+This repository collects my specialized agent roles, reusable workflow skills, PowerShell AST security guardrails, and architectural decision records (ADRs). It also includes utility scripts to synchronize configurations between my local environment (`~/.gemini/`) and Git, backed by pre-flight credential scanning and automated regression tests.
+
+The setup evolves continuously as I test new patterns, encounter edge cases, and refine workflows. Some components are adapted from community tools (Ponytail, Trail of Bits, Spec-Kit), while others were built for my own project needs. This is a personal configuration, not an enterprise framework or an absolute guarantee against model mistakes.
 
 > [!NOTE]
 > **Btw, feel free to ignore `academic-council` (or don't, if you're also fighting an empirical thesis):**  
@@ -44,7 +46,7 @@ This is my personal, battle-tested pair-programming harness for Antigravity—en
    ```powershell
    powershell -ExecutionPolicy Bypass -File .\sync.ps1
    ```
-   *The script runs a credential scanner before copying to prevent accidental token leaks.*
+   *The script runs a pattern-based pre-flight audit for known credential and token formats before copying.*
 
 ## Verified Tools and Commands
 
@@ -86,8 +88,8 @@ The global rules file stays compact by defining only active behavioral boundarie
 - Lean chat: report concise summaries (1 to 2 lines with diffs or action items).
 - Security boundaries: deny paths (`.env`, `~/.ssh`, token MCP), AST command interception (`Test-PowerShellCommandSafety.ps1` backed by continuous CI regression tests), and quarantine for external inputs.
 
-### Custom Subagents (`config/agents/`)
-Ten specialized agents handle task delegation. Analytical roles run on `model: inherit` (ADR-0004) to retain the full reasoning capacity of the primary model:
+### Specialized Agent Roles (`config/agents/`)
+Ten specialized agent configurations handle task delegation. Analytical roles run on `model: inherit` (ADR-0004) to retain the full reasoning capacity of the primary model:
 - `system-architect`: Contract-first API design, dependency topology, and ADR drafting.
 - `code-auditor`: Read-only security attack surface reviews and repository hygiene audits.
 - `database-reviewer`: PostgreSQL schemas, indexing strategies, and zero-downtime expand/contract migrations.

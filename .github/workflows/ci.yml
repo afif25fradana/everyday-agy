@@ -42,8 +42,8 @@ jobs:
         shell: pwsh
         run: |
           $agents = Get-ChildItem -Path "config/agents" -Directory
-          if ($agents.Count -ne 9) {
-            Write-Error "Expected 9 agents, found $($agents.Count)"
+          if ($agents.Count -ne 10) {
+            Write-Error "Expected 10 agents, found $($agents.Count)"
             exit 1
           }
           foreach ($a in $agents) {
@@ -58,7 +58,7 @@ jobs:
               exit 1
             }
           }
-          Write-Host "[PASS] All 9 custom agents verified."
+          Write-Host "[PASS] All $($agents.Count) custom agents verified."
 
       - name: Verify Bundled Skill Manifests
         shell: pwsh

@@ -25,7 +25,7 @@ This is my personal, battle-tested pair-programming harness for Antigravity—en
    ```powershell
    powershell -ExecutionPolicy Bypass -File .\restore.ps1
    ```
-   *The script detects existing files in `~/.gemini/` and creates a timestamped backup before copying.*
+   *The script runs a pre-flight credential audit, detects existing files in `~/.gemini/`, and creates a timestamped backup (including custom plugins) before deployment.*
 3. Configure Model Context Protocol (MCP) authentication:
    Add your Context7 token to `~/.gemini/config/mcp_config.json`:
    ```json
@@ -74,7 +74,7 @@ everyday-agy/
 │   ├── skills/          # 25 curated, adapted, and bespoke workflow skills
 │   └── plugins/         # Bespoke plugins (antislop design and code filters)
 ├── docs/
-│   └── adr/             # Architectural Decision Records (ADR-0001 through ADR-0010)
+│   └── adr/             # Architectural Decision Records (ADR-0001 through ADR-0011)
 ├── sync.ps1             # Pulls live configs from ~/.gemini/ into this repo
 └── restore.ps1          # Deploys this repo into ~/.gemini/ with automatic backup
 ```
@@ -85,7 +85,7 @@ The global rules file stays compact by defining only active behavioral boundarie
 - Explicit approval: obtain human confirmation before running mutating commands or modifying files.
 - Checkpoints & safety: verify git status or take backups before editing.
 - Lean chat: report concise summaries (1 to 2 lines with diffs or action items).
-- Security boundaries: deny paths (`.env`, `~/.ssh`, token MCP), AST command interception (`Test-PowerShellCommandSafety.ps1`), and quarantine for external inputs.
+- Security boundaries: deny paths (`.env`, `~/.ssh`, token MCP), AST command interception (`Test-PowerShellCommandSafety.ps1` backed by continuous CI regression tests), and quarantine for external inputs.
 
 ### Custom Subagents (`config/agents/`)
 Ten specialized agents handle task delegation. Analytical roles run on `model: inherit` (ADR-0004) to retain the full reasoning capacity of the primary model:
@@ -138,6 +138,7 @@ Technical decisions, constraints, and trade-offs are recorded as permanent Nygar
 - [ADR-0008](./docs/adr/0008-tri-pillar-council-review-architecture.md): Tri-Pillar Deliberative Multi-Agent Council Architecture.
 - [ADR-0009](./docs/adr/0009-ecc-harness-adaptation-and-security.md): ECC Selective Adaptation, Pre-Execution AST Security, and Bounded Gotchas.
 - [ADR-0010](./docs/adr/0010-domain-specific-academic-council.md): Academic Council for Capital Market & Secondary Data Thesis Evaluation.
+- [ADR-0011](./docs/adr/0011-ast-security-hardening-and-deployment-parity.md): Pre-Execution AST Security Hardening, Deployment Parity, and Anti-Slop Upstream Filtration.
 
 ## Contributing
 

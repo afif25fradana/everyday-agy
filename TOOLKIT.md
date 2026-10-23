@@ -18,6 +18,7 @@ Core development tools registered in `GEMINI.md` and verified across workflows.
 | **pwsh** | PowerShell 7+ | [PowerShell/PowerShell](https://github.com/PowerShell/PowerShell) | `winget install Microsoft.PowerShell` |
 | **ffmpeg** | Media Processing | [FFmpeg](https://ffmpeg.org/) • [GyanD/codexffmpeg](https://github.com/GyanD/codexffmpeg) | `winget install Gyan.FFmpeg` |
 | **adb** | Android Debug Bridge | [Android Platform Tools](https://developer.android.com/tools/releases/platform-tools) | `winget install Google.PlatformTools` |
+| **betterleaks** | Secret Scanner (Gitleaks Successor) | [betterleaks/betterleaks](https://github.com/betterleaks/betterleaks) | `go install github.com/betterleaks/betterleaks@latest` |
 | **Node.js** | JS/TS Runtime | [nodejs/node](https://github.com/nodejs/node) | `winget install OpenJS.NodeJS.LTS` |
 | **Python** | Python Runtime | [python/cpython](https://github.com/python/cpython) | `winget install Python.Python.3.12` |
 

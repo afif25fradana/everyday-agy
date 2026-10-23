@@ -14,3 +14,4 @@ This directory contains the immutable record of significant technical and struct
 | [ADR-0008](./0008-tri-pillar-council-review-architecture.md) | Tri-Pillar Deliberative Multi-Agent Council Architecture | Accepted | 2026-10-22 |
 | [ADR-0009](./0009-ecc-harness-adaptation-and-security.md) | ECC Selective Adaptation, AST Security & Bounded Gotchas | Accepted | 2026-10-23 |
 | [ADR-0010](./0010-domain-specific-academic-council.md) | Academic Council for Capital Market Thesis Evaluation | Accepted | 2026-10-23 |
+| [ADR-0011](./0011-ast-security-hardening-and-deployment-parity.md) | Pre-Execution AST Security Hardening, Deployment Parity, and Anti-Slop Upstream Filtration | Accepted | 2026-10-24 |

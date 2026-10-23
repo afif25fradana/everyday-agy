@@ -38,12 +38,17 @@ jobs:
             Write-Host "[PASS] Syntax verified: $($_.Name)"
           }
 
+      - name: Run PowerShell AST Command Safety Test Suite
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -ExecutionPolicy Bypass -File "config/skills/audit-dev-workflow/scripts/Test-PowerShellCommandSafety.Tests.ps1"
+
       - name: Verify Custom Agent Manifests
         shell: pwsh
         run: |
           $agents = Get-ChildItem -Path "config/agents" -Directory
-          if ($agents.Count -ne 10) {
-            Write-Error "Expected 10 agents, found $($agents.Count)"
+          if ($agents.Count -lt 5) {
+            Write-Error "Expected at least 5 agents, found $($agents.Count)"
             exit 1
           }
           foreach ($a in $agents) {

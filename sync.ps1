@@ -23,8 +23,8 @@ $secretPatterns = @(
     @{ Kind = "Credential assignment"; Pattern = '["'']?(?:api[_-]?key|access[_-]?token|secret[_-]?key|token)["'']?\s*[:=]\s*["''](?!<)[^\s"'']{16,}["'']' }
 )
 
-# Plugins excluded from sync (maintained by official Antigravity Marketplace)
-$officialPlugins = @("chrome-devtools-plugin", "modern-web-guidance-plugin", "android-cli-plugin")
+# Plugins excluded from sync (maintained by official Antigravity Marketplace or external installers)
+$officialPlugins = @("chrome-devtools-plugin", "modern-web-guidance-plugin", "android-cli-plugin", "antislop")
 
 function Assert-NoCredentialsInFile($filePath) {
     if (-not (Test-Path $filePath)) { return }
@@ -100,24 +100,29 @@ if (Test-Path "$configHome\skills") {
     Write-Host "[OK] Synced $skillCount Custom Skills (spec-kit, gh-workflow, ponytail, audit, etc.)" -ForegroundColor Green
 }
 
-# 5. Sync Custom Plugins (exclude official marketplace plugins)
+# 5. Sync Custom Plugins (exclude official marketplace and external plugins)
 if (Test-Path "$configHome\plugins") {
-    $dstPlugins = "$scriptRoot\config\plugins"
-    New-Item -ItemType Directory -Force -Path $dstPlugins | Out-Null
-    Get-ChildItem -Path "$configHome\plugins" -Directory | Where-Object { $_.Name -notin $officialPlugins } | ForEach-Object {
-        $targetDir = "$dstPlugins\$($_.Name)"
-        New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
-        Copy-Item -Path "$($_.FullName)\*" -Destination $targetDir -Recurse -Force
-    }
-    # Remove nested .git if any (scoped strictly to target plugin directories)
-    $resolvedDst = (Resolve-Path $dstPlugins).Path
-    Get-ChildItem -Path $dstPlugins -Filter ".git" -Recurse -Directory -Hidden -Force | ForEach-Object {
-        if ($_.FullName.StartsWith($resolvedDst)) {
-            Remove-Item -Path $_.FullName -Recurse -Force
+    $customPluginList = Get-ChildItem -Path "$configHome\plugins" -Directory | Where-Object { $_.Name -notin $officialPlugins }
+    if ($customPluginList.Count -gt 0) {
+        $dstPlugins = "$scriptRoot\config\plugins"
+        New-Item -ItemType Directory -Force -Path $dstPlugins | Out-Null
+        $customPluginList | ForEach-Object {
+            $targetDir = "$dstPlugins\$($_.Name)"
+            New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
+            Copy-Item -Path "$($_.FullName)\*" -Destination $targetDir -Recurse -Force
         }
+        # Remove nested .git if any (scoped strictly to target plugin directories)
+        $resolvedDst = (Resolve-Path $dstPlugins).Path
+        Get-ChildItem -Path $dstPlugins -Filter ".git" -Recurse -Directory -Hidden -Force | ForEach-Object {
+            if ($_.FullName.StartsWith($resolvedDst)) {
+                Remove-Item -Path $_.FullName -Recurse -Force
+            }
+        }
+        $pluginCount = (Get-ChildItem -Path $dstPlugins -Directory).Count
+        Write-Host "[OK] Synced $pluginCount Custom Plugins" -ForegroundColor Green
+    } else {
+        Write-Host "[INFO] All active plugins are external (antislop, devtools); skipped syncing." -ForegroundColor DarkGray
     }
-    $pluginCount = (Get-ChildItem -Path $dstPlugins -Directory).Count
-    Write-Host "[OK] Synced $pluginCount Custom Plugins (excluding official marketplace plugins)" -ForegroundColor Green
 }
 
 # 6. Sync Architectural Decision Records (ADRs)

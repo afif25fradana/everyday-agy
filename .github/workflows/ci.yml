@@ -68,9 +68,9 @@ jobs:
       - name: Verify Bundled Skill Manifests
         shell: pwsh
         run: |
-          $skills = Get-ChildItem -Path "config/skills", "config/plugins/antislop/skills" -Filter "SKILL.md" -Recurse
-          if ($skills.Count -lt 20) {
-            Write-Error "Expected at least 20 bundled skills, found $($skills.Count)"
+          $skills = Get-ChildItem -Path "config/skills" -Filter "SKILL.md" -Recurse
+          if ($skills.Count -lt 15) {
+            Write-Error "Expected at least 15 bundled skills, found $($skills.Count)"
             exit 1
           }
           foreach ($s in $skills) {

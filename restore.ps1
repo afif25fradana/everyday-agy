@@ -97,13 +97,16 @@ if (Test-Path "$scriptRoot\config\skills") {
     Write-Host "[OK] Restored $skillCount Custom Skills" -ForegroundColor Green
 }
 
-# 4. Restore Plugins
+# 4. Restore Custom Plugins (if any local custom plugins exist)
 if (Test-Path "$scriptRoot\config\plugins") {
-    $dstPlugins = "$configHome\plugins"
-    New-Item -ItemType Directory -Force -Path $dstPlugins | Out-Null
-    Copy-Item -Path "$scriptRoot\config\plugins\*" -Destination $dstPlugins -Recurse -Force
-    $pluginCount = (Get-ChildItem -Path $dstPlugins -Directory).Count
-    Write-Host "[OK] Restored $pluginCount Custom Plugins" -ForegroundColor Green
+    $customPluginList = Get-ChildItem -Path "$scriptRoot\config\plugins" -Directory
+    if ($customPluginList.Count -gt 0) {
+        $dstPlugins = "$configHome\plugins"
+        New-Item -ItemType Directory -Force -Path $dstPlugins | Out-Null
+        Copy-Item -Path "$scriptRoot\config\plugins\*" -Destination $dstPlugins -Recurse -Force
+        $pluginCount = (Get-ChildItem -Path $dstPlugins -Directory).Count
+        Write-Host "[OK] Restored $pluginCount Custom Plugins" -ForegroundColor Green
+    }
 }
 
 # 5. Restore Architectural Decision Records (ADRs)
@@ -117,4 +120,6 @@ if (Test-Path "$scriptRoot\docs\adr") {
 
 Write-Host ">>> Everyday-AGY restoration completed successfully!" -ForegroundColor Green
 Write-Host ">>> Note: For Context7 MCP setup, refer to README.md and TOOLKIT.md." -ForegroundColor Yellow
-Write-Host ">>> Tip: For full browser automation in ui-crafter and code-auditor, install 'Chrome DevTools' and 'Modern Web Guidance' from Antigravity Marketplace." -ForegroundColor Cyan
+Write-Host ">>> Tip: Recommended external plugins (install via CLI / Marketplace):" -ForegroundColor Cyan
+Write-Host "    - Antislop: npx antislop-ai (or clone to ~/.gemini/config/plugins/antislop)" -ForegroundColor DarkGray
+Write-Host "    - Chrome DevTools & Modern Web Guidance: Install from Antigravity Marketplace" -ForegroundColor DarkGray

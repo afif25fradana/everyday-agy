@@ -71,8 +71,7 @@ everyday-agy/
 ├── TOOLKIT.md           # Catalog of CLI tools, MCP snippets, and skill upstream links
 ├── config/
 │   ├── agents/          # 10 specialized subagents configured with model: inherit
-│   ├── skills/          # 25 curated, adapted, and bespoke workflow skills
-│   └── plugins/         # Bespoke plugins (antislop design and code filters)
+│   └── skills/          # 19 curated, adapted, and bespoke workflow skills
 ├── docs/
 │   └── adr/             # Architectural Decision Records (ADR-0001 through ADR-0011)
 ├── sync.ps1             # Pulls live configs from ~/.gemini/ into this repo
@@ -100,15 +99,17 @@ Ten specialized agents handle task delegation. Analytical roles run on `model: i
 - `maintenance-bot`: Dependabot PR triage, CI failure diagnosis, and CVE remediation.
 - `spec-verifier`: Cross-checks proposed fixes and API signatures against Context7 MCP and official vendor docs (anti-hallucination, read-only).
 
-### Workflow Skills and Provenance (`config/skills/` & `config/plugins/`)
+### Workflow Skills and Provenance (`config/skills/`)
 
-Twenty-five modular skills load on-demand through Antigravity's progressive disclosure engine. They are partitioned transparently by origin and licensing:
+Nineteen modular skills load on-demand through Antigravity's progressive disclosure engine. They are partitioned transparently by origin and licensing:
 
 | Category | Count | Included Skills | Origin / Licensing |
 |---|:---:|---|---|
 | **Bespoke Architectures** | 4 | `council-review`, `academic-council`, `audit-dev-workflow`, `sync-task-state` | Original works authored for Antigravity (MIT) |
 | **Engine-Adapted Ports** | 7 | `spec-kit`, `gh-workflow`, `audit-context-building`, `differential-review`, `contract-first`, `database-migrations`, `coding-standards` | Adapted from community tools, ECC, and Trail of Bits (MIT & CC BY-SA 4.0) |
-| **Curated Community Suites** | 14 | `ponytail` suite (6), `antislop` suite (6), `design-taste-frontend`, `documentation-and-adrs` | Bundled from DietrichGebert, miqdadbadjuber, Leonxlnx, and standards (MIT) |
+| **Curated Community Suites** | 8 | `ponytail` suite (6), `design-taste-frontend`, `documentation-and-adrs` | Bundled from DietrichGebert, Leonxlnx, and standards (MIT) |
+
+*(Note: Third-party suites like `antislop` are decoupled from git tracking per ADR-0006 and installed via `npx antislop-ai` or Antigravity Marketplace).*
 
 #### Core Workflows
 - `council-review`: Multi-agent deliberative review panel synthesizing context grounding, socratic scoping, and teamwork peer reviews (high token consumption; spawns 15 to 20+ subagents via `teamwork_preview`).

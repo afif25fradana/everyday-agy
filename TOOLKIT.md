@@ -63,12 +63,13 @@ npm install -g @ast-grep/cli
 
 ## 3. Custom Skills Catalog
 
-21 modular skills shipped directly within this repository (`config/skills/` and `config/plugins/antislop`), plus 9 recommended official marketplace skills documented in Section 4.
+19 modular skills shipped directly within this repository (`config/skills/`), plus 10 recommended external/marketplace skills documented in Section 4.
 
 ### A. Spec-Driven & Development Workflows
 | Skill Name | Trigger / Command | Description | Upstream / Origin |
 |---|---|---|---|
 | **council-review** | `/council`<br>`/council-review` | Deliberative multi-agent council review panel: fact grounding, socratic alignment, and adversarial peer review. | **Original Work (@afif25fradana)** /<br>Inspired by Anthropic & Karpathy |
+| **academic-council** | `/academic-council`<br>`/thesis-council` | Multi-agent council for empirical capital market, accounting, and BEI thesis proposal defense. | **Original Work (@afif25fradana)** |
 | **spec-kit** | `/speckit.specify`<br>`/speckit.plan`<br>`/speckit.tasks` | Spec-Driven Development (SDD) framework to specify, architect, and generate task lists before coding. | [github/spec-kit](https://github.com/github/spec-kit) |
 | **gh-workflow** | `/gh-workflow` | GitHub CLI automation for PR creation, non-interactive CI monitoring, and PR review comments. | Antigravity Native / [cli/cli](https://github.com/cli/cli) |
 | **audit-dev-workflow** | `/audit-dev-workflow`<br>`/audit-first` | Defensive audit-first workflow: caller tracing, checkpoints, explicit approvals, and verification. | **Original Work (@afif25fradana)** |
@@ -84,43 +85,33 @@ npm install -g @ast-grep/cli
 | **ponytail-gain** | `/ponytail-gain` | Displays measured token and performance benchmark savings (39-task suite). | [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail) |
 | **ponytail-help** | `/ponytail-help` | Quick reference cheatsheet for Ponytail levels, rules, and commands. | [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail) |
 
-### C. Security & Code Auditing
+### C. Security, Standards & Architecture
 | Skill Name | Trigger / Command | Description | Upstream / Origin |
 |---|---|---|---|
-| **audit-context-building** | `/audit-context-building` | Builds codebase comprehension before security audits: maps invariants, assumptions (`nothing found`), and contracts. | **Trail of Bits**<br>[trailofbits/skills](https://github.com/trailofbits/skills)<br>*(Adapted for Google Antigravity from original Claude Code tool calls)* |
-| **differential-review** | *Auto-triggers on security review of diffs/PRs* | Security-focused differential review evaluating blast radius, test gaps, regressions, and attacker models. | **Trail of Bits**<br>[trailofbits/skills](https://github.com/trailofbits/skills)<br>*(Adapted for Google Antigravity from original Claude Code tool calls)* |
-
-### D. Architecture & Decision Records
-| Skill Name | Trigger / Command | Description | Upstream / Origin |
-|---|---|---|---|
+| **audit-context-building** | `/audit-context-building` | Builds codebase comprehension before security audits: maps invariants, assumptions (`nothing found`), and contracts. | **Trail of Bits**<br>[trailofbits/skills](https://github.com/trailofbits/skills)<br>*(Adapted for Google Antigravity)* |
+| **differential-review** | *Auto-triggers on security review of diffs/PRs* | Security-focused differential review evaluating blast radius, test gaps, regressions, and attacker models. | **Trail of Bits**<br>[trailofbits/skills](https://github.com/trailofbits/skills)<br>*(Adapted for Google Antigravity)* |
+| **contract-first** | `/contract-first` | Schema-first API collaboration (OpenAPI, Protobuf, JSON Schema) preventing consumer/provider field drift. | Domain Best Practices / ECC Port |
+| **database-migrations** | `/database-migrations` | Zero-downtime expand-contract schema changes, reversible migrations, and concurrent indexes. | Database Reliability Engineering |
+| **coding-standards** | `/coding-standards` | Baseline naming, immutability, type safety, and defensive error-handling conventions. | Universal Engineering Standards |
 | **documentation-and-adrs** | `/documentation-and-adrs` | Documents architectural decisions, trade-offs, and context using Michael Nygard's ADR format. | Michael Nygard Standard /<br>[joelparkerhenderson/architecture-decision-record](https://github.com/joelparkerhenderson/architecture-decision-record) |
 
-### E. Anti-Slop Suite (Design, Copy & Code Craft)
-| Skill Name | Trigger / Command | Description | Upstream / Origin |
-|---|---|---|---|
-| **antislop** | *Core meta-skill / initial wizard* | Master filter for AI coding agents to stop generic AI aesthetics and enforce crafted design. | [miqdadbadjuber/anti-slop](https://github.com/miqdadbadjuber/anti-slop) |
-| **antislop-ui** | *Auto-triggers on UI & styling tasks* | Clean visual craft, balanced color palettes, and elimination of generic purple AI gradients. | [miqdadbadjuber/anti-slop](https://github.com/miqdadbadjuber/anti-slop) |
-| **antislop-copywriting** | *Auto-triggers on writing copy/text* | Anti-AI writing filter for punchy headlines, human tone, and clear microcopy. | [miqdadbadjuber/anti-slop](https://github.com/miqdadbadjuber/anti-slop) |
-| **antislop-code** | *Auto-triggers on code refactoring* | Code comment hygiene: strips generic AI commentary while preserving load-bearing explanations. | [miqdadbadjuber/anti-slop](https://github.com/miqdadbadjuber/anti-slop) |
-| **antislop-human** | *Auto-triggers on accessibility checks* | Human accessibility: WCAG contrast verification, keyboard focus states, and real-person interactions. | [miqdadbadjuber/anti-slop](https://github.com/miqdadbadjuber/anti-slop) |
-| **antislop-layoutmobile** | *Auto-triggers on mobile/responsive UI* | Mobile layout craft: adaptive grids, overflow protection, and touch targets. | [miqdadbadjuber/anti-slop](https://github.com/miqdadbadjuber/anti-slop) |
-
-### F. Frontend & Visual Craft
+### D. Frontend & Visual Craft
 | Skill Name | Trigger / Command | Description | Upstream / Origin |
 |---|---|---|---|
 | **design-taste-frontend** | *Auto-triggers on frontend UI design* | Tasteskill v2: art direction distilled from 247 curated Awwwards & OnePageLove websites. | [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) |
 
 ---
 
-## 4. Recommended Official Marketplace Plugins
+## 4. Recommended External & Marketplace Plugins
 
-These plugins are maintained officially by Google / Chromium / Android teams and can be installed with a single click via Antigravity's Plugin Marketplace (no manual tracking required):
+These plugins are maintained officially or via upstream package managers. Install them directly rather than tracking vendor clones in Git (per ADR-0006 & ADR-0011):
 
-| Plugin Name | Included Skills | Description | Official Upstream |
+| Plugin Name | Included Skills | Description | Official Upstream & Install |
 |---|---|---|---|
-| **Chrome DevTools** (`chrome-devtools-plugin`) | `chrome-devtools`<br>`a11y-debugging`<br>`cookie-debugging`<br>`debug-optimize-lcp`<br>`memory-leak-debugging`<br>`troubleshooting` | Browser automation, accessibility auditing, cookie debugging, Core Web Vitals (LCP) optimization, and heap snapshots. | [ChromeDevTools/chrome-devtools-mcp](https://github.com/ChromeDevTools/chrome-devtools-mcp) |
-| **Modern Web Guidance** (`modern-web-guidance-plugin`) | `modern-web-guidance`<br>`chrome-extensions` | Best practices for modern web platform APIs (popovers, container queries, view transitions) and Chrome Extensions Manifest V3. | [GoogleChrome/modern-web-guidance](https://github.com/GoogleChrome/modern-web-guidance) |
-| **Android CLI** (`android-cli-plugin`) | `android-cli` | Project scaffolding, emulator control, layout tree inspection, and visual validation for Android development. | [developer.android.com/tools/agents/android-cli](https://developer.android.com/tools/agents/android-cli) |
+| **Anti-Slop Suite** (`antislop`) | `antislop`<br>`antislop-ui`<br>`antislop-copywriting`<br>`antislop-code`<br>`antislop-human`<br>`antislop-layoutmobile` | Master filter for AI coding agents: stops generic AI purple gradients, filler copy, and sloppy comments. | [miqdadbadjuber/anti-slop](https://github.com/miqdadbadjuber/anti-slop)<br>`npx antislop-ai` |
+| **Chrome DevTools** (`chrome-devtools-plugin`) | `chrome-devtools`<br>`a11y-debugging`<br>`cookie-debugging`<br>`debug-optimize-lcp`<br>`memory-leak-debugging`<br>`troubleshooting` | Browser automation, accessibility auditing, cookie debugging, Core Web Vitals (LCP) optimization, and heap snapshots. | [ChromeDevTools/chrome-devtools-mcp](https://github.com/ChromeDevTools/chrome-devtools-mcp)<br>*(Antigravity Marketplace)* |
+| **Modern Web Guidance** (`modern-web-guidance-plugin`) | `modern-web-guidance`<br>`chrome-extensions` | Best practices for modern web platform APIs (popovers, container queries, view transitions) and Chrome Extensions Manifest V3. | [GoogleChrome/modern-web-guidance](https://github.com/GoogleChrome/modern-web-guidance)<br>*(Antigravity Marketplace)* |
+| **Android CLI** (`android-cli-plugin`) | `android-cli` | Project scaffolding, emulator control, layout tree inspection, and visual validation for Android development. | [developer.android.com/tools/agents/android-cli](https://developer.android.com/tools/agents/android-cli)<br>*(Antigravity Marketplace)* |
 
 ---
 

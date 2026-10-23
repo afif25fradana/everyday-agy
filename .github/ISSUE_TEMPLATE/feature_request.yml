@@ -1,0 +1,37 @@
+name: Feature Request / Workflow Proposal
+description: Suggest an improvement, new skill adaptation, or workflow guardrail.
+title: "[FEAT]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have an idea or skill you want adapted? Propose it here with concrete motivation and use case.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or Motivation
+      description: What limitation or pain point does this proposal address?
+    validations:
+      required: true
+  - type: textarea
+    id: proposed_solution
+    attributes:
+      label: Proposed Solution / Workflow
+      description: Describe your proposed addition or modification clearly.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: What other approaches or workarounds have you considered?
+    validations:
+      required: false
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Contribution Checklist
+      options:
+        - label: This aligns with the 'shortest working diff' and YAGNI principles.
+          required: true

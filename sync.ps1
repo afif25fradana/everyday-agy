@@ -109,19 +109,27 @@ if (Test-Path "$configHome\plugins") {
         New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
         Copy-Item -Path "$($_.FullName)\*" -Destination $targetDir -Recurse -Force
     }
-    # Remove nested .git if any
-    Get-ChildItem -Path $dstPlugins -Filter ".git" -Recurse -Directory -Hidden -Force | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+    # Remove nested .git if any (scoped strictly to target plugin directories)
+    $resolvedDst = (Resolve-Path $dstPlugins).Path
+    Get-ChildItem -Path $dstPlugins -Filter ".git" -Recurse -Directory -Hidden -Force | ForEach-Object {
+        if ($_.FullName.StartsWith($resolvedDst)) {
+            Remove-Item -Path $_.FullName -Recurse -Force
+        }
+    }
     $pluginCount = (Get-ChildItem -Path $dstPlugins -Directory).Count
     Write-Host "[OK] Synced $pluginCount Custom Plugins (excluding official marketplace plugins)" -ForegroundColor Green
 }
 
 # 6. Sync Architectural Decision Records (ADRs)
 if (Test-Path "$configHome\docs\adr") {
-    $dstAdr = "$scriptRoot\docs\adr"
-    New-Item -ItemType Directory -Force -Path $dstAdr | Out-Null
-    Copy-Item -Path "$configHome\docs\adr\*" -Destination $dstAdr -Recurse -Force
-    $adrCount = (Get-ChildItem -Path $dstAdr -Filter "*.md" | Where-Object { $_.Name -ne "README.md" }).Count
-    Write-Host "[OK] Synced $adrCount Architectural Decision Records (ADRs)" -ForegroundColor Green
+    $srcAdrs = Get-ChildItem -Path "$configHome\docs\adr" -Filter "*.md"
+    if ($srcAdrs.Count -gt 0) {
+        $dstAdr = "$scriptRoot\docs\adr"
+        New-Item -ItemType Directory -Force -Path $dstAdr | Out-Null
+        Copy-Item -Path "$configHome\docs\adr\*" -Destination $dstAdr -Recurse -Force
+        $adrCount = (Get-ChildItem -Path $dstAdr -Filter "*.md" | Where-Object { $_.Name -ne "README.md" }).Count
+        Write-Host "[OK] Synced $adrCount Architectural Decision Records (ADRs)" -ForegroundColor Green
+    }
 }
 
 Write-Host ">>> Everyday-AGY sync completed successfully!" -ForegroundColor Green

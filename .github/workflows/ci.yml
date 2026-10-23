@@ -101,7 +101,7 @@ jobs:
             'Bearer\s+(?!<)[A-Za-z0-9_\-\.]{12,}',
             '["'']?(?:api[_-]?key|access[_-]?token|secret[_-]?key|token)["'']?\s*[:=]\s*["''](?!<)[^\s"'']{16,}["'']'
           )
-          $files = Get-ChildItem -Path "GEMINI.md", "README.md", "TOOLKIT.md", "config", "docs" -Recurse -File -Include "*.md", "*.json", "*.ps1", "*.mjs", "*.py"
+          $files = Get-ChildItem -Path "GEMINI.md", "README.md", "TOOLKIT.md", "config", "docs" -Recurse -File -Include "*.md", "*.json", "*.ps1", "*.mjs", "*.py", "*.yml", "*.yaml", "LICENSE*"
           foreach ($f in $files) {
             $content = Get-Content $f.FullName
             foreach ($line in $content) {

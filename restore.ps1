@@ -12,6 +12,40 @@ $userHome = if ($env:USERPROFILE) { $env:USERPROFILE } else { $HOME }
 $geminiHome = Join-Path $userHome ".gemini"
 $configHome = Join-Path $geminiHome "config"
 
+# 1. Credential Scanner Definition & Pre-Flight Verification
+$secretPatterns = @(
+    @{ Kind = "Bearer token"; Pattern = 'Bearer\s+(?!<)[A-Za-z0-9_\-\.]{12,}' },
+    @{ Kind = "Credential assignment"; Pattern = '["'']?(?:api[_-]?key|access[_-]?token|secret[_-]?key|token)["'']?\s*[:=]\s*["''](?!<)[^\s"'']{16,}["'']' }
+)
+
+function Assert-NoCredentialsInFile($filePath) {
+    if (-not (Test-Path $filePath)) { return }
+    $lines = Get-Content -Path $filePath -ErrorAction SilentlyContinue
+    foreach ($line in $lines) {
+        foreach ($sp in $secretPatterns) {
+            if ($line -match $sp.Pattern) {
+                Write-Error "Credential leak detected in source deployment file: $filePath! ($($sp.Kind)). Restore aborted."
+                exit 1
+            }
+        }
+    }
+}
+
+Write-Host ">>> Running pre-flight credential audit on deployment files..." -ForegroundColor Cyan
+$deployScanTargets = @(
+    "$scriptRoot\GEMINI.md",
+    "$scriptRoot\config",
+    "$scriptRoot\docs"
+) | Where-Object { Test-Path $_ }
+
+if ($deployScanTargets) {
+    $deployFiles = Get-ChildItem -Path $deployScanTargets -Recurse -File -Include "*.md", "*.json", "*.ps1", "*.mjs", "*.py", "*.yml", "*.yaml", "LICENSE*"
+    foreach ($df in $deployFiles) {
+        Assert-NoCredentialsInFile $df.FullName
+    }
+}
+Write-Host "[PASS] Pre-flight audit clean: zero unmasked credentials in source files." -ForegroundColor Green
+
 # Ensure target directories exist
 New-Item -ItemType Directory -Force -Path $geminiHome | Out-Null
 New-Item -ItemType Directory -Force -Path $configHome | Out-Null
@@ -19,7 +53,7 @@ New-Item -ItemType Directory -Force -Path $configHome | Out-Null
 # Backup existing configuration if present to avoid accidental data loss
 $timestamp = (Get-Date).ToString("yyyyMMdd_HHmmss")
 $backupDir = "$geminiHome\backup_$timestamp"
-$needsBackup = (Test-Path "$geminiHome\GEMINI.md") -or (Test-Path "$configHome\agents") -or (Test-Path "$configHome\skills")
+$needsBackup = (Test-Path "$geminiHome\GEMINI.md") -or (Test-Path "$configHome\agents") -or (Test-Path "$configHome\skills") -or (Test-Path "$configHome\plugins")
 
 if ($needsBackup) {
     Write-Host ">>> Existing configuration detected. Creating backup at $backupDir..." -ForegroundColor Yellow
@@ -32,6 +66,9 @@ if ($needsBackup) {
     }
     if (Test-Path "$configHome\skills") {
         Copy-Item -Path "$configHome\skills" -Destination "$backupDir\skills" -Recurse -Force
+    }
+    if (Test-Path "$configHome\plugins") {
+        Copy-Item -Path "$configHome\plugins" -Destination "$backupDir\plugins" -Recurse -Force
     }
     Write-Host "[OK] Backup created successfully." -ForegroundColor Green
 }

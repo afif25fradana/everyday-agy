@@ -125,7 +125,7 @@ These plugins are maintained officially by Google / Chromium / Android teams and
 
 ## 5. Custom Subagents
 
-Nine specialized agents available for delegation in Antigravity:
+Ten specialized agents available for delegation in Antigravity:
 
 | Agent Name | Model Tier | Tools Boundary | Core Responsibility |
 |---|:---:|---|---|
@@ -133,6 +133,7 @@ Nine specialized agents available for delegation in Antigravity:
 | **code-auditor** | `model: inherit` | Read, Artifact Write, Run *(Read-Only)* | Repository health audits, security vulnerability analysis, and test integrity. |
 | **database-reviewer** | `model: inherit` | Read, Artifact Write, Run *(Read-Only)* | SQL schema design, zero-downtime migrations, and N+1 query optimization. |
 | **silent-failure-hunter** | `model: inherit` | Read, Artifact Write, Run *(Read-Only)* | Hunts silent failures, swallowed exceptions, and empty error handling blocks. |
+| **spec-verifier** | `model: inherit` | Read, Artifact Write, Search, Run *(Read-Only)* | Cross-checks proposed fixes and API contracts against Context7 MCP and official vendor docs. |
 | **build-error-resolver** | `model: flash` | Read, Replace, Run *(No write)* | Resolves compiler, typecheck, and build errors with shortest working diffs. |
 | **tdd-guide** | `model: flash` | Read, Write, Replace, Run | Guides Test-Driven Development workflows (Red-Green-Refactor cycles). |
 | **docs-architect** | `model: flash` | Read, Write, Replace, Run, Ask | Modernizes technical documentation and synchronizes AI-Context repositories. |

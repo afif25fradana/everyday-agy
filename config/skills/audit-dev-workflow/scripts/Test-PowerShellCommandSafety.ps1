@@ -28,10 +28,11 @@ if ($parseErrors -and $parseErrors.Count -gt 0) {
     exit 1
 }
 
-# 1. Deny forbidden destructive cmdlets
+# 1. Deny forbidden destructive cmdlets and execution wrappers
 $forbiddenCommands = @(
     'Format-Volume', 'Format-Disk', 'Clear-Disk', 'Initialize-Disk',
-    'Stop-Computer', 'Restart-Computer'
+    'Stop-Computer', 'Restart-Computer',
+    'Start-Process', 'saps'
 )
 
 # 2. Inspect command elements
@@ -39,7 +40,19 @@ $commandElements = $ast.FindAll({ $args[0] -is [System.Management.Automation.Lan
 
 foreach ($cmdAst in $commandElements) {
     $cmdName = $cmdAst.GetCommandName()
-    if (-not $cmdName) { continue }
+
+    # Block indirect dynamic expression invocations (e.g. & (Get-Command Remove-Item))
+    if (-not $cmdName) {
+        if ($cmdAst.InvocationOperator -eq 'Ampersand') {
+            $firstEl = $cmdAst.CommandElements[0]
+            if ($firstEl -is [System.Management.Automation.Language.ParenExpressionAst] -or
+                $firstEl -is [System.Management.Automation.Language.VariableExpressionAst]) {
+                Write-Error "Safety Violation: Prohibited dynamic command invocation '$($cmdAst.Extent.Text)' detected."
+                exit 1
+            }
+        }
+        continue
+    }
 
     # Forbidden cmdlets
     if ($forbiddenCommands -contains $cmdName) {
@@ -48,7 +61,7 @@ foreach ($cmdAst in $commandElements) {
     }
 
     # Remove-Item destructive combinations
-    if ($cmdName -in @('Remove-Item', 'rm', 'del', 'erase', 'rd', 'ri')) {
+    if ($cmdName -in @('Remove-Item', 'rm', 'del', 'erase', 'rd', 'ri', 'rmdir')) {
         $elements = $cmdAst.CommandElements
         $hasRecurse = $false
         $hasForce = $false
@@ -58,11 +71,11 @@ foreach ($cmdAst in $commandElements) {
             $text = $el.Extent.Text
             if ($text -match '^-(r|recurse)$') { $hasRecurse = $true }
             if ($text -match '^-(f|force)$') { $hasForce = $true }
-            if ($text -in @('/', '\', 'C:\', '$env:SystemDrive', '~', '$HOME', '$env:USERPROFILE')) { $targetRoot = $true }
+            if ($text -match '^[/\\]+$|^[a-zA-Z]:[/\\]*$|^~[/\\]*' -or $text -in @('$env:SystemDrive', '$HOME', '$env:USERPROFILE')) { $targetRoot = $true }
         }
 
-        if (($hasRecurse -and $hasForce) -or $targetRoot) {
-            Write-Error "Safety Violation: Prohibited recursive/forced deletion '$($cmdAst.Extent.Text)' detected."
+        if ($hasRecurse -or ($hasForce -and $targetRoot)) {
+            Write-Error "Safety Violation: Prohibited recursive or root deletion '$($cmdAst.Extent.Text)' detected."
             exit 1
         }
     }
@@ -74,6 +87,10 @@ foreach ($cmdAst in $commandElements) {
             Write-Error "Safety Violation: Prohibited git push force flag detected."
             exit 1
         }
+        if ($cmdLineText -match 'clean\s+.*(-[a-zA-Z]*f|--force)') {
+            Write-Error "Safety Violation: Prohibited git clean force flag detected."
+            exit 1
+        }
         if ($cmdLineText -match 'commit\s+.*--no-verify') {
             Write-Error "Safety Violation: Prohibited git commit --no-verify bypass flag detected."
             exit 1
@@ -83,6 +100,17 @@ foreach ($cmdAst in $commandElements) {
     # Dynamic code execution
     if ($cmdName -in @('Invoke-Expression', 'iex')) {
         Write-Error "Safety Violation: Prohibited dynamic code execution ($cmdName) detected."
+        exit 1
+    }
+}
+
+# 3. Direct .NET destructive method invocations (e.g. [System.IO.Directory]::Delete)
+$memberExpressions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.InvokeMemberExpressionAst] }, $true)
+foreach ($mem in $memberExpressions) {
+    $exprText = $mem.Expression.Extent.Text
+    $memberVal = $mem.Member.Extent.Text
+    if ($exprText -match 'System\.IO\.(Directory|File|Path)' -and $memberVal -eq 'Delete') {
+        Write-Error "Safety Violation: Prohibited direct .NET file deletion '$($mem.Extent.Text)' detected."
         exit 1
     }
 }

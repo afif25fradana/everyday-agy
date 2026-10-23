@@ -1,8 +1,14 @@
 # Secret & Credential Guards
 mcp_config.json
+mcp_config*.json
 *.env
 *.env.*
 *.secret
+*.secret.json
+*.token
+*.pem
+*.key
+id_rsa*
 
 # Cache and Runtime Logs
 *.log

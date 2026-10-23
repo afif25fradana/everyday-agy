@@ -101,7 +101,7 @@ Engage the operator interactively using `ask_question` (one question at a time) 
    - Documentation & ADRs (`docs-architect`)
    - Compiler & Typing (`build-error-resolver`)
    - Infrastructure & CI (`maintenance-bot`)
-   - Official Spec & Remediation Verifier (Context7 MCP + Official Web Search)
+   - Official Spec & Remediation Verifier (`spec-verifier`)
 2. **Evaluation Depth & Focus**: Select primary dimensions:
    - Antigravity Spec Alignment
    - Developer Ergonomics & Operational Friction
@@ -155,7 +155,7 @@ Hunt swallowed exceptions, silent defaults, masking catches, and resource leaks.
 ### R4. <Domain 4 Audit> (Council Seat 4 - e.g. Community Benchmarking)
 Benchmark against top GitHub repositories and state-of-the-art patterns.
 
-### R5. Official Spec & Remediation Verification (Council Seat: Spec Verifier)
+### R5. Official Spec & Remediation Verification (Council Seat: spec-verifier)
 Cross-check all proposed remediation plans, code snippets, and third-party library recommendations against live authoritative documentation. Use Context7 MCP (`resolve-library-id` -> `query-docs`) as primary verification; fallback to `search_web` targeting official documentation domains if Context7 lacks coverage. Veto deprecated APIs, unverified syntax, or speculative abstractions.
 
 ### R6. Strictly Read-Only Execution & Infrastructure
@@ -181,10 +181,13 @@ Generate a comprehensive evaluation report saved to `<appDataDir>\scratch\<proje
 #### What Happens Under the Hood
 1. **Sentinel Dispatch**: The Sentinel initializes the task scratch workspace and launches a dedicated Project Orchestrator.
 2. **Phase 0 (Parallel Seat Exploration)**: Orchestrator spawns concurrent Explorer subagents for the selected seats. Each Explorer performs a deep read-only inspection, citing concrete file and line coordinates (`file.ext#Lxx-Lyy`).
-3. **Phase 1 (Chairman Synthesis Draft)**: A synthesis worker compiles the initial draft report (`council_evaluation_report.md`) integrating cross-seat observations.
-4. **Phase 2 (Adversarial Quality & Forensic Gate)**:
-   - **Reviewers**: Verify domain claims and community benchmark fidelity.
-   - **Challengers**: Stress-test line citations (verifying exact code matches) and scorecard arithmetic closure (verifying row/column grand mean arithmetic).
+3. **Phase 1 (Chairman Synthesis & Evidence-Normalized Deduplication Barrier)**:
+   - A synthesis worker aggregates candidate findings across seats.
+   - **Deduplication Barrier (ADR-0009)**: Normalizes code snippet keys (`${file}::${normalize(evidence)}`), stripping transient whitespace and comments. Overlapping findings on identical code coordinates are collapsed into a single canonical gap claim, elevating severity to $\max(\text{Severities})$ and annotating all discovering seats. This cuts downstream review noise and token expenditure by >50%.
+   - Compiles the initial consolidated draft report (`council_evaluation_report.md`).
+4. **Phase 2 (Targeted Adversarial Quality & Forensic Gate)**:
+   - **Reviewers**: Verify domain claims and community benchmark fidelity against unique findings.
+   - **Challengers (Fail-Closed Semantics)**: Stress-test line citations and logic consistency on unique `CRITICAL` and `HIGH` findings. A finding is refuted only upon $\ge 0.8$ confidence with empirical proof; otherwise, it fails closed and remains blocking. Stress-test scorecard arithmetic closure (verifying row/column grand mean arithmetic).
    - **Forensic Auditor**: Verifies zero file mutations outside scratch and zero package installs.
 5. **Phase 3 (Mandatory Victory Audit)**: Sentinel invokes an independent Victory Auditor (`teamwork_preview_victory_auditor`). Deliberation completes only when `VICTORY CONFIRMED` is achieved.
 

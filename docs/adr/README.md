@@ -12,3 +12,5 @@ This directory contains the immutable record of significant technical and struct
 | [ADR-0006](./0006-marketplace-plugin-decoupling-and-security-adaptation.md) | Marketplace Plugin Decoupling and Security Skill Adaptation | Accepted | 2026-10-22 |
 | [ADR-0007](./0007-audit-dev-workflow-harmonization-and-anti-cheating.md) | Audit-Dev-Workflow Harmonization & Anti-Cheating Architecture | Accepted | 2026-10-22 |
 | [ADR-0008](./0008-tri-pillar-council-review-architecture.md) | Tri-Pillar Deliberative Multi-Agent Council Architecture | Accepted | 2026-10-22 |
+| [ADR-0009](./0009-ecc-harness-adaptation-and-security.md) | ECC Selective Adaptation, AST Security & Bounded Gotchas | Accepted | 2026-10-23 |
+| [ADR-0010](./0010-domain-specific-academic-council.md) | Academic Council for Capital Market Thesis Evaluation | Accepted | 2026-10-23 |

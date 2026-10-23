@@ -15,6 +15,13 @@ A defensive, evidence-backed operational runbook ensuring safe, well-investigate
 
 ## Step-by-Step Procedure
 
+### Step 0: Blast-Radius Size-Tiered Pipeline Routing (ADR-0009)
+Before initiating Phase 1 investigation, classify the incoming task into one of four discrete blast-radius tiers to calibrate ceremonial overhead:
+- **`trivial` (Tier 0)**: Localized change ($\le 2$ files, $\le 3$ executable lines or $\le 5$ docs/comment lines; zero logic/conditional/state/schema mutations). Fast-path: single implementer $\rightarrow$ test/verify $\rightarrow$ direct commit upon chat approval. Council review and formal Gate 1 ceremony skipped.
+- **`small` (Tier 1)**: Contained feature, bugfix, or single-module enhancement (1 module, clear scope). Standard investigation $\rightarrow$ Gate 1 $\rightarrow$ TDD implementation $\rightarrow$ single auditor review (`code-auditor` or human) $\rightarrow$ Gate 2 commit.
+- **`standard` (Tier 2)**: Multi-file refactor or multi-component enhancement (2–5 files, internal architectural boundaries). Full audit-dev-workflow: `system-architect` investigation/proposal $\rightarrow$ Gate 1 approval $\rightarrow$ TDD implementation $\rightarrow$ `code-auditor` and `silent-failure-hunter` verification $\rightarrow$ Gate 2 commit.
+- **`large` (Tier 3)**: High-stakes architectural overhaul, cross-cutting schema changes, public API redesign, or foreign harness porting. Trigger full deliberative Tri-Pillar Council Review ([`council-review`](../council-review/SKILL.md) via `teamwork_preview`).
+
 ### Phase 1: Investigation & Blast Radius Analysis
 1. **Trace Callers & Invariants**: Inspect callers, dependencies, and state first using `rtk rg` before proposing any edits. Understand the root cause and map affected boundaries.
 2. **External API & Library Verification (Context7 MCP)**: When inspecting or altering third-party libraries, APIs, or framework contracts, use Context7 MCP (`resolve-library-id` -> `query-docs`) to verify official APIs and versions instead of relying on pre-training memory.

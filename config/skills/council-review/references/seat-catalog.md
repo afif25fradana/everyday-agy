@@ -56,6 +56,7 @@ This catalog maps evaluation domains to specialized Antigravity custom subagents
 - **Evaluation Mandate**: Spots deprecated runtime targets (EOL Node/Python) and broken CI actions.
 
 ### Seat 10: Official Spec & Remediation Verifier
+- **Mapped Custom Agent**: [`spec-verifier`](../../../agents/spec-verifier/agent.md)
 - **Domain Focus**: Cross-checking proposed remediation roadmaps, refactoring patterns, third-party library integrations, and architectural fixes against authoritative vendor documentation.
 - **Verification Tooling Hierarchy**:
   1. **Primary Tool**: Context7 MCP (`resolve-library-id` -> `query-docs`) to pull authoritative, up-to-date library API signatures and guidelines.
@@ -68,9 +69,9 @@ This catalog maps evaluation domains to specialized Antigravity custom subagents
 
 | Task Type | Recommended Council Composition |
 | :--- | :--- |
-| **Architectural / Refactoring Audit** | `system-architect` + `code-auditor` + `docs-architect` + `silent-failure-hunter` + Spec Verifier |
+| **Architectural / Refactoring Audit** | `system-architect` + `code-auditor` + `docs-architect` + `silent-failure-hunter` + `spec-verifier` |
 | **Security & Vulnerability Audit** | `code-auditor` + `silent-failure-hunter` + `maintenance-bot` |
-| **New Feature / Greenfield PR Review** | `system-architect` + `tdd-guide` + `code-auditor` + `ui-crafter` + Spec Verifier |
+| **New Feature / Greenfield PR Review** | `system-architect` + `tdd-guide` + `code-auditor` + `ui-crafter` + `spec-verifier` |
 | **Database & Schema Modification** | `database-reviewer` + `system-architect` + `silent-failure-hunter` |
-| **Library Upgrade / Modernization** | `maintenance-bot` + `build-error-resolver` + Spec Verifier |
+| **Library Upgrade / Modernization** | `maintenance-bot` + `build-error-resolver` + `spec-verifier` |
 | **Skill & Workflow Tooling Audit** | `system-architect` + `code-auditor` + `docs-architect` + Community Benchmark |

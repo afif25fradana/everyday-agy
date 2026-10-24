@@ -7,7 +7,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$scratchDir = "$env:USERPROFILE\.gemini\antigravity\scratch\$Task"
+$safeTask = ($Task -replace '[^A-Za-z0-9_-]', '-')
+$scratchDir = "$env:USERPROFILE\.gemini\antigravity\scratch\$safeTask"
 if (-not (Test-Path -Path $scratchDir)) {
     New-Item -ItemType Directory -Path $scratchDir -Force | Out-Null
 }
@@ -21,7 +22,7 @@ function Invoke-GitCmd {
     }
 }
 
-$diffPath = Join-Path $scratchDir "$Task.diff"
+$diffPath = Join-Path $scratchDir "$safeTask.diff"
 Invoke-GitCmd @("-C", $RepoPath, "diff", "HEAD") | Out-File -FilePath $diffPath -Encoding utf8
 
 if (-not (Test-Path -Path $diffPath) -or ((Get-Item $diffPath).Length -eq 0)) {
@@ -32,8 +33,9 @@ if (-not (Test-Path -Path $diffPath) -or ((Get-Item $diffPath).Length -eq 0)) {
 $lineCount = 0
 if (Test-Path -Path $diffPath) {
     $lineCount = (Get-Content -Path $diffPath | Measure-Object -Line).Lines
-    $hashObj = Get-FileHash -Algorithm SHA256 -Path $diffPath
-    $fullHash = $hashObj.Hash.ToLower()
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try { $fullHash = ([BitConverter]::ToString($sha.ComputeHash([System.IO.File]::ReadAllBytes($diffPath)))).Replace('-', '').ToLower() }
+    finally { $sha.Dispose() }
     $shortHash = $fullHash.Substring(0, 12)
     "$fullHash  $diffPath" | Add-Content -Path (Join-Path $scratchDir "hashes.txt")
     Write-Output "Evidence exported: $diffPath (sha $shortHash, $lineCount lines)"

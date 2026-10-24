@@ -7,7 +7,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$scratchDir = "$env:USERPROFILE\.gemini\antigravity\scratch\$Task"
+$safeTask = ($Task -replace '[^A-Za-z0-9_-]', '-')
+$scratchDir = "$env:USERPROFILE\.gemini\antigravity\scratch\$safeTask"
 if (-not (Test-Path -Path $scratchDir)) {
     New-Item -ItemType Directory -Path $scratchDir -Force | Out-Null
 }
@@ -29,15 +30,16 @@ if ($FilePath) {
     $fileName = Split-Path -Leaf $FilePath
     $backupPath = Join-Path $scratchDir "$fileName.bak"
     Copy-Item -Path $FilePath -Destination $backupPath -Force
-    $hashObj = Get-FileHash -Algorithm SHA256 -Path $backupPath
-    $fullHash = $hashObj.Hash.ToLower()
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try { $fullHash = ([BitConverter]::ToString($sha.ComputeHash([System.IO.File]::ReadAllBytes($backupPath)))).Replace('-', '').ToLower() }
+    finally { $sha.Dispose() }
     $shortHash = $fullHash.Substring(0, 12)
     "$fullHash  $backupPath" | Add-Content -Path (Join-Path $scratchDir "hashes.txt")
     Write-Output "Checkpoint created: $backupPath (sha $shortHash)"
 } else {
     $gitCheck = Invoke-GitCmd @("rev-parse", "--is-inside-work-tree") 2>$null
     if ($gitCheck -eq "true") {
-        $branchName = "checkpoint-$Task"
+        $branchName = "checkpoint-$safeTask"
         Invoke-GitCmd @("branch", "-f", $branchName) 2>$null | Out-Null
         $headSha = (Invoke-GitCmd @("rev-parse", "HEAD")).Substring(0, 12)
         Write-Output "Checkpoint created: git branch $branchName (sha $headSha)"

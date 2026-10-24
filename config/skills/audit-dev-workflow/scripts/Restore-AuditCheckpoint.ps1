@@ -7,7 +7,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$scratchDir = "$env:USERPROFILE\.gemini\antigravity\scratch\$Task"
+$safeTask = ($Task -replace '[^A-Za-z0-9_-]', '-')
+$scratchDir = "$env:USERPROFILE\.gemini\antigravity\scratch\$safeTask"
 
 function Invoke-GitCmd {
     param([string[]]$Arguments)
@@ -30,7 +31,7 @@ if ($FilePath) {
 } else {
     $gitCheck = Invoke-GitCmd @("rev-parse", "--is-inside-work-tree") 2>$null
     if ($gitCheck -eq "true") {
-        $branchName = "checkpoint-$Task"
+        $branchName = "checkpoint-$safeTask"
         $branchExists = Invoke-GitCmd @("rev-parse", "--verify", "refs/heads/$branchName") 2>$null
         if ($branchExists) {
             Invoke-GitCmd @("reset", "--hard", $branchName) | Out-Null

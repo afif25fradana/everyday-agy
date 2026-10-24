@@ -37,6 +37,8 @@ Enforces strict size limits (target: **<= 8,192 bytes** and **<= 100 lines**) wh
 
 ## 2. Step-by-Step Execution Procedure
 
+> Each `pwsh` block runs in a fresh shell, so variables do not persist between blocks. Run Steps 1-5 in one shell session, or re-declare `$ctx`, `$codeHead`, and `$taskFile` in the block that uses them.
+
 ### Step 1: Pre-Sync Status Check
 1. Resolve context repository and check git status:
    ```pwsh
@@ -74,6 +76,7 @@ Follow the standardized section layout:
 ### Step 4: Verification Gate (Size, Line & Gotcha Limits)
 Verify that `task_state.md` meets the constraints directly in pwsh:
 ```pwsh
+$ctx = if ($AiContextPath -and (Test-Path $AiContextPath)) { $AiContextPath } elseif (Test-Path "..\*-AI-Context") { (Resolve-Path "..\*-AI-Context").Path } else { "." }
 $taskFile = if (Test-Path "$ctx\task_state.md") { "$ctx\task_state.md" } else { ".\task_state.md" }
 $item = Get-Item $taskFile
 $lines = (Get-Content $taskFile).Count
@@ -90,6 +93,8 @@ if ($item.Length -gt 8192 -or $lines -gt 100) {
 ### Step 5: Atomic Git Commit
 Commit the pruned state in the target repository:
 ```pwsh
+$ctx = if ($AiContextPath -and (Test-Path $AiContextPath)) { $AiContextPath } elseif (Test-Path "..\*-AI-Context") { (Resolve-Path "..\*-AI-Context").Path } else { "." }
+$taskFile = if (Test-Path "$ctx\task_state.md") { "$ctx\task_state.md" } else { ".\task_state.md" }
 rtk git -C $ctx add $taskFile
 rtk git -C $ctx commit -m "chore(context): update active task state"
 ```

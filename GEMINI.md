@@ -1,9 +1,10 @@
 <!-- project-layout -->
 # Project Layout (D:\Github)
-- Projects usually live under `D:\Github\<Group>\`: a code repo plus a sibling `<Project>-AI-Context` repo (names vary, e.g. `Media-Dex` + `Media-Dex-AI-Context`).
-- If that sibling exists, read the group's `AGENTS.md` first (if present), then `<Project>-AI-Context/task_state.md` (or `docs/task_state.md`), then the ADR index (`docs/adr/README.md`) if present and only the ADRs relevant to the task (`docs/adr/` in either repo). Do not scan every ADR.
+- Projects usually live under `D:\Github\<Group>\`: a code repo plus a sibling `<Project>-AI-Context` repo, which is the primary context source (names vary, e.g. `Media-Dex` + `Media-Dex-AI-Context`).
+- Read the sibling context repo first: `task_state.md` (root or `docs/`), then `docs/AGENTS.md` or `architecture.md` if present.
+- Then read the ADR index (`docs/adr/README.md`) and only the ADRs relevant to the task (`docs/adr/` in either repo). Read the group's `AGENTS.md` only if it exists. Do not scan every ADR.
 - Use the matching subagent from `~/.gemini/config/agents/` for audits, architecture, docs, DB, or tests instead of doing specialist work inline.
-- Do not scan all of `D:\Github`; locate the project group first and stay inside it.
+- Do not scan all of `D:\Github`; locate the project group and sibling context repo first.
 <!-- project-layout -->
 
 <!-- dev-tooling -->

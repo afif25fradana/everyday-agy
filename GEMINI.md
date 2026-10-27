@@ -27,6 +27,7 @@
 - Reuse existing helpers and stdlib first. Grep callers and read target files before editing; never edit an unread file. Touch only files strictly required by the task; fix root causes, not symptoms.
 - Never simplify away security, input validation, data integrity, or accessibility.
 - Anti-Slop: Zero obvious/generic AI commentary in code. Keep UI crafted, clean, and accessible (no purple AI gradients).
+- Zero Process Leaks: Never leak internal AI/audit terms into repo files, commits, or PRs (e.g. "investigation summary", "checkpoint commit", "Phase 2 complete", "subagent execution", "handoff_artifact"). Describe what changed and why in plain human engineering language.
 <!-- ponytail -->
 
 <!-- communication -->

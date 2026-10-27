@@ -71,11 +71,11 @@ Establish a rollback point before modifying files:
    - **Repos with Test Harnesses**: Execute relevant unit/integration tests directly to capture: (a) exact CLI test command executed, (b) terminal exit code (0), and (c) verbatim assertion stdout/stderr snippet showing passed checks (turning the Phase 1 RED test into GREEN). Stop immediately on unexpected test failures.
    - **Testless Repositories**: For repositories lacking automated test suites (documentation, infra/devops configs, initial prototypes), substitute with static verification: syntax checking (e.g. `python -m py_compile`, `rtk npx eslint`), build checks, or dry-run execution. Explicitly annotate Gate 2 with `[TEST HARNESS: NONE — STATIC/BUILD EVIDENCE PROVIDED]`.
 3. **Five-Axis Pre-Flight Rubric**:
-   - **Axis 1 (Correctness & Invariants)**: Boundary checks, state transitions, loop invariants, type safety, caller regressions, async/await/lock ordering, and zero dropped defensive logic (never silently strip timeouts, retries, null checks, or calibrated thresholds).
+   - **Axis 1 (Correctness & Invariants)**: Boundary checks, state transitions, loop invariants, type safety, caller regressions, async/await/lock ordering, and zero dropped defensive logic (never silently strip timeouts, retries, null checks, or calibrated thresholds). Avoid specificity/precedence surprises and unverified "dead code" claims. Modern active runtimes only (Python 3.12+, Node 20/22+).
    - **Axis 2 (Security & Attack Surface)**: Input sanitization, auth boundaries, injection/deserialization safety, cross-module blast radius, and Secret Scanner Hygiene (bracketed `<TOKEN>`, `<API_KEY>` placeholders; zero raw sample credentials exceeding 12-16 chars).
-   - **Axis 3 (Over-Engineering / Ponytail & Anti-Slop)**: Shortest working diff wins. Reject speculative abstractions, generic wrappers, and single-impl interfaces. Comment hygiene: strip generic AI narrative comments (`// Update state`); keep comments strictly for non-obvious *why* rationale, OS workarounds, or protocol quirks. Zero corporate/academic fluff in docstrings.
-   - **Axis 4 (Edge Cases & Silent Failures)**: No swallowed exceptions (bare `catch {}`), no masking defaults (`.catch(() => [])`), no silent `null` returns on critical paths, no resource leaks (unclosed streams, orphaned subprocesses, lingering event listeners, unreleased locks), and explicit boundary and timeout checks (`0`, `null`, `undefined`, empty collections, negative numbers, timeouts).
-   - **Axis 5 (Test Integrity & Fault Injection)**: No mock-cheating (no mocks replacing the unit under test; no asserting only `mock.called == True` without verifying state/data/return values). Both happy paths and negative paths must be verified. When in doubt, perform a temporary fault injection (flip a conditional or invalidate an input) to verify that the test fails before finalizing.
+   - **Axis 3 (Over-Engineering / Ponytail & Anti-Slop)**: Shortest working diff wins. Reject speculative abstractions, generic wrappers, and single-impl interfaces. Comment hygiene: strip generic AI narrative comments (`// Update state`); keep comments strictly for non-obvious *why* rationale, OS workarounds, or protocol quirks. Zero corporate/academic fluff in docstrings per [`clean-docs`](../clean-docs/SKILL.md).
+   - **Axis 4 (Edge Cases & Silent Failures)**: No swallowed exceptions (bare `catch {}`), no masking defaults (`.catch(() => [])`), no silent `null` returns on critical paths, no resource leaks (unclosed streams, orphaned subprocesses, lingering event listeners, unreleased locks), and explicit boundary and timeout checks (`0`, `null`, `undefined`, empty collections, negative numbers, timeouts). Fix root causes, not symptom patching.
+   - **Axis 5 (Test Integrity & Fault Injection)**: No mock-cheating (no mocks replacing the unit under test; no asserting only `mock.called == True` without verifying state/data/return values). Both happy paths and negative paths must be verified. Guard against mock/harness drift. When in doubt, perform a temporary fault injection (flip a conditional or invalidate an input) to verify that the test fails before finalizing.
 
 ### Phase 5: Gate 2 Review, Commit & Non-Interactive CI
 1. **Gate Packaging & Reviewer Payloads**:
@@ -92,7 +92,7 @@ Establish a rollback point before modifying files:
        - On `REJECT`: Stop, evaluate reviewer feedback, and return to Phase 1 investigation or Phase 3 implementation.
 3. **Repository Commit Discipline**:
    - Report a concise summary in chat (1-2 lines with diffstat / action items). For major milestones, an Antigravity UserFacing Artifact can be generated for structured persistence.
-   - **Code Repository**: Commit code changes using clean Conventional Commits (`fix(scope): ...`, `feat(scope): ...`) with zero AI buzzwords or process tags.
+   - **Code Repository**: Commit code changes using clean Conventional Commits (`fix(scope): ...`, `feat(scope): ...`) with zero AI buzzwords or process tags per [`clean-docs`](../clean-docs/SKILL.md).
    - **Context Tracking (Twin-Repo or Single-Repo)**:
      - **Twin-Repo Mode**: Update `task_state.md` (and new ADRs in `docs/adr/`) in the sibling context repo per `sync-task-state`, then commit:
        ```powershell
@@ -113,9 +113,8 @@ Establish a rollback point before modifying files:
 
 ## References & Templates (On-Demand)
 
+- [Clean Docs Standard](../clean-docs/SKILL.md): Plain-spoken repo prose, zero process leaks, public repo hygiene, and humanized commit messages.
 - [Prompt Templates](./references/prompt-templates.md): Ready-to-paste atomic prompts for Antigravity native execution.
 - [Engineering Pitfalls](./references/pitfalls.md): Agentic traps and Five-Axis logic pitfalls to double-check.
 - [Handoff Specification & Guidelines](./references/handoff-spec.md): Practical guidelines for milestone handoffs and change summaries.
 - [Subagent Execution Patterns](./references/subagent-patterns.md): Optional patterns for deploying read-only researcher or isolated executor subagents.
-- [Clean Docs Standard](./references/clean-docs.md): Plain-spoken repo prose, zero process leaks, and natural commit messages.
-- [Public Repo Checklist](./references/public-repo-checklist.md): Standards for public claims, CI gates, and repo hygiene.

@@ -9,6 +9,7 @@ tools:
   - run_command
   - ask_question
 skills:
+  - clean-docs
   - audit-dev-workflow
   - antislop-copywriting
   - antislop-code
@@ -59,8 +60,8 @@ Every root README must follow this clean structure:
 - **Grounded Contributing Guidelines (`.github/CONTRIBUTING.md`)**:
   - Include actual local test and validation commands that exist and run in CI.
 
-### 6. Public Repo Checklist Compliance
-Enforce the gates defined in `config/skills/audit-dev-workflow/references/public-repo-checklist.md`:
+### 6. Public Repo & Clean Docs Compliance
+Enforce the gates and hygiene defined in `config/skills/clean-docs/SKILL.md`:
 - **CI-Claim Gate**: Only claim tests pass if backed by a green CI run at `Git HEAD`.
 - **No Mutable Vanity Metrics**: Never hardcode volatile counts (subagent counts, test counts, LOC) that go stale immediately.
 - **Zero Process Leak**: Verify no internal scratch tags, prompt residue, or checkpoint markers appear in tracked public documentation.

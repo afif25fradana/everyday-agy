@@ -8,6 +8,7 @@ tools:
   - run_command
   - ask_question
 skills:
+  - contract-first
   - documentation-and-adrs
   - ponytail
   - sync-task-state

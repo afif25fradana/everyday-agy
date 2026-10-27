@@ -9,6 +9,8 @@ tools:
 skills:
   # Repository Custom Skills
   - audit-dev-workflow
+  - coding-standards
+  - clean-docs
   - ponytail
   - differential-review
   - sync-task-state

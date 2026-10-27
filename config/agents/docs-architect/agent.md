@@ -9,6 +9,7 @@ tools:
   - run_command
   - ask_question
 skills:
+  - clean-docs
   - documentation-and-adrs
   - antislop-copywriting
   - antislop-code

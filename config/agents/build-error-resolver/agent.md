@@ -8,6 +8,7 @@ tools:
   - run_command
 skills:
   - ponytail
+  - coding-standards
   - audit-dev-workflow
 ---
 

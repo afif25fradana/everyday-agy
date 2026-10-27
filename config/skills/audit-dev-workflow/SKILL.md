@@ -23,9 +23,9 @@ Before initiating Phase 1 investigation, classify the incoming task into one of 
 - **`large` (Tier 3)**: High-stakes architectural overhaul, cross-cutting schema changes, public API redesign, or foreign harness porting. Trigger full deliberative Tri-Pillar Council Review ([`council-review`](../council-review/SKILL.md) via `teamwork_preview`).
 
 ### Phase 1: Investigation & Blast Radius Analysis
-1. **Trace Callers & Invariants**: Inspect callers, dependencies, and state first using `rtk rg` before proposing any edits. Understand the root cause and map affected boundaries.
+1. **Trace Callers & Invariants (Parallel Fan-Out)**: Batch read-only `rtk rg` caller searches and target file reads in parallel within a single turn before proposing any edits. Understand the root cause and map affected boundaries.
 2. **External API & Library Verification (Context7 MCP)**: When inspecting or altering third-party libraries, APIs, or framework contracts, use Context7 MCP (`resolve-library-id` -> `query-docs`) to verify official APIs and versions instead of relying on pre-training memory.
-3. **Optional Delegation for Large Discovery**: For massive codebase exploration or log-heavy caller tracing, Parent may deploy a read-only `research` subagent (`Model: inherit`) to keep context clean. For standard investigations, Parent inspects files directly using `view_file`.
+3. **Optional Delegation for Large Discovery**: For massive codebase exploration or log-heavy caller tracing, Parent may deploy a read-only `research` subagent (`Model: inherit`) to keep context clean. For standard investigations, inspect files directly (`read_file` in Parent Agent; `view_file` in Subagents per ADR-0007).
 4. **Repro-First Failing Test (SWE-Agent Pattern)**: For bug fixes or logic defects, create a minimal reproducible test script or failing test case first (RED) before writing any solution code. Confirm that the test reliably captures the failure mode before moving to execution.
 5. **Hazard Assessment**:
    - Test harness mocks (`unittest.mock.patch`, Jest spies, dynamic method patching).
@@ -61,7 +61,7 @@ Establish a rollback point before modifying files:
   - Qualifying Tier 0 changes bypass Gate 1 review ceremony and proceed directly to execution upon user approval.
 
 ### Phase 3: Pragmatic Implementation
-1. **Direct Execution**: Parent applies approved changes directly using `replace_file_content` or `write_to_file` (or the same tools when delegated to Subagents). Shortest working diff wins.
+1. **Direct Execution**: Apply approved changes directly (`edit_file` / `write_file` in Parent Agent; `replace_file_content` / `write_to_file` when delegated to Subagents per ADR-0007). Shortest working diff wins.
 2. **Optional Subagent Delegation**: For isolated worktree testing or tasks with heavy build/test iterations, Parent may optionally invoke a subagent executor (`Workspace: branch`) or delegate test writing to `tdd-guide`.
 3. **Clean Code Discipline**: Zero unneeded abstractions, zero generic AI comments, strict preservation of existing defensive logic (timeouts, retries, null checks, calibrated thresholds), and bracketed `<...>` placeholders for secret scanner hygiene.
 

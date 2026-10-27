@@ -7,6 +7,7 @@ tools:
   - write_to_file
   - run_command
 skills:
+  - database-migrations
   - documentation-and-adrs
   - ponytail
   - audit-context-building

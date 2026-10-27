@@ -35,7 +35,8 @@ if ($FilePath) {
         $branchExists = Invoke-GitCmd @("rev-parse", "--verify", "refs/heads/$branchName") 2>$null
         if ($branchExists) {
             Invoke-GitCmd @("reset", "--hard", $branchName) | Out-Null
-            $restoredSha = (Invoke-GitCmd @("rev-parse", "HEAD")).Substring(0, 12)
+            $rawSha = ((Invoke-GitCmd @("rev-parse", "HEAD")) | Out-String).Trim()
+            $restoredSha = $rawSha.Substring(0, [Math]::Min(12, $rawSha.Length))
             Write-Output "Checkpoint restored: reset working tree to branch $branchName (sha $restoredSha)"
         } else {
             Write-Error "Checkpoint branch '$branchName' not found."

@@ -72,8 +72,8 @@ everyday-agy/
 ├── GEMINI.md            # Active operational rules, workflow guardrails, and security boundaries
 ├── TOOLKIT.md           # Catalog of CLI tools, MCP snippets, and skill upstream links
 ├── config/
-│   ├── agents/          # 11 specialized subagents configured with model: inherit
-│   └── skills/          # 19 curated, adapted, and bespoke workflow skills
+│   ├── agents/          # 11 specialized subagents configured with hybrid model tiering (ADR-0004)
+│   └── skills/          # 20 curated, adapted, and bespoke workflow skills
 ├── docs/
 │   └── adr/             # Architectural Decision Records (ADR-0001 through ADR-0011)
 ├── sync.ps1             # Pulls live configs from ~/.gemini/ into this repo
@@ -104,11 +104,11 @@ Eleven specialized agent configurations handle task delegation. Analytical roles
 
 ### Workflow Skills and Provenance (`config/skills/`)
 
-Nineteen modular skills load on-demand through Antigravity's progressive disclosure engine. They are partitioned transparently by origin and licensing:
+Twenty modular skills load on-demand through Antigravity's progressive disclosure engine. They are partitioned transparently by origin and licensing:
 
 | Category | Count | Included Skills | Origin / Licensing |
 |---|:---:|---|---|
-| **Bespoke Architectures** | 4 | `council-review`, `academic-council`, `audit-dev-workflow`, `sync-task-state` | Original works authored for Antigravity (MIT) |
+| **Bespoke Architectures** | 5 | `council-review`, `academic-council`, `audit-dev-workflow`, `sync-task-state`, `clean-docs` | Original works authored for Antigravity (MIT) |
 | **Engine-Adapted Ports** | 7 | `spec-kit`, `gh-workflow`, `audit-context-building`, `differential-review`, `contract-first`, `database-migrations`, `coding-standards` | Adapted from community tools, ECC, and Trail of Bits (MIT & CC BY-SA 4.0) |
 | **Curated Community Suites** | 8 | `ponytail` suite (6), `design-taste-frontend`, `documentation-and-adrs` | Bundled from DietrichGebert, Leonxlnx, and standards (MIT) |
 

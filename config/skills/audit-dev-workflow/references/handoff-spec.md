@@ -21,7 +21,7 @@ This specification defines the communication contracts, trigger headers, quantit
 - **Quantitative Limits**: Modifies `<= 2` files AND `<= 3` lines of executable code (or `<= 5` lines of non-executable docs/comments).
 - **Qualitative Limits**: ZERO changes to business logic, conditionals, loops, state transitions, error handlers, public API signatures, schemas, or security boundaries.
 - **Required Payload**: Diffstat and full inline unified diff (`+`/`-`).
-- **Bypass Rule**: Qualifying Tier 0 changes bypass Gate 1 ceremony and proceed straight from Phase 2 checkpoint to Phase 3 execution, submitting `[TRIVIAL REVIEW]` before commit.
+- **Bypass Rule**: Qualifying Tier 0 changes bypass formal Gate 1 ceremony upon simple chat approval, proceeding from Phase 2 checkpoint to Phase 3 execution and submitting `[TRIVIAL REVIEW]` before commit.
 
 ### 2.2 Gate 1 (Pre-Execution Proposal Review)
 - **Trigger Header**: `# Review Request: Gate 1 (Pre-Execution Proposal)`

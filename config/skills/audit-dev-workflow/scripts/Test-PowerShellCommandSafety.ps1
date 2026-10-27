@@ -4,7 +4,7 @@
 .DESCRIPTION
     Inspects command lines using native .NET PowerShell AST parsing without execution.
     Halts on forbidden destructive cmdlets, recursive root deletions, git force pushes, and --no-verify flags.
-    Adheres to ADR-0009 (ECC Selective Adaptation & Pre-Execution AST Security).
+    Adheres to ADR-0009 & ADR-0011.
 #>
 [CmdletBinding()]
 param(
@@ -60,7 +60,7 @@ foreach ($cmdAst in $commandElements) {
         exit 1
     }
 
-    # Remove-Item destructive combinations
+    # Remove-Item destructive combinations (including PowerShell parameter prefix abbreviations & colon booleans)
     if ($cmdName -in @('Remove-Item', 'rm', 'del', 'erase', 'rd', 'ri', 'rmdir')) {
         $elements = $cmdAst.CommandElements
         $hasRecurse = $false
@@ -69,8 +69,8 @@ foreach ($cmdAst in $commandElements) {
 
         foreach ($el in $elements) {
             $text = $el.Extent.Text
-            if ($text -match '^-(r|recurse)$') { $hasRecurse = $true }
-            if ($text -match '^-(f|force)$') { $hasForce = $true }
+            if ($text -match '^-(r|re|rec|recu|recur|recurs|recurse)(:\$?true)?$' -or $text -match '^/s$') { $hasRecurse = $true }
+            if ($text -match '^-(f|fo|for|forc|force)(:\$?true)?$' -or $text -match '^/q$') { $hasForce = $true }
             if ($text -match '^[/\\]+$|^[a-zA-Z]:[/\\]*$|^~[/\\]*' -or $text -in @('$env:SystemDrive', '$HOME', '$env:USERPROFILE')) { $targetRoot = $true }
         }
 
@@ -80,20 +80,55 @@ foreach ($cmdAst in $commandElements) {
         }
     }
 
-    # Git destructive commands & bypass flags
+    # Git destructive commands & bypass flags (token-aware to avoid false positives inside commit messages)
     if ($cmdName -in @('git', 'rtk')) {
-        $cmdLineText = $cmdAst.Extent.Text
-        if ($cmdLineText -match 'push\s+.*(-f\b|--force\b)') {
-            Write-Error "Safety Violation: Prohibited git push force flag detected."
-            exit 1
+        $argTokens = @()
+        $skipNext = $false
+        for ($i = 1; $i -lt $cmdAst.CommandElements.Count; $i++) {
+            $t = $cmdAst.CommandElements[$i].Extent.Text
+            if ($skipNext) {
+                $skipNext = $false
+                continue
+            }
+            # Skip commit/tag message payload tokens so strings like -m "fix clean -f" do not false-positive
+            if ($t -in @('-m', '--message', '-C', '-c')) {
+                $skipNext = $true
+                continue
+            }
+            if ($t -match '^(-m|--message=)') {
+                continue
+            }
+            $argTokens += $t
         }
-        if ($cmdLineText -match 'clean\s+.*(-[a-zA-Z]*f|--force)') {
-            Write-Error "Safety Violation: Prohibited git clean force flag detected."
-            exit 1
+
+        if ($cmdName -eq 'rtk' -and $argTokens.Count -gt 0 -and $argTokens[0] -eq 'git') {
+            $argTokens = if ($argTokens.Count -gt 1) { $argTokens[1..($argTokens.Count - 1)] } else { @() }
         }
-        if ($cmdLineText -match 'commit\s+.*--no-verify') {
-            Write-Error "Safety Violation: Prohibited git commit --no-verify bypass flag detected."
-            exit 1
+
+        if ($argTokens.Count -gt 0) {
+            $subCmd = $argTokens[0]
+            $subArgs = ($argTokens -join ' ')
+
+            if ($subCmd -eq 'push' -and $subArgs -match '(^|\s)(-f\b|--force\b|--force-with-lease\b|--force-if-includes\b)') {
+                Write-Error "Safety Violation: Prohibited git push force flag detected."
+                exit 1
+            }
+            if ($subCmd -eq 'clean' -and $subArgs -match '(^|\s)(-[a-zA-Z]*f|--force\b)') {
+                Write-Error "Safety Violation: Prohibited git clean force flag detected."
+                exit 1
+            }
+            if ($subCmd -eq 'commit' -and $subArgs -match '(^|\s)(-n\b|--no-verify\b)') {
+                Write-Error "Safety Violation: Prohibited git commit --no-verify bypass flag detected."
+                exit 1
+            }
+            # Intercept uncheckpointed destructive git resets (allow only exact checkpoint-<task> target ref)
+            if ($subCmd -eq 'reset' -and $subArgs -match '(^|\s)--hard\b') {
+                $lastToken = ($argTokens[-1] -replace '^[''"]|[''"]$', '')
+                if ($lastToken -notmatch '^(refs/heads/)?checkpoint-[A-Za-z0-9_-]+$') {
+                    Write-Error "Safety Violation: Prohibited uncheckpointed 'git reset --hard' detected."
+                    exit 1
+                }
+            }
         }
     }
 

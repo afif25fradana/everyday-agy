@@ -41,7 +41,8 @@ if ($FilePath) {
     if ($gitCheck -eq "true") {
         $branchName = "checkpoint-$safeTask"
         Invoke-GitCmd @("branch", "-f", $branchName) 2>$null | Out-Null
-        $headSha = (Invoke-GitCmd @("rev-parse", "HEAD")).Substring(0, 12)
+        $rawSha = ((Invoke-GitCmd @("rev-parse", "HEAD")) | Out-String).Trim()
+        $headSha = $rawSha.Substring(0, [Math]::Min(12, $rawSha.Length))
         Write-Output "Checkpoint created: git branch $branchName (sha $headSha)"
     } else {
         Write-Output "Checkpoint notice: outside git repository and no FilePath specified. Scratch directory prepared at $scratchDir"

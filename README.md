@@ -75,7 +75,7 @@ everyday-agy/
 │   ├── agents/          # 11 specialized subagents configured with hybrid model tiering (ADR-0004)
 │   └── skills/          # 20 curated, adapted, and bespoke workflow skills
 ├── docs/
-│   └── adr/             # Architectural Decision Records (ADR-0001 through ADR-0011)
+│   └── adr/             # Architectural Decision Records (ADR-0001 through ADR-0012)
 ├── sync.ps1             # Pulls live configs from ~/.gemini/ into this repo
 └── restore.ps1          # Deploys this repo into ~/.gemini/ with automatic backup
 ```
@@ -143,6 +143,7 @@ Technical decisions, constraints, and trade-offs are recorded as permanent Nygar
 - [ADR-0009](./docs/adr/0009-ecc-harness-adaptation-and-security.md): ECC Selective Adaptation, Pre-Execution AST Security, and Bounded Gotchas.
 - [ADR-0010](./docs/adr/0010-domain-specific-academic-council.md): Academic Council for Capital Market & Secondary Data Thesis Evaluation.
 - [ADR-0011](./docs/adr/0011-ast-security-hardening-and-deployment-parity.md): Pre-Execution AST Security Hardening, Deployment Parity, and Anti-Slop Upstream Filtration.
+- [ADR-0012](./docs/adr/0012-flash-high-optimization-ast-hardening-and-model-tiering-invariants.md): Flash High Optimization, AST Hardening, and Cognitive Tiering Invariants.
 
 ## Contributing
 

@@ -3,14 +3,14 @@ name: council-review
 description: >
   Orchestrate a deliberative Multi-Agent Council Review panel for high-stakes architectural evaluations,
   deep code audits, or pre-release verification. Synthesizes audit-context-building (fact grounding),
-  grill-me (socratic scoping), and teamwork-preview (adversarial peer-review & Victory Auditor certification)
+  grill-me (socratic scoping), and teamwork (adversarial peer-review & Victory Auditor certification)
   powered by specialized custom subagents. Trigger when the user types /council, /council-review, or says
   "council review", "dewan pakar", "multi-agent audit", "deliberative review", or asks for a council-based evaluation.
 ---
 
 # Deliberative Council Review Orchestration (Operational Runbook)
 
-A high-rigor, evidence-backed evaluation framework combining Anthropic's **Evaluator-Optimizer** separation, Karpathy's **Council Double-Blind Synthesis**, and Addy Osmani's **SDLC Phased Gating**. Powered natively by Antigravity's hidden multi-agent orchestration engine (`teamwork_preview`).
+A high-rigor, evidence-backed evaluation framework combining Anthropic's **Evaluator-Optimizer** separation, Karpathy's **Council Double-Blind Synthesis**, and Addy Osmani's **SDLC Phased Gating**. Powered natively by Antigravity's hidden multi-agent orchestration engine (`teamwork`).
 
 ---
 
@@ -20,17 +20,17 @@ A high-rigor, evidence-backed evaluation framework combining Anthropic's **Evalu
 > **NEVER CALL SPECIALIST AGENTS DIRECTLY FROM THE PARENT AGENT.**
 > Calling `invoke_subagent(TypeName: "code-auditor")`, `invoke_subagent(TypeName: "system-architect")`, or any other individual specialist agent directly from the parent session completely bypasses the multi-tier council architecture. Direct calls execute flat, unverified, sycophantic runs that finish in 60 seconds with zero critical defects found.
 >
-> **The Parent Agent MUST dispatch EXACTLY ONE call to `teamwork_preview`:**
+> **The Parent Agent MUST dispatch EXACTLY ONE call to `teamwork`:**
 >
 > ```json
 > invoke_subagent(
->   TypeName: "teamwork_preview",
+>   TypeName: "teamwork",
 >   Role: "Council Review Panel",
 >   Prompt: "Requested team: Council review panel (read-only audit & comparison)\n\n..."
 > )
 > ```
 >
-> *Engine Visibility Note*: `teamwork_preview` is an internal engine subagent. Even though it is omitted from the visible `Available subagents:` list in your system prompt, it is fully recognized by the Antigravity runtime. Invoking `TypeName: "teamwork_preview"` spawns the full autonomous council (Sentinel -> Project Orchestrator -> Parallel Explorers -> Adversarial Challengers -> Victory Auditor).
+> *Engine Visibility Note*: `teamwork` is an internal engine subagent. Even though it is omitted from the visible `Available subagents:` list in your system prompt, it is fully recognized by the Antigravity runtime. Invoking `TypeName: "teamwork"` spawns the full autonomous council (Sentinel -> Project Orchestrator -> Parallel Explorers -> Adversarial Challengers -> Victory Auditor).
 
 ---
 
@@ -63,7 +63,7 @@ A high-rigor, evidence-backed evaluation framework combining Anthropic's **Evalu
                        │
                        ▼
 ┌──────────────────────────────────────────────┐
-│  Pillar 3: Autonomous Council Deliberation   │  <-- teamwork_preview (Sentinel)
+│  Pillar 3: Autonomous Council Deliberation   │  <-- teamwork (Sentinel)
 │  - Dedicated Project Orchestrator            │
 │  - Parallel Specialized Explorers            │
 │  - Adversarial Reviewers & Challengers       │
@@ -108,18 +108,18 @@ Engage the operator interactively using `ask_question` (one question at a time) 
    - Token & Context Window Efficiency
    - GitHub Community Benchmarking
 3. **Forcing Function & Output Format**: Confirm deliverable format (Scorecard Rubric 1-5 + Prioritized Gap Matrix + Chairman Roadmap).
-4. **Draft Prompt Assembly**: Maintain and display `prompt_draft.md` in the brain artifact directory per `teamwork_preview` rules.
+4. **Draft Prompt Assembly**: Maintain and display `prompt_draft.md` in the brain artifact directory per `teamwork` rules.
 5. **Operator Approval Gate**: Require explicit operator confirmation ("approve", "proceed", "continue", or UI "Proceed") before delegating.
 
 ---
 
-### Pillar 3: Autonomous Council Deliberation (`teamwork_preview`)
+### Pillar 3: Autonomous Council Deliberation (`teamwork`)
 
-Upon operator approval, dispatch `teamwork_preview` using this exact structure:
+Upon operator approval, dispatch `teamwork` using this exact structure:
 
 ```json
 invoke_subagent(
-  TypeName: "teamwork_preview",
+  TypeName: "teamwork",
   Role: "Council Review Panel",
   Prompt: <council_prompt_text>
 )
@@ -189,13 +189,13 @@ Generate a comprehensive evaluation report saved to `<appDataDir>\scratch\<proje
    - **Reviewers**: Verify domain claims and community benchmark fidelity against unique findings.
    - **Challengers (Fail-Closed Semantics)**: Stress-test line citations and logic consistency on unique `CRITICAL` and `HIGH` findings. A finding is refuted only upon $\ge 0.8$ confidence with empirical proof; otherwise, it fails closed and remains blocking. Stress-test scorecard arithmetic closure (verifying row/column grand mean arithmetic).
    - **Forensic Auditor**: Verifies zero file mutations outside scratch and zero package installs.
-5. **Phase 3 (Mandatory Victory Audit)**: Sentinel invokes an independent Victory Auditor (`teamwork_preview_victory_auditor`). Deliberation completes only when `VICTORY CONFIRMED` is achieved.
+5. **Phase 3 (Mandatory Victory Audit)**: Sentinel invokes an independent Victory Auditor (`teamwork_victory_auditor`). Deliberation completes only when `VICTORY CONFIRMED` is achieved.
 
 ---
 
 ### Pillar 4: Certified Deliverable Packaging
 
-Once `teamwork_preview` returns, the Parent Agent reads `<appDataDir>\scratch\<project>\council_evaluation_report.md` and presents the certified deliverable meeting [`scorecard-rubric.md`](./references/scorecard-rubric.md):
+Once `teamwork` returns, the Parent Agent reads `<appDataDir>\scratch\<project>\council_evaluation_report.md` and presents the certified deliverable meeting [`scorecard-rubric.md`](./references/scorecard-rubric.md):
 1. **Executive Summary & Chairman Verdict**: Clear grade (A, B+, B, C) and composite score (out of 5.0).
 2. **16-Cell Scorecard Matrix**: Normalized arithmetic closure across Rigor, Ergonomics, Token Efficiency, and Spec Alignment.
 3. **Concrete Discrepancies**: Citations anchored strictly to line coordinates (`file.ext#Lxx-Lyy`).

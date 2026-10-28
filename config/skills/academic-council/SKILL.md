@@ -16,7 +16,7 @@ A high-rigor, evidence-backed academic evaluation framework for thesis proposals
 and scholarly writing. Adapted from the `council-review` architecture for software engineering,
 re-engineered for **accounting, finance, economics, and social science research**.
 
-Powered by Antigravity's multi-agent orchestration engine (`teamwork_preview`).
+Powered by Antigravity's multi-agent orchestration engine (`teamwork`).
 
 ---
 
@@ -24,19 +24,19 @@ Powered by Antigravity's multi-agent orchestration engine (`teamwork_preview`).
 
 > [!CAUTION]
 > **NEVER CALL SPECIALIST AGENTS DIRECTLY FROM THE PARENT AGENT.**
-> The Parent Agent MUST dispatch EXACTLY ONE call to `teamwork_preview`:
+> The Parent Agent MUST dispatch EXACTLY ONE call to `teamwork`:
 >
 > ```json
 > invoke_subagent(
->   TypeName: "teamwork_preview",
+>   TypeName: "teamwork",
 >   Role: "Academic Council Panel",
 >   Prompt: "Requested team: Council review panel (read-only audit & comparison)\n\n..."
 > )
 > ```
 >
-> *Engine Visibility Note*: `teamwork_preview` is an internal engine subagent. Even though it
+> *Engine Visibility Note*: `teamwork` is an internal engine subagent. Even though it
 > may be omitted from the visible `Available subagents:` list, it is fully recognized by the
-> Antigravity runtime. Invoking `TypeName: "teamwork_preview"` spawns the full autonomous council.
+> Antigravity runtime. Invoking `TypeName: "teamwork"` spawns the full autonomous council.
 
 ---
 
@@ -70,7 +70,7 @@ Powered by Antigravity's multi-agent orchestration engine (`teamwork_preview`).
                        │
                        ▼
 ┌──────────────────────────────────────────────┐
-│  Pillar 3: Autonomous Council Deliberation   │  <-- teamwork_preview
+│  Pillar 3: Autonomous Council Deliberation   │  <-- teamwork
 │  - Parallel Specialized Academic Reviewers   │
 │  - Adversarial Thesis Defense Simulation     │
 │  - Citation Forensic Verification            │
@@ -128,11 +128,11 @@ Engage the operator interactively using `ask_question` (one question at a time):
 
 ### Pillar 3: Autonomous Council Deliberation
 
-Upon operator approval, dispatch `teamwork_preview` using this structure:
+Upon operator approval, dispatch `teamwork` using this structure:
 
 ```json
 invoke_subagent(
-  TypeName: "teamwork_preview",
+  TypeName: "teamwork",
   Role: "Academic Council Panel",
   Prompt: <academic_council_prompt_text>
 )
@@ -260,7 +260,7 @@ Generate a comprehensive evaluation report saved to
 
 ### Pillar 4: Certified Deliverable Packaging
 
-Once `teamwork_preview` returns, the Parent Agent reads `academic_council_report.md` and presents:
+Once `teamwork` returns, the Parent Agent reads `academic_council_report.md` and presents:
 
 1. **Executive Summary & Chairman Verdict**: Ranking (#1 to #5) with composite scores.
 2. **Scorecard Matrix**: Per-proposal scores across Feasibility, Novelty, Methodology, Theory, Defense Readiness.

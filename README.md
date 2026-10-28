@@ -11,8 +11,8 @@ The setup evolves continuously as I test new patterns, encounter edge cases, and
 > Tucked inside the skills catalog is an odd one out: `academic-council`. Full disclosure: I built it on a whim specifically to survive my own undergraduate accounting & finance thesis—validating Indonesia Stock Exchange (IDX/BEI) secondary data, double-checking panel econometrics (Chow/Hausman tests, Cash ETR boundaries), and simulating ruthless oral defense interrogations from thesis committees. If you're here strictly for software engineering dotfiles, feel free to skip it entirely. But if you happen to be a senior student drowning in econometric specs and hallucinated AI citations, *well... feel free to borrow the council!*
 
 > [!WARNING]
-> **Token Consumption Warning: `council-review` & `teamwork_preview`**
-> Running the deliberative `council-review` skill triggers Antigravity's experimental `teamwork_preview` engine. A full council run spawns 15 to 20+ autonomous subagents in discrete phases (Sentinel, Orchestrator, Parallel Domain Explorers, Adversarial Challengers, and Victory Auditor).
+> **Token Consumption Warning: `council-review` & `teamwork`**
+> Running the deliberative `council-review` skill triggers Antigravity's `teamwork` engine. A full council run spawns 15 to 20+ autonomous subagents in discrete phases (Sentinel, Orchestrator, Parallel Domain Explorers, Adversarial Challengers, and Victory Auditor).
 >
 > This multi-agent deliberation consumes significant tokens. Reserve `council-review` for high-stakes architectural evaluations, comprehensive security audits, and critical pre-release reviews rather than routine, minor code edits.
 
@@ -115,7 +115,7 @@ Twenty modular skills load on-demand through Antigravity's progressive disclosur
 *(Note: Third-party suites like `antislop` are decoupled from git tracking per ADR-0006 and installed via `npx antislop-ai` or Antigravity Marketplace).*
 
 #### Core Workflows
-- `council-review`: Multi-agent deliberative review panel synthesizing context grounding, socratic scoping, and teamwork peer reviews (high token consumption; spawns 15 to 20+ subagents via `teamwork_preview`).
+- `council-review`: Multi-agent deliberative review panel synthesizing context grounding, socratic scoping, and teamwork peer reviews (high token consumption; spawns 15 to 20+ subagents via `teamwork`).
 - `academic-council`: Deliberative research evaluation panel for empirical finance, accounting, and BEI thesis proposals (featuring citation forensics and defense simulation).
 - `audit-dev-workflow`: Defensive development runbook with caller tracing, checkpoints, testless fallbacks, and automated rollback scripts.
 - `spec-kit`: Spec-Driven Development framework (`/speckit.specify`, `/speckit.plan`, `/speckit.tasks`).

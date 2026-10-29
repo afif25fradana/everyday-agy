@@ -21,6 +21,8 @@ Never let internal AI orchestration or audit machinery leak into repository file
   - Commit messages must use clean standard prefixes (`fix(scope): ...`, `refactor(scope): ...`, `feat(scope): ...`, `test(scope): ...`, `docs(scope): ...`).
   - Describe **what** changed in the software and **why**, exactly as a pragmatist human software engineer would write it.
   - Zero AI buzzwords, zero process tags, and zero robotic self-congratulations.
+- **Review Anti-Sycophancy**:
+  - Strictly ban performative praise in code review dialogs: `"You're absolutely right!"`, `"Great point!"`, `"Thanks for catching that!"`, `"Excellent feedback!"`. Evaluate feedback purely on caller verification, YAGNI, and technical merits.
 
 ---
 

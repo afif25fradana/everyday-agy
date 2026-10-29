@@ -4,7 +4,7 @@ My personal configuration for Google Antigravity, built around the coding workfl
 
 This repository collects my specialized agent roles, reusable workflow skills, PowerShell AST security guardrails, and architectural decision records (ADRs). It also includes utility scripts to synchronize configurations between my local environment (`~/.gemini/`) and Git, backed by pre-flight credential scanning and automated regression tests.
 
-The setup evolves continuously as I test new patterns, encounter edge cases, and refine workflows. Some components are adapted from community tools (Ponytail, Trail of Bits, Spec-Kit), while others were built for my own project needs. This is a personal configuration, not an enterprise framework or an absolute guarantee against model mistakes.
+The setup evolves continuously as I test new patterns, encounter edge cases, and refine workflows. Some components are adapted from community tools (Ponytail, Trail of Bits, Spec-Kit, Superpowers), while others were built for my own project needs. This is a personal configuration, not an enterprise framework or an absolute guarantee against model mistakes.
 
 > [!NOTE]
 > **Btw, feel free to ignore `academic-council` (or don't, if you're also fighting an empirical thesis):**  

@@ -110,6 +110,19 @@ const [userProfile, orderHistory, accountBalance] = await Promise.all([
 const userProfile = await fetchUserProfile(userId);
 const orderHistory = await fetchOrderHistory(userId);
 const accountBalance = await fetchAccountBalance(userId);
+
+// GOOD: Deterministic condition-based waiting (replaces flaky sleep/setTimeout in async tests)
+async function waitFor(predicate: () => Promise<boolean> | boolean, timeoutMs = 2000, intervalMs = 50): Promise<void> {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    if (await predicate()) return;
+    await new Promise(r => setTimeout(r, intervalMs));
+  }
+  throw new Error(`waitFor condition timed out after ${timeoutMs}ms`);
+}
+
+// BAD: Arbitrary fixed sleep in async tests
+await new Promise(r => setTimeout(r, 1000));
 ```
 
 ### 5. Type Safety & Boundary Validation

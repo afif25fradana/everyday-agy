@@ -30,6 +30,9 @@ All artifacts are persisted in `specs/<feature_name>/` within the project root.
 ## Phase 1: `/speckit.specify`
 
 Focus on **WHAT** is needed and **WHY**, without prescribing internal implementation details or prematurely picking libraries.
+- **Socratic 1-Question Discipline**: Clarifying turns must end with exactly one focused question to prevent user fatigue.
+- **Scope & Constraint Discovery**: Surface implied constraints and cheaper alternative paths in 1–3 lines (strictly zero prompt restating per `GEMINI.md#L35`).
+- **Design Gate**: Hard boundary prohibiting code writing or project scaffolding until the user explicitly approves `spec.md`.
 
 Create `specs/<feature_name>/spec.md`:
 ```markdown
@@ -77,6 +80,9 @@ Create `specs/<feature_name>/plan.md`:
 ## 4. Verification Harness
 - **Test Strategy**: [Unit tests, integration tests, or mock-free CLI invocations]
 - **Verification Command**: [Exact command to test, e.g. `npm test` or `python -m pytest`]
+
+## 5. Review Focus (Top 5 Implied Edge Cases & Failure Modes)
+- [Identify top 5 implied edge cases, race hazards, or boundary limits; each must map to an atomic test task in tasks.md]
 ```
 
 ---

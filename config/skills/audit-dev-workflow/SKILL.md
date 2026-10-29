@@ -23,10 +23,10 @@ Before initiating Phase 1 investigation, classify the incoming task into one of 
 - **`large` (Tier 3)**: High-stakes architectural overhaul, cross-cutting schema changes, public API redesign, or foreign harness porting. Trigger full deliberative Tri-Pillar Council Review ([`council-review`](../council-review/SKILL.md) via `teamwork`).
 
 ### Phase 1: Investigation & Blast Radius Analysis
-1. **Trace Callers & Invariants (Parallel Fan-Out)**: Batch read-only `rtk rg` caller searches and target file reads in parallel within a single turn before proposing any edits. Understand the root cause and map affected boundaries.
+1. **Trace Callers & Invariants (Parallel Fan-Out)**: Batch read-only `rtk rg` caller searches and target file reads in parallel within a single turn before proposing any edits. For complex bugs, use multi-layer boundary logging (inserting temporary diagnostic logs showing data crossing boundaries) and trace call stacks backward from the failure point to root causes.
 2. **External API & Library Verification (Context7 MCP)**: When inspecting or altering third-party libraries, APIs, or framework contracts, use Context7 MCP (`resolve-library-id` -> `query-docs`) to verify official APIs and versions instead of relying on pre-training memory.
-3. **Optional Delegation for Large Discovery**: For massive codebase exploration or log-heavy caller tracing, Parent may deploy a read-only `research` subagent (`Model: inherit`) to keep context clean. For standard investigations, inspect files directly (`read_file` in Parent Agent; `view_file` in Subagents per ADR-0007).
-4. **Repro-First Failing Test (SWE-Agent Pattern)**: For bug fixes or logic defects, create a minimal reproducible test script or failing test case first (RED) before writing any solution code. Confirm that the test reliably captures the failure mode before moving to execution.
+3. **Optional Delegation for Large Discovery**: For massive codebase exploration or log-heavy caller tracing, Parent may deploy a read-only specialist subagent from `~/.gemini/config/agents/` (e.g. `system-architect` or `code-auditor`, `Model: inherit`) to keep parent context clean. For standard investigations, inspect files directly (`read_file` in Parent Agent; `view_file` in Subagents per ADR-0007).
+4. **Repro-First Failing Test (Failure-First Verification / RED)**: For bug fixes or logic defects, create a minimal reproducible test script or failing test case first (RED) before writing any solution code. Confirm the test fails specifically for the missing behavior or broken assertion—not for syntax errors, missing imports, or broken test setup.
 5. **Hazard Assessment**:
    - Test harness mocks (`unittest.mock.patch`, Jest spies, dynamic method patching).
    - Concurrency & threading locks, event loops, and daemon states.
@@ -58,17 +58,18 @@ Establish a rollback point before modifying files:
       - On `APPROVE`: Proceed directly to Phase 3 implementation.
       - On `QUESTIONS FOR IMPLEMENTER`: Run `rtk rg "<symbol>"` and return exact file coordinates (`file.ext#Lxx-Lyy`) and verbatim definitions; await reviewer resolution.
       - On `REJECT`: Stop immediately, evaluate reviewer feedback, and return to Phase 1 investigation or revise proposal.
+    - **Review Anti-Sycophancy & Technical Verification**: Strictly ban performative praise (`"You're absolutely right!"`, `"Great point!"`). Verify all review suggestions technically against caller grep results and Ponytail YAGNI before implementing.
   - Qualifying Tier 0 changes bypass Gate 1 review ceremony and proceed directly to execution upon user approval.
 
 ### Phase 3: Pragmatic Implementation
 1. **Direct Execution**: Apply approved changes directly (`edit_file` / `write_file` in Parent Agent; `replace_file_content` / `write_to_file` when delegated to Subagents per ADR-0007). Shortest working diff wins.
-2. **Optional Subagent Delegation**: For isolated worktree testing or tasks with heavy build/test iterations, Parent may optionally invoke a subagent executor (`Workspace: branch`) or delegate test writing to `tdd-guide`.
+2. **Optional Subagent Delegation**: For tasks with heavy test iterations or isolated prototyping, Parent may delegate test writing to `tdd-guide` or invoke a specialist subagent. Ensure an atomic Git checkpoint exists (`New-AuditCheckpoint.ps1` -> `checkpoint-<task>`) before mutating files.
 3. **Clean Code Discipline**: Zero unneeded abstractions, zero generic AI comments, strict preservation of existing defensive logic (timeouts, retries, null checks, calibrated thresholds), and bracketed `<...>` placeholders for secret scanner hygiene.
 
 ### Phase 4: Local Verification & Review
 1. **Unified Diff Inspection**: Review the diffstat and unified diff against the plan. Ensure no accidental changes or debug artifacts were left behind.
 2. **Test Suite Verification**:
-   - **Repos with Test Harnesses**: Execute relevant unit/integration tests directly to capture: (a) exact CLI test command executed, (b) terminal exit code (0), and (c) verbatim assertion stdout/stderr snippet showing passed checks (turning the Phase 1 RED test into GREEN). Stop immediately on unexpected test failures.
+   - **Repos with Test Harnesses**: Execute relevant unit/integration tests directly to capture: (a) exact CLI test command executed, (b) terminal exit code (0), and (c) verbatim assertion stdout/stderr snippet showing passed checks (turning the Phase 1 RED test into GREEN). In addition to targeted tests, execute the full project test suite (`rtk npm test`, `rtk python -m pytest`); any unmentioned failing test is treated as an incomplete report. Circuit Breaker: After two failed fix attempts on unexpected test/build failures, stop immediately, assess whether the pattern couples shared state or patches symptoms, and escalate to the user per `GEMINI.md#L45`.
    - **Testless Repositories**: For repositories lacking automated test suites (documentation, infra/devops configs, initial prototypes), substitute with static verification: syntax checking (e.g. `python -m py_compile`, `rtk npx eslint`), build checks, or dry-run execution. Explicitly annotate Gate 2 with `[TEST HARNESS: NONE — STATIC/BUILD EVIDENCE PROVIDED]`.
 3. **Five-Axis Pre-Flight Rubric**:
    - **Axis 1 (Correctness & Invariants)**: Boundary checks, state transitions, loop invariants, type safety, caller regressions, async/await/lock ordering, and zero dropped defensive logic (never silently strip timeouts, retries, null checks, or calibrated thresholds). Avoid specificity/precedence surprises and unverified "dead code" claims. Modern active runtimes only (Python 3.12+, Node 20/22+).

@@ -281,6 +281,21 @@ After drafting documentation, review the prose to ensure technical accuracy and 
 
 ---
 
+## Process Documentation: Match Form to Failure
+
+When authoring operational runbooks, agent skills, or prompt contracts:
+
+1. **Output Shaping Failures** (verbose narrative or unstructured responses):
+   - Provide a **positive structural recipe** defining what the output *is* (order, headings, slots). Never rely on prohibition lists ("don't restate"), which invite prompt negotiation.
+2. **Discipline & Rule Violations Under Pressure** (skipping steps or cutting corners):
+   - Use **explicit prohibitions + anti-rationalization tables + red flags**. Avoid soft guidance ("prefer", "consider") that collapses under pressure.
+3. **Omission of Required Elements**:
+   - Use **explicit uppercase schema slots** (e.g. `<TARGET_COORDINATES>`) instead of prose reminders.
+4. **Zero Nuance Clauses**:
+   - Never append escape clauses ("Don't X unless Y"). Nuance clauses reopen behavioral bargaining.
+
+---
+
 ## Red Flags
 
 - Architectural decisions made with no written rationale

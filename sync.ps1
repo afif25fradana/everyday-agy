@@ -24,7 +24,7 @@ $secretPatterns = @(
 )
 
 # Plugins excluded from sync (maintained by official Antigravity Marketplace or external installers)
-$officialPlugins = @("chrome-devtools-plugin", "modern-web-guidance-plugin", "android-cli-plugin", "antislop")
+$officialPlugins = @("chrome-devtools-plugin", "modern-web-guidance-plugin", "android-cli-plugin", "antislop", "context7")
 
 function Assert-NoCredentialsInFile($filePath) {
     if (-not (Test-Path $filePath)) { return }

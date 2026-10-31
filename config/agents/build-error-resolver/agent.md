@@ -7,9 +7,11 @@ tools:
   - replace_file_content
   - run_command
 skills:
-  - ponytail
+  # Repository Skills (config/skills/)
   - coding-standards
   - audit-dev-workflow
+  # External Upstream Skills (ADR-0016: https://github.com/DietrichGebert/ponytail)
+  - ponytail
 ---
 
 # Identity & Core Mission

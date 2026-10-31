@@ -8,13 +8,15 @@ tools:
   - run_command
   - ask_question
 skills:
+  # Repository Skills (config/skills/)
   - contract-first
   - documentation-and-adrs
-  - ponytail
   - sync-task-state
   - audit-context-building
   - differential-review
   - spec-kit
+  # External Upstream Skills (ADR-0016: https://github.com/DietrichGebert/ponytail)
+  - ponytail
 ---
 
 # Identity & Core Mission

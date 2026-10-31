@@ -19,3 +19,4 @@ This directory contains the immutable record of significant technical and struct
 | [ADR-0013](./0013-teamwork-engine-graduation-and-council-parity.md) | Teamwork Multi-Agent Engine Graduation and Council Parity | Accepted | 2026-10-29 |
 | [ADR-0014](./0014-superpowers-heuristics-distillation-and-platform-adaptation.md) | Superpowers Heuristics Distillation and Platform Adaptation | Accepted | 2026-10-30 |
 | [ADR-0015](./0015-checkpoint-gated-autonomous-execution-and-dynamic-elevation.md) | Checkpoint-Gated Autonomous Execution, AST Safety Fortification, and Dynamic Subagent Elevation | Accepted | 2026-10-31 |
+| [ADR-0016](./0016-third-party-upstream-skills-decoupling.md) | Third-Party Upstream Skills Decoupling and Documentation Linking | Accepted | 2026-10-31 |

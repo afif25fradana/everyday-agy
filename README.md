@@ -73,20 +73,20 @@ everyday-agy/
 ├── TOOLKIT.md           # Catalog of CLI tools, MCP snippets, and skill upstream links
 ├── config/
 │   ├── agents/          # 11 specialized subagents configured with hybrid model tiering (ADR-0004)
-│   └── skills/          # 20 curated, adapted, and bespoke workflow skills
+│   └── skills/          # 13 bespoke and engine-adapted workflow skills
 ├── docs/
-│   └── adr/             # Architectural Decision Records (ADR-0001 through ADR-0015)
+│   └── adr/             # Architectural Decision Records (ADR-0001 through ADR-0016)
 ├── sync.ps1             # Pulls live configs from ~/.gemini/ into this repo
 └── restore.ps1          # Deploys this repo into ~/.gemini/ with automatic backup
 ```
 
 ### Operational Guardrails (`GEMINI.md`)
 The global rules file stays compact by defining only active behavioral boundaries:
-- Investigate first: trace callers with `rtk rg` before editing code.
-- Explicit approval: obtain human confirmation before running mutating commands or modifying files.
-- Checkpoints & safety: verify git status or take backups before editing.
-- Lean chat: report concise summaries (1 to 2 lines with diffs or action items).
-- Security boundaries: deny paths (`.env`, `~/.ssh`, token MCP), AST command interception (`Test-PowerShellCommandSafety.ps1` backed by continuous CI regression tests), and quarantine for external inputs.
+- Investigate first: trace callers with `rtk rg` before proposing or editing code.
+- Checkpoint-gated execution: autonomous execution and verification for small fixes (Tier 0/1); explicit approval before multi-file or architectural changes (Tier 2/3, ADR-0015).
+- Rollback safety: maintain a clean git checkpoint before modifying files.
+- Lean chat: concise status responses (1 to 3 lines) pointing to structured artifacts for review payloads.
+- Security boundaries: deny paths (`.env`, `~/.ssh`, token MCP configs), AST command interception (`Test-PowerShellCommandSafety.ps1` with 35 CI test cases), and quarantine for external inputs.
 
 ### Specialized Agent Roles (`config/agents/`)
 Eleven specialized agent configurations handle task delegation. Analytical roles run on `model: inherit` (ADR-0004) to retain the full reasoning capacity of the primary model:
@@ -104,31 +104,34 @@ Eleven specialized agent configurations handle task delegation. Analytical roles
 
 ### Workflow Skills and Provenance (`config/skills/`)
 
-Twenty modular skills load on-demand through Antigravity's progressive disclosure engine. They are partitioned transparently by origin and licensing:
+Thirteen modular skills are maintained directly within `config/skills/`. Third-party upstream suites (`ponytail`, `taste-skill`, and `antislop`) are decoupled from git tracking per ADR-0006, ADR-0011, and ADR-0016, and installed directly from their respective project repositories:
 
 | Category | Count | Included Skills | Origin / Licensing |
 |---|:---:|---|---|
 | **Bespoke Architectures** | 5 | `council-review`, `academic-council`, `audit-dev-workflow`, `sync-task-state`, `clean-docs` | Original works authored for Antigravity (MIT) |
-| **Engine-Adapted Ports** | 7 | `spec-kit`, `gh-workflow`, `audit-context-building`, `differential-review`, `contract-first`, `database-migrations`, `coding-standards` | Adapted from community tools, ECC, and Trail of Bits (MIT & CC BY-SA 4.0) |
-| **Curated Community Suites** | 8 | `ponytail` suite (6), `design-taste-frontend`, `documentation-and-adrs` | Bundled from DietrichGebert, Leonxlnx, and standards (MIT) |
+| **Engine-Adapted Ports** | 8 | `spec-kit`, `gh-workflow`, `audit-context-building`, `differential-review`, `contract-first`, `database-migrations`, `coding-standards`, `documentation-and-adrs` | Adapted from community tools, ECC, and Trail of Bits (MIT & CC BY-SA 4.0) |
 
-*(Note: Third-party suites like `antislop` are decoupled from git tracking per ADR-0006 and installed via `npx antislop-ai` or Antigravity Marketplace).*
+#### Recommended Upstream Skills & Plugins (Decoupled per ADR-0016)
+Refer to the upstream repositories for their official Antigravity installation instructions:
+- [**Taste-Skill (`design-taste-frontend`)**](https://github.com/Leonxlnx/taste-skill): Anti-slop frontend art direction distilled from 247 curated design galleries (Leonxlnx, MIT).
+- [**Ponytail Suite**](https://github.com/DietrichGebert/ponytail): Minimal diff enforcement, repo quality audits, technical debt ledgers, and PR reviews (DietrichGebert, MIT).
+- [**Antislop Suite**](https://github.com/antislop-ai/antislop): Content and code comment hygiene for AI coding agents (MIT).
+- [**Chrome DevTools & Modern Web Guidance**](https://antigravity.google): Official Google developer tooling plugins available in the Antigravity Plugin Marketplace.
 
-#### Core Workflows
+#### Core Tracked Workflows
 - `council-review`: Multi-agent deliberative review panel synthesizing context grounding, socratic scoping, and teamwork peer reviews (high token consumption; spawns 15 to 20+ subagents via `teamwork`).
 - `academic-council`: Deliberative research evaluation panel for empirical finance, accounting, and BEI thesis proposals (featuring citation forensics and defense simulation).
 - `audit-dev-workflow`: Defensive development runbook with caller tracing, checkpoints, testless fallbacks, and automated rollback scripts.
 - `spec-kit`: Spec-Driven Development framework (`/speckit.specify`, `/speckit.plan`, `/speckit.tasks`).
 - `gh-workflow`: Non-interactive CI monitoring and PR lifecycle automation via authenticated `gh`.
-- `ponytail` (suite of 6): Minimal diff enforcement, repo quality audits, technical debt ledgers, and PR reviews (DietrichGebert, MIT).
 - `contract-first`: Schema-first API design collaboration without drift.
 - `database-migrations`: Safe, reversible, zero-downtime database schema changes.
 - `coding-standards`: Baseline naming, immutability, and error handling conventions.
 - `audit-context-building`: Invariant mapping and assumption tracing before code audits (Trail of Bits, CC BY-SA 4.0).
 - `differential-review`: Security differential analysis for commits and pull requests (Trail of Bits, CC BY-SA 4.0).
-- `design-taste-frontend`: Anti-slop frontend art direction distilled from curated design galleries (Leonxlnx, MIT).
 - `documentation-and-adrs`: Standardized Nygard ADR authoring.
-- `sync-task-state`: Lightweight context synchronization (`task_state.md`) for Twin-Repo workflows with Antigravity Tactical Gotcha Protocol (ATGP).
+- `sync-task-state`: Lightweight context synchronization (`task_state.md`) for Twin-Repo workflows with bounded gotchas linked to ADRs.
+- `clean-docs`: Plain-spoken documentation, zero AI process leaks, and commit hygiene.
 
 ### Architectural Decision Records (`docs/adr/`)
 Technical decisions, constraints, and trade-offs are recorded as permanent Nygard ADRs:
@@ -147,13 +150,14 @@ Technical decisions, constraints, and trade-offs are recorded as permanent Nygar
 - [ADR-0013](./docs/adr/0013-teamwork-engine-graduation-and-council-parity.md): Teamwork Multi-Agent Engine Graduation and Council Parity.
 - [ADR-0014](./docs/adr/0014-superpowers-heuristics-distillation-and-platform-adaptation.md): Superpowers Heuristics Distillation and Platform Adaptation.
 - [ADR-0015](./docs/adr/0015-checkpoint-gated-autonomous-execution-and-dynamic-elevation.md): Checkpoint-Gated Autonomous Execution, AST Safety Fortification, and Dynamic Subagent Elevation.
+- [ADR-0016](./docs/adr/0016-third-party-upstream-skills-decoupling.md): Third-Party Upstream Skills Decoupling and Documentation Linking.
 
 ## Contributing
 
 1. Keep modifications minimal: shortest working diff wins (see `ponytail`).
 2. Avoid generic commentary: remove empty AI narrative comments from code.
 3. Propose structural changes through ADRs before modifying directory layouts or core guardrails.
-4. Verify all tests and CI checks pass locally using `.\sync.ps1` before opening a pull request.
+4. Verify PowerShell syntax and run AST safety tests (`Test-PowerShellCommandSafety.Tests.ps1`) locally before committing.
 
 ## License
 

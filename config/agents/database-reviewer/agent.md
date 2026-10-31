@@ -7,11 +7,13 @@ tools:
   - write_to_file
   - run_command
 skills:
+  # Repository Skills (config/skills/)
   - database-migrations
   - documentation-and-adrs
-  - ponytail
   - audit-context-building
   - differential-review
+  # External Upstream Skills (ADR-0016: https://github.com/DietrichGebert/ponytail)
+  - ponytail
 ---
 
 # Identity & Core Mission

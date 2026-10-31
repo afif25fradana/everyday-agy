@@ -90,7 +90,7 @@ if (Test-Path $srcAgents) {
     $dstAgents = Join-Path $configHome "agents"
     New-Item -ItemType Directory -Force -Path $dstAgents | Out-Null
     Copy-Item -Path (Join-Path $srcAgents "*") -Destination $dstAgents -Recurse -Force
-    $agentCount = (Get-ChildItem -Path $dstAgents -Directory).Count
+    $agentCount = (Get-ChildItem -Path $srcAgents -Directory).Count
     Write-Host "[OK] Restored $agentCount Custom Agents" -ForegroundColor Green
 }
 
@@ -100,7 +100,7 @@ if (Test-Path $srcSkills) {
     $dstSkills = Join-Path $configHome "skills"
     New-Item -ItemType Directory -Force -Path $dstSkills | Out-Null
     Copy-Item -Path (Join-Path $srcSkills "*") -Destination $dstSkills -Recurse -Force
-    $skillCount = (Get-ChildItem -Path $dstSkills -Directory).Count
+    $skillCount = (Get-ChildItem -Path $srcSkills -Directory).Count
     Write-Host "[OK] Restored $skillCount Custom Skills" -ForegroundColor Green
 }
 
@@ -129,6 +129,8 @@ if (Test-Path $srcAdr) {
 
 Write-Host ">>> Everyday-AGY restoration completed successfully!" -ForegroundColor Green
 Write-Host ">>> Note: For Context7 MCP setup, refer to README.md and TOOLKIT.md." -ForegroundColor Yellow
-Write-Host ">>> Tip: Recommended external plugins (install via CLI / Marketplace):" -ForegroundColor Cyan
-Write-Host "    - Antislop: npx antislop-ai (or clone to ~/.gemini/config/plugins/antislop)" -ForegroundColor DarkGray
-Write-Host "    - Chrome DevTools & Modern Web Guidance: Install from Antigravity Marketplace" -ForegroundColor DarkGray
+Write-Host ">>> Tip: Recommended upstream skills & plugins (refer to official docs for Antigravity install):" -ForegroundColor Cyan
+Write-Host "    - Taste-Skill (design-taste-frontend): https://github.com/Leonxlnx/taste-skill" -ForegroundColor DarkGray
+Write-Host "    - Ponytail (lazy dev mode & audits):  https://github.com/DietrichGebert/ponytail" -ForegroundColor DarkGray
+Write-Host "    - Antislop (clean copywriting & UI):  https://github.com/antislop-ai/antislop" -ForegroundColor DarkGray
+Write-Host "    - Chrome DevTools & Web Guidance:     Install via Antigravity Marketplace" -ForegroundColor DarkGray

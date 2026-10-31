@@ -52,14 +52,12 @@ Every root README must follow this clean structure:
   - Plainly document trade-offs and known architectural constraints.
 
 ### 5. GitHub Community Standards & Clean Root Invariant
-- **Clean Root**: All community health files must reside in `.github/` (`.github/CONTRIBUTING.md`, `.github/SECURITY.md`, `.github/CODE_OF_CONDUCT.md`, `.github/pull_request_template.md`).
+- **Clean Root & Anti-Ceremony**: Avoid excessive ceremony files (e.g. Code of Conduct, heavy contributing guides) in small personal dotfiles or hobby repos. When community files are legitimately required for larger libraries, keep them cleanly tucked in `.github/`.
 - **Modern Issue Forms (`.github/ISSUE_TEMPLATE/*.yml`)**:
-  - Prefer GitHub Issue Forms (`.yml`) over plain markdown templates for structured reporting.
+  - Prefer GitHub Issue Forms (`.yml`) over unstructured templates when issue forms are used.
   - Include `.github/ISSUE_TEMPLATE/config.yml` with `blank_issues_enabled: false`.
-- **Authentic Security Policy (`.github/SECURITY.md`)**:
+- **Authentic Security & Guidelines (When Present)**:
   - Avoid fake corporate security team references (*"Contact our 24/7 Global AppSec team"*).
-  - Use native **GitHub Private Vulnerability Reporting** (`https://github.com/<owner>/<repo>/security/advisories/new`).
-- **Grounded Contributing Guidelines (`.github/CONTRIBUTING.md`)**:
   - Include actual local test and validation commands that exist and run in CI.
 
 ### 6. Public Repo & Clean Docs Compliance

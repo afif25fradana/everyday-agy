@@ -63,7 +63,7 @@ npm install -g @ast-grep/cli
 
 ## 3. Custom Skills Catalog
 
-19 modular skills shipped directly within this repository (`config/skills/`), plus 10 recommended external/marketplace skills documented in Section 4.
+13 bespoke and adapted skills shipped directly within this repository (`config/skills/`), with external third-party suites decoupled into Section 4.
 
 ### A. Spec-Driven & Development Workflows
 | Skill Name | Trigger / Command | Description | Upstream / Origin |
@@ -75,17 +75,7 @@ npm install -g @ast-grep/cli
 | **audit-dev-workflow** | `/audit-dev-workflow`<br>`/audit-first` | Defensive audit-first workflow: caller tracing, checkpoints, explicit approvals, and verification. | **Original Work (@afif25fradana)** /<br>Heuristics adapted from [obra/superpowers](https://github.com/obra/superpowers) |
 | **sync-task-state** | `/sync-task-state` | Lightweight active AI context management (`task_state.md`) in Twin-Repo workflows. | **Original Work (@afif25fradana)** |
 
-### B. Ponytail 5 Suite (YAGNI & Anti-Overengineering)
-| Skill Name | Trigger / Command | Description | Upstream / Origin |
-|---|---|---|---|
-| **ponytail** | `/ponytail [lite\|full\|ultra]` | Lazy senior dev mode: shortest working diff, eliminates speculative abstractions and bloat. | [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail) |
-| **ponytail-audit** | `/ponytail-audit` | Quality audit of an entire repo: bugs, security risks, load bottlenecks, and dead code cleanup. | [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail) |
-| **ponytail-review** | `/ponytail-review` | Deep quality review for git diffs and PRs (correctness, safety, real load, and testing). | [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail) |
-| **ponytail-debt** | `/ponytail-debt` | Scans `shortcut:` and `ponytail:` comments as an actionable technical debt ledger. | [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail) |
-| **ponytail-gain** | `/ponytail-gain` | Displays measured token and performance benchmark savings (39-task suite). | [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail) |
-| **ponytail-help** | `/ponytail-help` | Quick reference cheatsheet for Ponytail levels, rules, and commands. | [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail) |
-
-### C. Security, Standards & Architecture
+### B. Security, Standards & Architecture
 | Skill Name | Trigger / Command | Description | Upstream / Origin |
 |---|---|---|---|
 | **audit-context-building** | `/audit-context-building` | Builds codebase comprehension before security audits: maps invariants, assumptions (`nothing found`), and contracts. | **Trail of Bits**<br>[trailofbits/skills](https://github.com/trailofbits/skills)<br>*(Adapted for Google Antigravity)* |
@@ -96,23 +86,20 @@ npm install -g @ast-grep/cli
 | **clean-docs** | `/clean-docs` | Enforces plain-spoken repo prose, humanized conventional commits, and zero AI process leaks. | **Original Work (@afif25fradana)** |
 | **documentation-and-adrs** | `/documentation-and-adrs` | Documents architectural decisions, trade-offs, and context using Michael Nygard's ADR format. | Michael Nygard Standard /<br>[joelparkerhenderson/architecture-decision-record](https://github.com/joelparkerhenderson/architecture-decision-record) |
 
-### D. Frontend & Visual Craft
-| Skill Name | Trigger / Command | Description | Upstream / Origin |
-|---|---|---|---|
-| **design-taste-frontend** | *Auto-triggers on frontend UI design* | Tasteskill v2: art direction distilled from 247 curated Awwwards & OnePageLove websites. | [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) |
-
 ---
 
-## 4. Recommended External & Marketplace Plugins
+## 4. Recommended Upstream Skills & Plugins (Decoupled per ADR-0016)
 
-These plugins are maintained officially or via upstream package managers. Install them directly rather than tracking vendor clones in Git (per ADR-0006 & ADR-0011):
+These skills and plugins are maintained in their own upstream repositories with dedicated Antigravity installers. Refer to their official project documentation for installation instructions rather than tracking vendor clones in Git:
 
-| Plugin Name | Included Skills | Description | Official Upstream & Install |
+| Project / Suite | Included Skills | Description | Official Documentation & Antigravity Setup |
 |---|---|---|---|
-| **Anti-Slop Suite** (`antislop`) | `antislop`<br>`antislop-ui`<br>`antislop-copywriting`<br>`antislop-code`<br>`antislop-human`<br>`antislop-layoutmobile` | Master filter for AI coding agents: stops generic AI purple gradients, filler copy, and sloppy comments. | [miqdadbadjuber/anti-slop](https://github.com/miqdadbadjuber/anti-slop)<br>`npx antislop-ai` |
-| **Chrome DevTools** (`chrome-devtools-plugin`) | `chrome-devtools`<br>`a11y-debugging`<br>`cookie-debugging`<br>`debug-optimize-lcp`<br>`memory-leak-debugging`<br>`troubleshooting` | Browser automation, accessibility auditing, cookie debugging, Core Web Vitals (LCP) optimization, and heap snapshots. | [ChromeDevTools/chrome-devtools-mcp](https://github.com/ChromeDevTools/chrome-devtools-mcp)<br>*(Antigravity Marketplace)* |
-| **Modern Web Guidance** (`modern-web-guidance-plugin`) | `modern-web-guidance`<br>`chrome-extensions` | Best practices for modern web platform APIs (popovers, container queries, view transitions) and Chrome Extensions Manifest V3. | [GoogleChrome/modern-web-guidance](https://github.com/GoogleChrome/modern-web-guidance)<br>*(Antigravity Marketplace)* |
-| **Android CLI** (`android-cli-plugin`) | `android-cli` | Project scaffolding, emulator control, layout tree inspection, and visual validation for Android development. | [developer.android.com/tools/agents/android-cli](https://developer.android.com/tools/agents/android-cli)<br>*(Antigravity Marketplace)* |
+| **Taste-Skill** | `design-taste-frontend` | Anti-slop frontend art direction distilled from 247 curated design galleries. | [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) |
+| **Ponytail Suite** | `ponytail`<br>`ponytail-audit`<br>`ponytail-review`<br>`ponytail-debt`<br>`ponytail-gain`<br>`ponytail-help` | Lazy senior developer mode: shortest working diffs, YAGNI enforcement, repo audits, and debt ledgers. | [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail) |
+| **Anti-Slop Suite** | `antislop`<br>`antislop-ui`<br>`antislop-copywriting`<br>`antislop-code`<br>`antislop-human`<br>`antislop-layoutmobile` | Master filter for AI coding agents: stops generic AI purple gradients, filler copy, and sloppy comments. | [miqdadbadjuber/anti-slop](https://github.com/miqdadbadjuber/anti-slop) |
+| **Chrome DevTools** | `chrome-devtools`<br>`a11y-debugging`<br>`cookie-debugging`<br>`debug-optimize-lcp`<br>`memory-leak-debugging`<br>`troubleshooting` | Browser automation, accessibility auditing, cookie debugging, Core Web Vitals (LCP) optimization, and heap snapshots. | [ChromeDevTools/chrome-devtools-mcp](https://github.com/ChromeDevTools/chrome-devtools-mcp)<br>*(Antigravity Marketplace)* |
+| **Modern Web Guidance** | `modern-web-guidance`<br>`chrome-extensions` | Best practices for modern web platform APIs (popovers, container queries, view transitions) and Chrome Extensions Manifest V3. | [GoogleChrome/modern-web-guidance](https://github.com/GoogleChrome/modern-web-guidance)<br>*(Antigravity Marketplace)* |
+| **Android CLI** | `android-cli` | Project scaffolding, emulator control, layout tree inspection, and visual validation for Android development. | [developer.android.com/tools/agents/android-cli](https://developer.android.com/tools/agents/android-cli)<br>*(Antigravity Marketplace)* |
 
 ---
 

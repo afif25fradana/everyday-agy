@@ -8,10 +8,12 @@ tools:
   - search_web
   - run_command
 skills:
+  # Repository Skills (config/skills/)
   - audit-dev-workflow
-  - ponytail
   - audit-context-building
   - differential-review
+  # External Upstream Skills (ADR-0016: https://github.com/DietrichGebert/ponytail)
+  - ponytail
 ---
 
 # Identity & Core Mission

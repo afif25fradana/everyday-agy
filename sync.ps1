@@ -23,8 +23,17 @@ $secretPatterns = @(
     @{ Kind = "Credential assignment"; Pattern = '["'']?(?:api[_-]?key|access[_-]?token|secret[_-]?key|token)["'']?\s*[:=]\s*["''](?!<)[^\s"'']{16,}["'']' }
 )
 
-# Plugins excluded from sync (maintained by official Antigravity Marketplace or external installers)
+# Plugins and skills excluded from sync (maintained by upstream repositories with dedicated Antigravity installers)
 $officialPlugins = @("chrome-devtools-plugin", "modern-web-guidance-plugin", "android-cli-plugin", "antislop", "context7")
+$externalSkills = @(
+    "design-taste-frontend",
+    "ponytail",
+    "ponytail-audit",
+    "ponytail-debt",
+    "ponytail-gain",
+    "ponytail-help",
+    "ponytail-review"
+)
 
 function Assert-NoCredentialsInFile($filePath) {
     if (-not (Test-Path $filePath)) { return }
@@ -57,12 +66,16 @@ $customPluginDirs = if (Test-Path $pluginsDir) {
     Get-ChildItem -Path $pluginsDir -Directory | Where-Object { $_.Name -notin $officialPlugins } | Select-Object -ExpandProperty FullName
 } else { @() }
 
-# 1c. Scan all custom text files across candidate source directories
+# 1c. Scan all custom text files across candidate source directories (excluding external decoupled skills)
+$allSkillsDir = Join-Path $configHome "skills"
+$customSkillDirs = if (Test-Path $allSkillsDir) {
+    Get-ChildItem -Path $allSkillsDir -Directory | Where-Object { $_.Name -notin $externalSkills } | Select-Object -ExpandProperty FullName
+} else { @() }
+
 $sourceScanTargets = @(
     (Join-Path $configHome "agents"),
-    (Join-Path $configHome "skills"),
     (Join-Path (Join-Path $configHome "docs") "adr")
-) + $customPluginDirs | Where-Object { $_ -and (Test-Path $_) }
+) + $customSkillDirs + $customPluginDirs | Where-Object { $_ -and (Test-Path $_) }
 
 if ($sourceScanTargets) {
     $sourceFiles = Get-ChildItem -Path $sourceScanTargets -Recurse -File -Include "*.md", "*.json", "*.ps1", "*.mjs", "*.py", "*.yml", "*.yaml", "LICENSE*"
@@ -94,14 +107,19 @@ if (Test-Path $srcAgents) {
     Write-Host "[OK] Synced $agentCount Custom Agents" -ForegroundColor Green
 }
 
-# 4. Sync Custom Skills
+# 4. Sync Custom Skills (excluding decoupled upstream skills)
 $srcSkills = Join-Path $configHome "skills"
 if (Test-Path $srcSkills) {
     $dstSkills = Join-Path (Join-Path $scriptRoot "config") "skills"
     New-Item -ItemType Directory -Force -Path $dstSkills | Out-Null
-    Copy-Item -Path (Join-Path $srcSkills "*") -Destination $dstSkills -Recurse -Force
+    $customSkills = Get-ChildItem -Path $srcSkills -Directory | Where-Object { $_.Name -notin $externalSkills }
+    foreach ($cs in $customSkills) {
+        $targetDir = Join-Path $dstSkills $cs.Name
+        New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
+        Copy-Item -Path (Join-Path $cs.FullName "*") -Destination $targetDir -Recurse -Force
+    }
     $skillCount = (Get-ChildItem -Path $dstSkills -Directory).Count
-    Write-Host "[OK] Synced $skillCount Custom Skills (spec-kit, gh-workflow, ponytail, audit, etc.)" -ForegroundColor Green
+    Write-Host "[OK] Synced $skillCount Custom Skills (excluding decoupled upstream skills)" -ForegroundColor Green
 }
 
 # 5. Sync Custom Plugins (exclude official marketplace and external plugins)

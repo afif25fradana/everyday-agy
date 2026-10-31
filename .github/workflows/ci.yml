@@ -69,8 +69,8 @@ jobs:
         shell: pwsh
         run: |
           $skills = Get-ChildItem -Path "config/skills" -Filter "SKILL.md" -Recurse
-          if ($skills.Count -lt 15) {
-            Write-Error "Expected at least 15 bundled skills, found $($skills.Count)"
+          if ($skills.Count -lt 10) {
+            Write-Error "Expected at least 10 bespoke skills, found $($skills.Count)"
             exit 1
           }
           foreach ($s in $skills) {
@@ -80,7 +80,7 @@ jobs:
               exit 1
             }
           }
-          Write-Host "[PASS] All $($skills.Count) bundled skills verified."
+          Write-Host "[PASS] All $($skills.Count) bespoke skills verified."
 
       - name: Verify ADR Index Integrity
         shell: pwsh

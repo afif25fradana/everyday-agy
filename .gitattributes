@@ -1,0 +1,3 @@
+# GitHub Linguist Overrides
+# Exclude bundled third-party design gallery assets and curated JSON databases from repository language statistics
+config/skills/design-taste-frontend/** linguist-vendored

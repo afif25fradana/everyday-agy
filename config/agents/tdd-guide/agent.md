@@ -8,9 +8,11 @@ tools:
   - replace_file_content
   - run_command
 skills:
+  # Repository Skills (config/skills/)
   - audit-dev-workflow
   - coding-standards
   - ponytail
+  # External Marketplace Plugins (ADR-0006: npx antislop-ai)
   - antislop-code
 ---
 

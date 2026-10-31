@@ -11,13 +11,13 @@ tools:
 skills:
   # Antigravity Built-in Skills
   - generative_ui
-  # Repository Custom Skills
+  # Repository Skills (config/skills/)
+  - design-taste-frontend
+  # External Marketplace Plugins (ADR-0006: npx antislop-ai / Chrome DevTools)
   - antislop-ui
   - antislop-copywriting
-  - design-taste-frontend
   - antislop-human
   - antislop-layoutmobile
-  # Optional Marketplace Extensions (Chrome DevTools & Web Guidance)
   - modern-web-guidance
   - a11y-debugging
   - debug-optimize-lcp

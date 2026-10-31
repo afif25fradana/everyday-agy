@@ -75,7 +75,7 @@ everyday-agy/
 │   ├── agents/          # 11 specialized subagents configured with hybrid model tiering (ADR-0004)
 │   └── skills/          # 20 curated, adapted, and bespoke workflow skills
 ├── docs/
-│   └── adr/             # Architectural Decision Records (ADR-0001 through ADR-0012)
+│   └── adr/             # Architectural Decision Records (ADR-0001 through ADR-0015)
 ├── sync.ps1             # Pulls live configs from ~/.gemini/ into this repo
 └── restore.ps1          # Deploys this repo into ~/.gemini/ with automatic backup
 ```
@@ -144,6 +144,9 @@ Technical decisions, constraints, and trade-offs are recorded as permanent Nygar
 - [ADR-0010](./docs/adr/0010-domain-specific-academic-council.md): Academic Council for Capital Market & Secondary Data Thesis Evaluation.
 - [ADR-0011](./docs/adr/0011-ast-security-hardening-and-deployment-parity.md): Pre-Execution AST Security Hardening, Deployment Parity, and Anti-Slop Upstream Filtration.
 - [ADR-0012](./docs/adr/0012-flash-high-optimization-ast-hardening-and-model-tiering-invariants.md): Flash High Optimization, AST Hardening, and Cognitive Tiering Invariants.
+- [ADR-0013](./docs/adr/0013-teamwork-engine-graduation-and-council-parity.md): Teamwork Multi-Agent Engine Graduation and Council Parity.
+- [ADR-0014](./docs/adr/0014-superpowers-heuristics-distillation-and-platform-adaptation.md): Superpowers Heuristics Distillation and Platform Adaptation.
+- [ADR-0015](./docs/adr/0015-checkpoint-gated-autonomous-execution-and-dynamic-elevation.md): Checkpoint-Gated Autonomous Execution, AST Safety Fortification, and Dynamic Subagent Elevation.
 
 ## Contributing
 

@@ -46,20 +46,22 @@ function Assert-NoCredentialsInFile($filePath) {
 Write-Host ">>> Running pre-flight credential audit on source files ($geminiHome)..." -ForegroundColor Cyan
 
 # 1a. Scan GEMINI.md at source
-if (Test-Path "$geminiHome\GEMINI.md") {
-    Assert-NoCredentialsInFile "$geminiHome\GEMINI.md"
+$srcGeminiMd = Join-Path $geminiHome "GEMINI.md"
+if (Test-Path $srcGeminiMd) {
+    Assert-NoCredentialsInFile $srcGeminiMd
 }
 
 # 1b. Scan custom plugins at source (excluding official marketplace plugins)
-$customPluginDirs = if (Test-Path "$configHome\plugins") {
-    Get-ChildItem -Path "$configHome\plugins" -Directory | Where-Object { $_.Name -notin $officialPlugins } | Select-Object -ExpandProperty FullName
+$pluginsDir = Join-Path $configHome "plugins"
+$customPluginDirs = if (Test-Path $pluginsDir) {
+    Get-ChildItem -Path $pluginsDir -Directory | Where-Object { $_.Name -notin $officialPlugins } | Select-Object -ExpandProperty FullName
 } else { @() }
 
 # 1c. Scan all custom text files across candidate source directories
 $sourceScanTargets = @(
-    "$configHome\agents",
-    "$configHome\skills",
-    "$configHome\docs\adr"
+    (Join-Path $configHome "agents"),
+    (Join-Path $configHome "skills"),
+    (Join-Path (Join-Path $configHome "docs") "adr")
 ) + $customPluginDirs | Where-Object { $_ -and (Test-Path $_) }
 
 if ($sourceScanTargets) {
@@ -77,39 +79,41 @@ Write-Host ">>> Proceeding to copy configurations into everyday-agy repository..
 # ==============================================================================
 
 # 2. Sync Global Prompt & Rules
-if (Test-Path "$geminiHome\GEMINI.md") {
-    Copy-Item "$geminiHome\GEMINI.md" "$scriptRoot\GEMINI.md" -Force
+if (Test-Path $srcGeminiMd) {
+    Copy-Item $srcGeminiMd (Join-Path $scriptRoot "GEMINI.md") -Force
     Write-Host "[OK] Synced GEMINI.md" -ForegroundColor Green
 }
 
 # 3. Sync Custom Agents
-if (Test-Path "$configHome\agents") {
-    $dstAgents = "$scriptRoot\config\agents"
+$srcAgents = Join-Path $configHome "agents"
+if (Test-Path $srcAgents) {
+    $dstAgents = Join-Path (Join-Path $scriptRoot "config") "agents"
     New-Item -ItemType Directory -Force -Path $dstAgents | Out-Null
-    Copy-Item -Path "$configHome\agents\*" -Destination $dstAgents -Recurse -Force
+    Copy-Item -Path (Join-Path $srcAgents "*") -Destination $dstAgents -Recurse -Force
     $agentCount = (Get-ChildItem -Path $dstAgents -Directory).Count
     Write-Host "[OK] Synced $agentCount Custom Agents" -ForegroundColor Green
 }
 
 # 4. Sync Custom Skills
-if (Test-Path "$configHome\skills") {
-    $dstSkills = "$scriptRoot\config\skills"
+$srcSkills = Join-Path $configHome "skills"
+if (Test-Path $srcSkills) {
+    $dstSkills = Join-Path (Join-Path $scriptRoot "config") "skills"
     New-Item -ItemType Directory -Force -Path $dstSkills | Out-Null
-    Copy-Item -Path "$configHome\skills\*" -Destination $dstSkills -Recurse -Force
+    Copy-Item -Path (Join-Path $srcSkills "*") -Destination $dstSkills -Recurse -Force
     $skillCount = (Get-ChildItem -Path $dstSkills -Directory).Count
     Write-Host "[OK] Synced $skillCount Custom Skills (spec-kit, gh-workflow, ponytail, audit, etc.)" -ForegroundColor Green
 }
 
 # 5. Sync Custom Plugins (exclude official marketplace and external plugins)
-if (Test-Path "$configHome\plugins") {
-    $customPluginList = Get-ChildItem -Path "$configHome\plugins" -Directory | Where-Object { $_.Name -notin $officialPlugins }
+if (Test-Path $pluginsDir) {
+    $customPluginList = Get-ChildItem -Path $pluginsDir -Directory | Where-Object { $_.Name -notin $officialPlugins }
     if ($customPluginList.Count -gt 0) {
-        $dstPlugins = "$scriptRoot\config\plugins"
+        $dstPlugins = Join-Path (Join-Path $scriptRoot "config") "plugins"
         New-Item -ItemType Directory -Force -Path $dstPlugins | Out-Null
         $customPluginList | ForEach-Object {
-            $targetDir = "$dstPlugins\$($_.Name)"
+            $targetDir = Join-Path $dstPlugins $_.Name
             New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
-            Copy-Item -Path "$($_.FullName)\*" -Destination $targetDir -Recurse -Force
+            Copy-Item -Path (Join-Path $_.FullName "*") -Destination $targetDir -Recurse -Force
         }
         # Remove nested .git if any (scoped strictly to target plugin directories)
         $resolvedDst = (Resolve-Path $dstPlugins).Path
@@ -126,12 +130,13 @@ if (Test-Path "$configHome\plugins") {
 }
 
 # 6. Sync Architectural Decision Records (ADRs)
-if (Test-Path "$configHome\docs\adr") {
-    $srcAdrs = Get-ChildItem -Path "$configHome\docs\adr" -Filter "*.md"
+$srcAdrsDir = Join-Path (Join-Path $configHome "docs") "adr"
+if (Test-Path $srcAdrsDir) {
+    $srcAdrs = Get-ChildItem -Path $srcAdrsDir -Filter "*.md"
     if ($srcAdrs.Count -gt 0) {
-        $dstAdr = "$scriptRoot\docs\adr"
+        $dstAdr = Join-Path (Join-Path $scriptRoot "docs") "adr"
         New-Item -ItemType Directory -Force -Path $dstAdr | Out-Null
-        Copy-Item -Path "$configHome\docs\adr\*" -Destination $dstAdr -Recurse -Force
+        Copy-Item -Path (Join-Path $srcAdrsDir "*") -Destination $dstAdr -Recurse -Force
         $adrCount = (Get-ChildItem -Path $dstAdr -Filter "*.md" | Where-Object { $_.Name -ne "README.md" }).Count
         Write-Host "[OK] Synced $adrCount Architectural Decision Records (ADRs)" -ForegroundColor Green
     }

@@ -7,9 +7,11 @@ tools:
   - write_to_file
   - run_command
 skills:
+  # Repository Skills (config/skills/)
   - audit-dev-workflow
   - ponytail
   - differential-review
+  # External Marketplace Plugins (ADR-0006: npx antislop-ai)
   - antislop-code
 ---
 

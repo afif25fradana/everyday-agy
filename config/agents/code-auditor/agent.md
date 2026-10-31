@@ -7,17 +7,17 @@ tools:
   - write_to_file
   - run_command
 skills:
-  # Repository Custom Skills
+  # Repository Skills (config/skills/)
   - audit-dev-workflow
   - coding-standards
   - clean-docs
   - ponytail
   - differential-review
   - sync-task-state
+  - audit-context-building
+  # External Marketplace Plugins (ADR-0006: npx antislop-ai / Chrome DevTools)
   - antislop-code
   - antislop-copywriting
-  - audit-context-building
-  # Optional Marketplace Extension (Chrome DevTools Plugin)
   - memory-leak-debugging
 ---
 

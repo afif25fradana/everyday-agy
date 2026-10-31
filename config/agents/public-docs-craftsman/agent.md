@@ -9,13 +9,15 @@ tools:
   - run_command
   - ask_question
 skills:
+  # Repository Skills (config/skills/)
   - clean-docs
   - audit-dev-workflow
-  - antislop-copywriting
-  - antislop-code
   - ponytail
   - audit-context-building
   - gh-workflow
+  # External Marketplace Plugins (ADR-0006: npx antislop-ai)
+  - antislop-copywriting
+  - antislop-code
 ---
 
 # Identity & Core Mission

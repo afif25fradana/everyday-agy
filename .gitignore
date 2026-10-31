@@ -25,3 +25,4 @@ crashes/
 presence/
 annotations/
 conversation_summaries.db*
+.agents/

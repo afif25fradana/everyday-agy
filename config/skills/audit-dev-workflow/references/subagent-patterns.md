@@ -22,7 +22,8 @@ The multi-tiered architecture allows the **Parent Agent** to optionally leverage
 
 ### 2.2 Model Selection Invariant (`Model`)
 - **Default (`inherit`)**: Inherits parent agent model unless the subagent manifest defines an explicit specialized tier (e.g. `tdd-guide` uses `model: flash` per ADR-0004 & ADR-0012).
-- **Explicit User Request Only**: Use alternative tiers (`flash` / `flash_lite` for lightweight read-only sweeps or `pro` for heavy architectural refactoring) ONLY if the user explicitly requests it in chat.
+- **Dynamic Flash-to-Pro Elevation (`spec-verifier` & `database-reviewer`)**: Keep `model: inherit` in agent manifests so `Claude Sonnet 4.6 Thinking` or `Gemini 4 Argon` parent sessions never downgrade. When the parent session is running on `Gemini 3.8 Flash`, pass `Model: "pro"` dynamically in `invoke_subagent` when invoking `spec-verifier` (paired with mandatory Context7 MCP live docs) or `database-reviewer`.
+- **Explicit User Override**: For all other agents, override model tiers at invocation time ONLY if the user explicitly requests it in chat.
 
 ### 2.3 Core Execution & Verification Invariants
 1. **Focused Scope & Concise Contracts**:

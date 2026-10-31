@@ -39,11 +39,15 @@
 <!-- workflow-guardrails -->
 # Workflow & Safety Guardrails
 1. Investigate First: Trace callers and state in parallel before proposing edits. For multi-file or complex changes, consult the `audit-dev-workflow` skill.
-2. Explicit Approval & Tier 0 Fast-Path: Wait for explicit user confirmation in chat (or UI "Proceed") before modifying files, installing packages, committing, pushing, or running mutating commands. Exception: qualifying Tier 0 cosmetic/doc fixes (`<= 2` files, `<= 3` exec or `<= 5` doc lines, zero logic mutation) bypass formal Gate 1 ceremony upon simple chat approval; pause at `[TRIVIAL REVIEW]` before committing. Read-only inspection never needs approval.
+2. Checkpoint-Gated Autonomous Execution & Approval Gates: Read-only inspection never needs approval. Before modifying files in git repos, establish a verified rollback checkpoint (`New-AuditCheckpoint.ps1`). Approval gating scales by blast radius:
+   - Tier 0 (`trivial`: `<= 2` files, `<= 3` exec or `<= 5` doc lines, zero logic/state/schema mutation): Execute autonomously after checkpoint -> verify -> pause at `[TRIVIAL REVIEW]` before commit.
+   - Tier 1 (`small`: single-module bugfix or contained enhancement): Execute autonomously after checkpoint -> Failure-First TDD (RED -> GREEN) -> 5-Axis verification -> pause at Gate 2 (`gate2_handoff.md`) before commit.
+   - Tier 2/3 (`standard`/`large`: multi-file refactors, architectural/schema changes) & Package Installations: Wait for explicit Gate 1 human approval (`gate1_proposal.md`) before modifying files.
+   - Write Path Boundary: File mutations (`edit_file`/`write_file` in Parent; `replace_file_content`/`write_to_file` in Subagents) are restricted to the active repository, its sibling `<Project>-AI-Context` repo, and Antigravity `brain`/`scratch` directories.
 3. Rollback Point First: Ensure git repo is clean or create a checkpoint. Outside git, back up the target to `$HOME/.gemini/antigravity/scratch/<task>/`. If neither is possible, say so before editing.
-4. Definition of Done: The change works, verified by running checks AFTER the final edit (prior runs are stale). If checks cannot run, label NOT VERIFIED; never claim unverified passes. The diff must have no debug leftovers or secrets.
+4. Definition of Done: The change works, verified by running checks AFTER the final edit (prior runs are stale). Test runner verification requires exit code 0 AND `> 0` passed assertions (0 failed); exit code 0 with 0 tests executed is a failure. Never weaken or delete existing test assertions to force a pass. If checks cannot run, label NOT VERIFIED; never claim unverified passes. The diff must have no debug leftovers or secrets.
 5. Commit Only With Approval: Use Conventional Commits. Never `--no-verify`; never force-push.
-6. Stop Rule: Never re-run the exact same failing command unchanged; adjust the diagnosis or approach first. Stop on unexpected test/build failures; after two failed fix attempts, report the evidence and ask for direction.
+6. Stop Rule & Auto-Rollback: Never re-run the exact same failing command unchanged; adjust the diagnosis or approach first. After two failed fix attempts on test/build failures, execute `Restore-AuditCheckpoint.ps1` to revert the working tree cleanly, report the failure evidence, and ask for direction.
 7. Task Freezing: When switching contexts or addressing urgent sidequests, snapshot active task state via `sync-task-state` before branching off to prevent context drift.
 <!-- workflow-guardrails -->
 

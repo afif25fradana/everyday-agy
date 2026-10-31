@@ -33,8 +33,28 @@ if ($FilePath) {
     if ($gitCheck -eq "true") {
         $branchName = "checkpoint-$safeTask"
         $branchExists = Invoke-GitCmd @("rev-parse", "--verify", "refs/heads/$branchName") 2>$null
-        if ($branchExists) {
+        if ($LASTEXITCODE -eq 0 -and $branchExists) {
             Invoke-GitCmd @("reset", "--hard", $branchName) | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+                Write-Error "Failed to reset working tree to '$branchName'."
+                exit 1
+            }
+            $untrackedBaseline = Join-Path $scratchDir "untracked_baseline.txt"
+            $baselineSet = @{}
+            if (Test-Path -Path $untrackedBaseline) {
+                foreach ($line in (Get-Content -Path $untrackedBaseline)) {
+                    if (-not [string]::IsNullOrWhiteSpace($line)) { $baselineSet[$line.Trim()] = $true }
+                }
+            }
+            $currentUntracked = Invoke-GitCmd @("ls-files", "--others", "--exclude-standard")
+            foreach ($relPath in @($currentUntracked)) {
+                $cleanRel = "$relPath".Trim()
+                if (-not [string]::IsNullOrWhiteSpace($cleanRel) -and -not $baselineSet.ContainsKey($cleanRel)) {
+                    if (Test-Path -LiteralPath $cleanRel) {
+                        Remove-Item -LiteralPath $cleanRel -Recurse -Force
+                    }
+                }
+            }
             $rawSha = ((Invoke-GitCmd @("rev-parse", "HEAD")) | Out-String).Trim()
             $restoredSha = $rawSha.Substring(0, [Math]::Min(12, $rawSha.Length))
             Write-Output "Checkpoint restored: reset working tree to branch $branchName (sha $restoredSha)"

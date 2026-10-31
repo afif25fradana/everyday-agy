@@ -39,8 +39,24 @@ if ($FilePath) {
 } else {
     $gitCheck = Invoke-GitCmd @("rev-parse", "--is-inside-work-tree") 2>$null
     if ($gitCheck -eq "true") {
+        $dirtyPreexisting = ((Invoke-GitCmd @("status", "--porcelain", "-uno")) | Out-String).Trim()
+        if (-not [string]::IsNullOrWhiteSpace($dirtyPreexisting)) {
+            Write-Error "Working tree has uncommitted tracked changes. Commit or stash changes before creating an autonomous checkpoint so rollback does not wipe prior work."
+            exit 1
+        }
         $branchName = "checkpoint-$safeTask"
-        Invoke-GitCmd @("branch", "-f", $branchName) 2>$null | Out-Null
+        Invoke-GitCmd @("branch", "-f", $branchName) | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "Failed to create or update git checkpoint branch '$branchName'."
+            exit 1
+        }
+        $untrackedBaseline = Join-Path $scratchDir "untracked_baseline.txt"
+        $untrackedFiles = Invoke-GitCmd @("ls-files", "--others", "--exclude-standard")
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "Failed to record untracked files baseline."
+            exit 1
+        }
+        @($untrackedFiles) | Set-Content -Path $untrackedBaseline -Encoding utf8
         $rawSha = ((Invoke-GitCmd @("rev-parse", "HEAD")) | Out-String).Trim()
         $headSha = $rawSha.Substring(0, [Math]::Min(12, $rawSha.Length))
         Write-Output "Checkpoint created: git branch $branchName (sha $headSha)"

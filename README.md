@@ -155,7 +155,7 @@ Technical decisions, constraints, and trade-offs are recorded as permanent Nygar
 - [ADR-0014](./docs/adr/0014-superpowers-heuristics-distillation-and-platform-adaptation.md): Superpowers Heuristics Distillation and Platform Adaptation.
 - [ADR-0015](./docs/adr/0015-checkpoint-gated-autonomous-execution-and-dynamic-elevation.md): Checkpoint-Gated Autonomous Execution, AST Safety Fortification, and Dynamic Subagent Elevation.
 - [ADR-0016](./docs/adr/0016-third-party-upstream-skills-decoupling.md): Third-Party Upstream Skills Decoupling and Documentation Linking.
-- [ADR-0017](./docs/adr/0017-custom-agent-consolidation-and-mandatory-skill-gates.md): Custom Agent Fleet Consolidation and Mandatory Skill Activation Architecture.
+- [ADR-0017](./docs/adr/0017-custom-agent-consolidation-and-mandatory-skill-gates.md): Custom Agent Fleet Consolidation, AST Security Hardening, and Mandatory Skill Activation Architecture.
 
 ## Contributing
 

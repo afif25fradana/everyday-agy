@@ -39,7 +39,7 @@ This specification defines the communication contracts, trigger headers, quantit
 - **Lifecycle Timing**: Generated AFTER Phase 3 (Patch Execution) and Phase 4 (Local Verification), strictly BEFORE `git commit` or `git push`.
 - **Required Payload**:
   1. High-level summary of outcome and root cause resolution.
-  2. High-level diffstat and full unified diff (`+`/`-`).
+  2. High-level diffstat (untruncated paths via `git diff --stat=140,80 HEAD`) and full unified diff (`+`/`-`).
   3. Five-Axis Pre-Flight self-audit confirmation per [`SKILL.md`](../SKILL.md#3-five-axis-pre-flight-rubric).
   4. Mandatory Real Test Evidence (or Static Verification):
      - Repos with test harnesses: (a) Exact CLI command, (b) Terminal exit code `0`, (c) Verbatim snippet of `stdout`/`stderr` showing passed assertions.
@@ -95,7 +95,7 @@ Ready-to-paste execution prompts are in [`prompt-templates.md`](./prompt-templat
 
 ## Diff & Impact
 ### Diffstat & Full Unified Diff
-<diffstat and diff>
+<untruncated diffstat (`git diff --stat=140,80 HEAD`) and full unified diff>
 
 ## Mandatory Real Test Evidence
 - **CLI Test Command**: `<command>`

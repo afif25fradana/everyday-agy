@@ -113,7 +113,7 @@ Tier 1: Small Feature / Bugfix Autonomous Execution (Single Module)
 
 ## Diff & Impact
 ### Diffstat & Full Unified Diff
-[diffstat and diff]
+[untruncated diffstat via `git diff --stat=140,80 HEAD` and full unified diff]
 
 ## Mandatory Verification Evidence
 - **CLI Command**: [exact test command]
@@ -160,7 +160,7 @@ Approved Gate 1 plan: [1-2 sentence summary of approved proposal]
 
 ## Diff & Impact
 ### Diffstat & Full Unified Diff
-[diffstat and diff]
+[untruncated diffstat via `git diff --stat=140,80 HEAD` and full unified diff]
 
 ## Mandatory Verification Evidence
 - **CLI Command**: [exact command, e.g., rtk npm test]

@@ -15,6 +15,11 @@ param(
 $ErrorActionPreference = "Stop"
 
 if ([string]::IsNullOrWhiteSpace($CommandLine)) {
+    if ($input) {
+        $CommandLine = ($input | Out-String)
+    }
+}
+if ([string]::IsNullOrWhiteSpace($CommandLine)) {
     Write-Output $true
     exit 0
 }
@@ -32,7 +37,7 @@ if ($parseErrors -and $parseErrors.Count -gt 0) {
 $forbiddenCommands = @(
     'Format-Volume', 'Format-Disk', 'Clear-Disk', 'Initialize-Disk',
     'Stop-Computer', 'Restart-Computer',
-    'Start-Process', 'saps'
+    'Start-Process', 'saps', 'start'
 )
 
 # 2. Inspect command elements
@@ -56,11 +61,11 @@ foreach ($cmdAst in $commandElements) {
     # Normalize module-qualified names (Microsoft.PowerShell.Management\Remove-Item) and .exe suffixes
     $cmdName = (($rawCmdName -split '[\\/]')[-1]) -replace '\.(exe|cmd|bat)$', ''
 
-    # Handle rtk and rtk proxy command unwrapping to subject underlying command to full AST safety inspection
+    # Handle rtk, sudo, and gsudo command unwrapping to subject underlying command to full AST safety inspection
     $targetElements = @($cmdAst.CommandElements)
-    if ($cmdName -eq 'rtk') {
+    if ($cmdName -in @('rtk', 'sudo', 'gsudo')) {
         $idx = 1
-        while ($idx -lt $targetElements.Count -and ($targetElements[$idx].Extent.Text -replace '^[''"]|[''"]$', '') -eq 'proxy') {
+        while ($idx -lt $targetElements.Count -and ($targetElements[$idx].Extent.Text -replace '^[''"]|[''"]$', '') -in @('proxy', 'exec')) {
             $idx++
         }
         if ($idx -lt $targetElements.Count) {
@@ -78,7 +83,7 @@ foreach ($cmdAst in $commandElements) {
     if ($cmdName -in @('powershell', 'pwsh')) {
         $skipNextArg = $false
         for ($i = 1; $i -lt $targetElements.Count; $i++) {
-            $t = $targetElements[$i].Extent.Text
+            $t = $targetElements[$i].Extent.Text -replace '^[''"]|[''"]$', ''
             if ($skipNextArg) {
                 $skipNextArg = $false
                 continue
@@ -123,7 +128,7 @@ foreach ($cmdAst in $commandElements) {
         $targetRoot = $false
 
         foreach ($el in $elements) {
-            $text = $el.Extent.Text
+            $text = $el.Extent.Text -replace '^[''"]|[''"]$', ''
             if ($el -is [System.Management.Automation.Language.VariableExpressionAst] -and $el.Splatted) {
                 Write-Error "Safety Violation: Prohibited parameter splatting '$text' on '$cmdName'."
                 exit 1
@@ -137,6 +142,15 @@ foreach ($cmdAst in $commandElements) {
                 $text -match '^\$(HOME|env:(USERPROFILE|SystemDrive))([/\\]+(\*.*)?)?$' -or
                 $text -in @('$env:SystemDrive', '$HOME', '$env:USERPROFILE')) {
                 $targetRoot = $true
+            }
+        }
+
+        # Check if downstream in pipeline where upstream command requested recursion (e.g. gci -r | rm)
+        $isPiped = $cmdAst.Parent -is [System.Management.Automation.Language.PipelineAst] -and $cmdAst.Parent.PipelineElements[0] -ne $cmdAst
+        if ($isPiped) {
+            $parentPipeline = $cmdAst.Parent.Extent.Text
+            if ($parentPipeline -match '(?i)(^|\s)-(r|re|rec|recu|recur|recurs|recurse)\b') {
+                $hasRecurse = $true
             }
         }
 
@@ -156,7 +170,7 @@ foreach ($cmdAst in $commandElements) {
                 Write-Error "Safety Violation: Prohibited parameter splatting '$($targetElements[$i].Extent.Text)' on git command."
                 exit 1
             }
-            $t = $targetElements[$i].Extent.Text
+            $t = $targetElements[$i].Extent.Text -replace '^[''"]|[''"]$', ''
             if ($skipNext) {
                 $skipNext = $false
                 continue
@@ -169,7 +183,7 @@ foreach ($cmdAst in $commandElements) {
             # Intercept dangerous git -c configuration overrides (core.hooksPath, core.fsmonitor, alias.*)
             if ($t -ceq '-c') {
                 if ($i + 1 -lt $targetElements.Count) {
-                    $cfgPayload = $targetElements[$i + 1].Extent.Text
+                    $cfgPayload = $targetElements[$i + 1].Extent.Text -replace '^[''"]|[''"]$', ''
                     if ($cfgPayload -match '(?i)^(core\.(hookspath|fsmonitor|sshcommand|askpass)|alias\.)') {
                         Write-Error "Safety Violation: Prohibited git -c security override '$cfgPayload' detected."
                         exit 1
@@ -179,7 +193,7 @@ foreach ($cmdAst in $commandElements) {
                 continue
             }
             if ($t -cmatch '^-c(?<cfg>.+)$') {
-                $cfgPayload = $Matches['cfg'] -replace '^=', ''
+                $cfgPayload = ($Matches['cfg'] -replace '^=', '') -replace '^[''"]|[''"]$', ''
                 if ($cfgPayload -match '(?i)^(core\.(hookspath|fsmonitor|sshcommand|askpass)|alias\.)') {
                     Write-Error "Safety Violation: Prohibited git -c security override '$cfgPayload' detected."
                     exit 1
@@ -196,9 +210,14 @@ foreach ($cmdAst in $commandElements) {
             $subCmd = $argTokens[0]
             $subArgs = ($argTokens -join ' ')
 
-            if ($subCmd -eq 'push' -and ($subArgs -match '(^|\s)(-f\b|--force\b|--force-with-lease\b|--force-if-includes\b)' -or $subArgs -match '(^|\s)\+[A-Za-z0-9_./-]+:[A-Za-z0-9_./-]+')) {
-                Write-Error "Safety Violation: Prohibited git push force flag detected."
-                exit 1
+            if ($subCmd -eq 'push') {
+                $hasForceFlag = $subArgs -match '(^|\s)(-f\b|--force\b|--force-with-lease\b|--force-if-includes\b)'
+                $hasForceRefspec = $subArgs -match '(^|\s)\+[A-Za-z0-9_./-]+'
+                $hasRemoteDeletion = $subArgs -match '(^|\s):[A-Za-z0-9_./-]+($|\s)'
+                if ($hasForceFlag -or $hasForceRefspec -or $hasRemoteDeletion) {
+                    Write-Error "Safety Violation: Prohibited git push force or remote deletion detected."
+                    exit 1
+                }
             }
             if ($subCmd -eq 'clean' -and $subArgs -match '(^|\s)(-[a-zA-Z]*f|--force\b)') {
                 Write-Error "Safety Violation: Prohibited git clean force flag detected."
@@ -249,13 +268,17 @@ foreach ($cmdAst in $commandElements) {
     }
 }
 
-# 3. Direct .NET destructive method invocations (e.g. [System.IO.Directory]::Delete, [IO.File]::Delete)
+# 3. Direct .NET destructive method invocations & dynamic reflection execution
 $memberExpressions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.InvokeMemberExpressionAst] }, $true)
 foreach ($mem in $memberExpressions) {
     $exprText = $mem.Expression.Extent.Text
-    $memberVal = $mem.Member.Extent.Text
+    $memberVal = $mem.Member.Extent.Text -replace '^[''"]|[''"]$', ''
     if ($memberVal -eq 'Delete' -and ($exprText -match '(?i)(^|\[)(System\.)?IO\.(Directory|File|Path|DirectoryInfo|FileInfo)' -or $exprText -match '(?i)\b(Get-Item|Get-ChildItem|gi|gci|dir|ls|DirectoryInfo|FileInfo)\b')) {
         Write-Error "Safety Violation: Prohibited direct .NET file deletion '$($mem.Extent.Text)' detected."
+        exit 1
+    }
+    if ($memberVal -in @('Invoke', 'InvokeReturnAsIs', 'InvokeScript') -and $exprText -match '(?i)(scriptblock|InvokeCommand|PowerShell)') {
+        Write-Error "Safety Violation: Prohibited dynamic script reflection execution '$($mem.Extent.Text)' detected."
         exit 1
     }
 }

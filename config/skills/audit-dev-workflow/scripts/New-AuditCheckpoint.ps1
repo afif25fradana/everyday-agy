@@ -15,7 +15,8 @@ if ($RepoPath -and (Test-Path -Path $RepoPath)) {
 }
 
 $safeTask = ($Task -replace '[^A-Za-z0-9_-]', '-')
-$scratchDir = "$env:USERPROFILE\.gemini\antigravity\scratch\$safeTask"
+$userHome = if ($env:USERPROFILE) { $env:USERPROFILE } else { $HOME }
+$scratchDir = Join-Path $userHome ".gemini/antigravity/scratch/$safeTask"
 if (-not (Test-Path -Path $scratchDir)) {
     New-Item -ItemType Directory -Path $scratchDir -Force | Out-Null
 }

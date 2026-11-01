@@ -15,10 +15,11 @@ $configHome = Join-Path $geminiHome "config"
 # 1. Credential Scanner Definition & Pre-Flight Verification
 $secretPatterns = @(
     @{ Kind = "Bearer token"; Pattern = 'Bearer\s+(?!<)[A-Za-z0-9_\-\.]{12,}' },
-    @{ Kind = "Credential assignment"; Pattern = '["'']?(?:api[_-]?key|access[_-]?token|secret[_-]?key|token)["'']?\s*[:=]\s*["''](?!<)[^\s"'']{16,}["'']' },
-    @{ Kind = "GitHub Token"; Pattern = '\b(ghp|github_pat)_[A-Za-z0-9_]{20,}' },
+    @{ Kind = "Quoted Credential assignment"; Pattern = '["'']?(?:api[_-]?key|access[_-]?token|secret[_-]?key|token)["'']?\s*[:=]\s*["''](?!<)[^\s"'']{16,}["'']' },
+    @{ Kind = "Unquoted Key Assignment"; Pattern = '(?m)^\s*(?:[A-Za-z0-9_]*_)?(?:api[_-]?key|access[_-]?token|secret[_-]?key)\s*[:=]\s*(?!<)[A-Za-z0-9_\-\.]{20,}\s*$' },
+    @{ Kind = "GitHub Token"; Pattern = '\b(ghp|github_pat|gho|ghu|ghs|ghr)_[A-Za-z0-9_]{20,}' },
     @{ Kind = "Private Key Header"; Pattern = '-----BEGIN\s+([A-Z0-9_-]+\s+)?PRIVATE\s+KEY-----' },
-    @{ Kind = "Cloud API Key"; Pattern = '\b(AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z\-_]{35}|sk-[a-zA-Z0-9]{20,})\b' }
+    @{ Kind = "Cloud API Key"; Pattern = '\b(AKIA[0-9A-Z]{16}|ASIA[0-9A-Z]{16}|AIza[0-9A-Za-z\-_]{35}|sk-ant-(?:api|admin)\d{2}-[a-zA-Z0-9_-]{30,}|sk-(?:proj|svcacct|admin)-[a-zA-Z0-9_-]{30,}|sk-[a-zA-Z0-9]{20,})\b' }
 )
 
 function Assert-NoCredentialsInFile($filePath) {
@@ -96,10 +97,12 @@ if (Test-Path $srcAgents) {
     New-Item -ItemType Directory -Force -Path $dstAgents | Out-Null
     # Prune stale agents in ~/.gemini/config/agents/ that no longer exist in repo
     $srcAgentNames = @(Get-ChildItem -Path $srcAgents -Directory | ForEach-Object { $_.Name })
-    Get-ChildItem -Path $dstAgents -Directory | ForEach-Object {
-        if ($_.Name -notin $srcAgentNames) {
-            Remove-Item -Path $_.FullName -Recurse -Force
-            Write-Host "[CLEANUP] Pruned stale agent: $($_.Name)" -ForegroundColor DarkGray
+    if ($srcAgentNames.Count -gt 0) {
+        Get-ChildItem -Path $dstAgents -Directory | ForEach-Object {
+            if ($_.Name -notin $srcAgentNames) {
+                Remove-Item -Path $_.FullName -Recurse -Force
+                Write-Host "[CLEANUP] Pruned stale agent: $($_.Name)" -ForegroundColor DarkGray
+            }
         }
     }
     Copy-Item -Path (Join-Path $srcAgents "*") -Destination $dstAgents -Recurse -Force
@@ -123,10 +126,12 @@ if (Test-Path $srcSkills) {
         "ponytail-review"
     )
     $srcSkillNames = @(Get-ChildItem -Path $srcSkills -Directory | ForEach-Object { $_.Name })
-    Get-ChildItem -Path $dstSkills -Directory | ForEach-Object {
-        if ($_.Name -notin $srcSkillNames -and $_.Name -notin $externalSkills) {
-            Remove-Item -Path $_.FullName -Recurse -Force
-            Write-Host "[CLEANUP] Pruned stale skill: $($_.Name)" -ForegroundColor DarkGray
+    if ($srcSkillNames.Count -gt 0) {
+        Get-ChildItem -Path $dstSkills -Directory | ForEach-Object {
+            if ($_.Name -notin $srcSkillNames -and $_.Name -notin $externalSkills) {
+                Remove-Item -Path $_.FullName -Recurse -Force
+                Write-Host "[CLEANUP] Pruned stale skill: $($_.Name)" -ForegroundColor DarkGray
+            }
         }
     }
     Copy-Item -Path (Join-Path $srcSkills "*") -Destination $dstSkills -Recurse -Force

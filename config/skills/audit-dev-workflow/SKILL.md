@@ -91,7 +91,9 @@ Establish a rollback point before modifying files:
      - **Mode B (Structured or Pasted External AI Review)**: Ingest `# Review Feedback...` or `# Technical Review...` (from Claude, Gemini Web, or pasted external audit):
        - On `APPROVE` or `APPROVE (Trivial: <rationale>)`: Proceed to repository commit discipline.
        - On `QUESTIONS FOR IMPLEMENTER`: Run `rtk rg "<symbol>"` and return exact file coordinates (`file.ext#Lxx-Lyy`) and verbatim definitions.
-       - On `REJECT`: Stop, evaluate reviewer feedback, and return to Phase 1 investigation or Phase 3 implementation.
+       - On `REJECT`: Stop and evaluate reviewer feedback via two branches:
+         - *Implementation Fix (Iterative Phase 3)*: If the rejection requests code tweaks or test additions, do NOT run `Restore-AuditCheckpoint.ps1` and do NOT create a new checkpoint. Keep the active `checkpoint-<task>` branch as the baseline rollback point, apply requested modifications directly in working tree, re-verify tests, and present an updated Gate 2 handoff.
+         - *Architectural Abort (Return to Phase 1)*: If the rejection invalidates the core architecture or approach, run `Restore-AuditCheckpoint.ps1` to revert working tree to clean checkpoint state, report rollback confirmation, and produce a new Gate 1 proposal.
 3. **Repository Commit Discipline**:
    - Report a concise summary in chat (1-2 lines with diffstat / action items). For major milestones, an Antigravity UserFacing Artifact can be generated for structured persistence.
    - **Code Repository**: Commit code changes using clean Conventional Commits (`fix(scope): ...`, `feat(scope): ...`) with zero AI buzzwords or process tags per [`clean-docs`](../clean-docs/SKILL.md).

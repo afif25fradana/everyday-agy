@@ -91,10 +91,21 @@ $testCases = @(
     @{ Expected = "BLOCK"; Cmd = 'powershell "Remove-Item C:\test -Recurse -Force"'; Reason = "powershell positional inline eval" },
     @{ Expected = "BLOCK"; Cmd = 'git.exe --work-tree=. clean -fdx'; Reason = "git.exe with global --work-tree flag" },
     @{ Expected = "BLOCK"; Cmd = 'git push origin +main:main'; Reason = "git push force refspec" },
+    @{ Expected = "BLOCK"; Cmd = 'git push origin +main'; Reason = "git push force refspec without colon" },
+    @{ Expected = "BLOCK"; Cmd = 'git push origin :branch'; Reason = "git push remote branch deletion" },
+    @{ Expected = "BLOCK"; Cmd = 'git push ''--force'''; Reason = "git push single-quoted force flag" },
+    @{ Expected = "BLOCK"; Cmd = 'git push "--force"'; Reason = "git push double-quoted force flag" },
+    @{ Expected = "BLOCK"; Cmd = 'Remove-Item "-Recurse" "-Force" "C:\*"'; Reason = "quoted recursive root deletion" },
+    @{ Expected = "BLOCK"; Cmd = 'start cmd "/c rd /s /q C:\"'; Reason = "start alias launching secondary shell" },
+    @{ Expected = "BLOCK"; Cmd = 'sudo git push --force'; Reason = "sudo unwrapping git force push" },
+    @{ Expected = "BLOCK"; Cmd = '[scriptblock]::Create(''git push --force'').Invoke()'; Reason = "Dynamic scriptblock reflection invocation" },
+    @{ Expected = "BLOCK"; Cmd = 'Get-ChildItem -Recurse | Remove-Item -Force'; Reason = "Pipelined recursive Remove-Item" },
     @{ Expected = "BLOCK"; Cmd = 'git restore .'; Reason = "git restore worktree discard" },
 
     # Allowed: Standard developer commands
     @{ Expected = "ALLOW"; Cmd = 'git status'; Reason = "git status" },
+    @{ Expected = "ALLOW"; Cmd = 'git push git@github.com:user/repo.git main'; Reason = "git push to SSH remote URL containing colon" },
+    @{ Expected = "ALLOW"; Cmd = 'git push origin main'; Reason = "git push origin main" },
     @{ Expected = "ALLOW"; Cmd = 'rtk git log --oneline -n 10'; Reason = "rtk git log" },
     @{ Expected = "ALLOW"; Cmd = 'npm test'; Reason = "npm test" },
     @{ Expected = "ALLOW"; Cmd = 'python -m pytest tests/'; Reason = "python pytest" },
@@ -134,11 +145,11 @@ foreach ($tc in $testCases) {
     }
 
     if ($tc.Expected -eq "BLOCK") {
-        if ($wasBlocked) {
+        if ($wasBlocked -and ($errMsg -match 'Safety Violation:')) {
             Write-Host "  [PASS] Blocked: $($tc.Reason)" -ForegroundColor Green
             $passed++
         } else {
-            Write-Host "  [FAIL] Expected BLOCK, but command was ALLOWED: $($tc.Cmd)" -ForegroundColor Red
+            Write-Host "  [FAIL] Expected BLOCK with 'Safety Violation:', but got wasBlocked=$wasBlocked, errMsg=$errMsg ($($tc.Cmd))" -ForegroundColor Red
             $failed++
         }
     } elseif ($tc.Expected -eq "ALLOW") {

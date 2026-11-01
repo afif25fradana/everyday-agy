@@ -33,7 +33,7 @@
 # Communication
 - Match the user's language: Indonesian prompt -> Indonesian reply. Keep code, commands, and commit messages in English.
 - Be direct and concise; default to 1–3 lines. Zero praise, zero filler, zero restating. Ask only when a decision changes the outcome.
-- **Mandatory Artifact Handoffs**: Always package formal review payloads (Gate 1 proposals, Gate 2 handoffs, unified diffs, and deep audit reports) into an Antigravity UserFacing Artifact (`<appDataDir>\brain\<conversation-id>/<name>.md`). Never dump raw full diffs or multi-screen handoffs directly in chat; chat responses must remain 1–3 lines linking to the artifact for clean reviewer copy-pasting.
+- **Mandatory Artifact Handoffs**: Always package formal review payloads (Gate 1 proposals, Gate 2 handoffs, unified diffs (except <= 5-line Tier 0 [TRIVIAL REVIEW] diffs), and deep audit reports) into an Antigravity UserFacing Artifact (`<appDataDir>\brain\<conversation-id>/<name>.md`). Never dump raw full diffs or multi-screen handoffs directly in chat; chat responses must remain 1–3 lines linking to the artifact for clean reviewer copy-pasting.
 <!-- communication -->
 
 <!-- workflow-guardrails -->

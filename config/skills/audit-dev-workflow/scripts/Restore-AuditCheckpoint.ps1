@@ -15,7 +15,8 @@ if ($RepoPath -and (Test-Path -Path $RepoPath)) {
 }
 
 $safeTask = ($Task -replace '[^A-Za-z0-9_-]', '-')
-$scratchDir = "$env:USERPROFILE\.gemini\antigravity\scratch\$safeTask"
+$userHome = if ($env:USERPROFILE) { $env:USERPROFILE } else { $HOME }
+$scratchDir = Join-Path $userHome ".gemini/antigravity/scratch/$safeTask"
 
 function Invoke-GitCmd {
     param([string[]]$Arguments)
@@ -27,7 +28,11 @@ function Invoke-GitCmd {
 }
 
 if ($FilePath) {
-    $resolvedPath = if (Test-Path -Path $FilePath) { (Resolve-Path -LiteralPath $FilePath).Path } else { $FilePath }
+    $resolvedPath = if (Test-Path -Path $FilePath) {
+        (Resolve-Path -LiteralPath $FilePath).Path
+    } else {
+        $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($FilePath)
+    }
     $pathBytes = [System.Text.Encoding]::UTF8.GetBytes($resolvedPath.ToLowerInvariant())
     $sha1 = [System.Security.Cryptography.SHA1]::Create()
     try {
@@ -59,33 +64,35 @@ if ($FilePath) {
                 exit 1
             }
             $untrackedBaseline = Join-Path $scratchDir "untracked_baseline.txt"
-            $baselineSet = @{}
             if (Test-Path -Path $untrackedBaseline) {
+                $baselineSet = @{}
                 foreach ($line in (Get-Content -Path $untrackedBaseline)) {
                     if (-not [string]::IsNullOrWhiteSpace($line)) { $baselineSet[$line.Trim()] = $true }
                 }
-            }
-            $currentUntracked = Invoke-GitCmd @("-c", "core.quotePath=false", "ls-files", "--others", "--exclude-standard")
-            foreach ($relPath in @($currentUntracked)) {
-                $cleanRel = "$relPath".Trim()
-                if (-not [string]::IsNullOrWhiteSpace($cleanRel) -and -not $baselineSet.ContainsKey($cleanRel)) {
-                    if (Test-Path -LiteralPath $cleanRel) {
-                        Remove-Item -LiteralPath $cleanRel -Recurse -Force
-                    }
-                }
-            }
-            # Clean up empty untracked directories created during task
-            $currentUntrackedDirs = Invoke-GitCmd @("-c", "core.quotePath=false", "ls-files", "--others", "--exclude-standard", "--directory")
-            foreach ($dirRel in @($currentUntrackedDirs)) {
-                $cleanDir = "$dirRel".Trim().TrimEnd('/', '\')
-                if (-not [string]::IsNullOrWhiteSpace($cleanDir) -and -not $baselineSet.ContainsKey($cleanDir) -and -not $baselineSet.ContainsKey("$cleanDir/")) {
-                    if (Test-Path -LiteralPath $cleanDir -PathType Container) {
-                        $remainingFiles = @(Get-ChildItem -LiteralPath $cleanDir -Recurse -File -Force)
-                        if ($remainingFiles.Count -eq 0) {
-                            Remove-Item -LiteralPath $cleanDir -Recurse -Force
+                $currentUntracked = Invoke-GitCmd @("-c", "core.quotePath=false", "ls-files", "--others", "--exclude-standard")
+                foreach ($relPath in @($currentUntracked)) {
+                    $cleanRel = "$relPath".Trim()
+                    if (-not [string]::IsNullOrWhiteSpace($cleanRel) -and -not $baselineSet.ContainsKey($cleanRel)) {
+                        if (Test-Path -LiteralPath $cleanRel) {
+                            Remove-Item -LiteralPath $cleanRel -Recurse -Force
                         }
                     }
                 }
+                # Clean up empty untracked directories created during task
+                $currentUntrackedDirs = Invoke-GitCmd @("-c", "core.quotePath=false", "ls-files", "--others", "--exclude-standard", "--directory")
+                foreach ($dirRel in @($currentUntrackedDirs)) {
+                    $cleanDir = "$dirRel".Trim().TrimEnd('/', '\')
+                    if (-not [string]::IsNullOrWhiteSpace($cleanDir) -and -not $baselineSet.ContainsKey($cleanDir) -and -not $baselineSet.ContainsKey("$cleanDir/")) {
+                        if (Test-Path -LiteralPath $cleanDir -PathType Container) {
+                            $remainingFiles = @(Get-ChildItem -LiteralPath $cleanDir -Recurse -File -Force)
+                            if ($remainingFiles.Count -eq 0) {
+                                Remove-Item -LiteralPath $cleanDir -Recurse -Force
+                            }
+                        }
+                    }
+                }
+            } else {
+                Write-Warning "Untracked baseline '$untrackedBaseline' not found; skipping untracked cleanup to preserve untracked files."
             }
             $rawSha = ((Invoke-GitCmd @("rev-parse", "HEAD")) | Out-String).Trim()
             $restoredSha = $rawSha.Substring(0, [Math]::Min(12, $rawSha.Length))

@@ -37,7 +37,7 @@ ADRs capture the reasoning behind significant technical decisions. They are the 
 
 ### Convention Discovery (Twin-Repo vs. Single-Repo)
 
-Before creating an ADR, use tools (`rtk rg` or `view_file`) to inspect the project layout and follow the established convention:
+Before creating an ADR, use tools (`rtk rg` or `read_file` / `view_file`) to inspect the project layout and follow the established convention:
 
 1. **Twin-Repo Architecture (`<Project>-AI-Context/`)**:
    - In workflows using a companion context repository, ADRs live in the context repository:
@@ -275,7 +275,7 @@ Special consideration for AI agent context in Antigravity:
 
 After drafting documentation, review the prose to ensure technical accuracy and readability:
 
-1. **Preserve Concrete Facts**: Keep names, numbers, units, verified commands, paths, links, and trade-offs. Check them against live code using `view_file` or `rtk rg`.
+1. **Preserve Concrete Facts**: Keep names, numbers, units, verified commands, paths, links, and trade-offs. Check them against live code using `read_file` (Parent) / `view_file` (Subagent) or `rtk rg`.
 2. **Eliminate Fluff & Corporate Buzzwords**: Remove vague hype, self-congratulatory descriptions, and decorative prose. State plainly what the code does.
 3. **Verify Links & References**: Ensure relative file links use the `file://` scheme or standard Markdown links and point to valid coordinates.
 

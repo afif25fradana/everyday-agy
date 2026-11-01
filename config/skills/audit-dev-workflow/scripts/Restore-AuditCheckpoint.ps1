@@ -74,6 +74,19 @@ if ($FilePath) {
                     }
                 }
             }
+            # Clean up empty untracked directories created during task
+            $currentUntrackedDirs = Invoke-GitCmd @("-c", "core.quotePath=false", "ls-files", "--others", "--exclude-standard", "--directory")
+            foreach ($dirRel in @($currentUntrackedDirs)) {
+                $cleanDir = "$dirRel".Trim().TrimEnd('/', '\')
+                if (-not [string]::IsNullOrWhiteSpace($cleanDir) -and -not $baselineSet.ContainsKey($cleanDir) -and -not $baselineSet.ContainsKey("$cleanDir/")) {
+                    if (Test-Path -LiteralPath $cleanDir -PathType Container) {
+                        $remainingFiles = @(Get-ChildItem -LiteralPath $cleanDir -Recurse -File -Force)
+                        if ($remainingFiles.Count -eq 0) {
+                            Remove-Item -LiteralPath $cleanDir -Recurse -Force
+                        }
+                    }
+                }
+            }
             $rawSha = ((Invoke-GitCmd @("rev-parse", "HEAD")) | Out-String).Trim()
             $restoredSha = $rawSha.Substring(0, [Math]::Min(12, $rawSha.Length))
             Write-Output "Checkpoint restored: reset working tree to branch $branchName (sha $restoredSha)"

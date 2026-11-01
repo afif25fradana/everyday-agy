@@ -37,6 +37,8 @@ function Assert-NoCredentialsInFile($filePath) {
 Write-Host ">>> Running pre-flight credential audit on deployment files..." -ForegroundColor Cyan
 $deployScanTargets = @(
     (Join-Path $scriptRoot "GEMINI.md"),
+    (Join-Path $scriptRoot "README.md"),
+    (Join-Path $scriptRoot "TOOLKIT.md"),
     (Join-Path $scriptRoot "config"),
     (Join-Path $scriptRoot "docs")
 ) | Where-Object { Test-Path $_ }
@@ -92,6 +94,14 @@ $srcAgents = Join-Path (Join-Path $scriptRoot "config") "agents"
 if (Test-Path $srcAgents) {
     $dstAgents = Join-Path $configHome "agents"
     New-Item -ItemType Directory -Force -Path $dstAgents | Out-Null
+    # Prune stale agents in ~/.gemini/config/agents/ that no longer exist in repo
+    $srcAgentNames = @(Get-ChildItem -Path $srcAgents -Directory | ForEach-Object { $_.Name })
+    Get-ChildItem -Path $dstAgents -Directory | ForEach-Object {
+        if ($_.Name -notin $srcAgentNames) {
+            Remove-Item -Path $_.FullName -Recurse -Force
+            Write-Host "[CLEANUP] Pruned stale agent: $($_.Name)" -ForegroundColor DarkGray
+        }
+    }
     Copy-Item -Path (Join-Path $srcAgents "*") -Destination $dstAgents -Recurse -Force
     $agentCount = (Get-ChildItem -Path $srcAgents -Directory).Count
     Write-Host "[OK] Restored $agentCount Custom Agents" -ForegroundColor Green
@@ -102,6 +112,23 @@ $srcSkills = Join-Path (Join-Path $scriptRoot "config") "skills"
 if (Test-Path $srcSkills) {
     $dstSkills = Join-Path $configHome "skills"
     New-Item -ItemType Directory -Force -Path $dstSkills | Out-Null
+    # Prune stale skills, preserving decoupled upstream skills (ADR-0016)
+    $externalSkills = @(
+        "design-taste-frontend",
+        "ponytail",
+        "ponytail-audit",
+        "ponytail-debt",
+        "ponytail-gain",
+        "ponytail-help",
+        "ponytail-review"
+    )
+    $srcSkillNames = @(Get-ChildItem -Path $srcSkills -Directory | ForEach-Object { $_.Name })
+    Get-ChildItem -Path $dstSkills -Directory | ForEach-Object {
+        if ($_.Name -notin $srcSkillNames -and $_.Name -notin $externalSkills) {
+            Remove-Item -Path $_.FullName -Recurse -Force
+            Write-Host "[CLEANUP] Pruned stale skill: $($_.Name)" -ForegroundColor DarkGray
+        }
+    }
     Copy-Item -Path (Join-Path $srcSkills "*") -Destination $dstSkills -Recurse -Force
     $skillCount = (Get-ChildItem -Path $srcSkills -Directory).Count
     Write-Host "[OK] Restored $skillCount Custom Skills" -ForegroundColor Green
@@ -125,6 +152,14 @@ $srcAdr = Join-Path (Join-Path $scriptRoot "docs") "adr"
 if (Test-Path $srcAdr) {
     $dstAdr = Join-Path (Join-Path $configHome "docs") "adr"
     New-Item -ItemType Directory -Force -Path $dstAdr | Out-Null
+    # Prune stale ADR files that no longer exist in repo
+    $srcAdrNames = @(Get-ChildItem -Path $srcAdr -Filter "*.md" | ForEach-Object { $_.Name })
+    Get-ChildItem -Path $dstAdr -Filter "*.md" | ForEach-Object {
+        if ($_.Name -notin $srcAdrNames) {
+            Remove-Item -Path $_.FullName -Force
+            Write-Host "[CLEANUP] Pruned stale ADR: $($_.Name)" -ForegroundColor DarkGray
+        }
+    }
     Copy-Item -Path (Join-Path $srcAdr "*") -Destination $dstAdr -Recurse -Force
     $adrCount = (Get-ChildItem -Path $dstAdr -Filter "*.md" | Where-Object { $_.Name -ne "README.md" }).Count
     Write-Host "[OK] Restored $adrCount Architectural Decision Records (ADRs)" -ForegroundColor Green

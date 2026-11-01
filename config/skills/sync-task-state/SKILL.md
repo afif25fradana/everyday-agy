@@ -84,7 +84,7 @@ $gotchas = (Get-Content $taskFile | Select-String '^- \[[A-Z0-9_\-\/]+\]').Count
 if ($item.Length -gt 8192 -or $lines -gt 100) {
     Write-Error "task_state.md exceeds limits: $($item.Length) bytes (max 8192), $lines lines (max 100)."
 } elseif ($gotchas -gt 5) {
-    Write-Error "task_state.md contains $gotchas gotchas (max 5 active allowed). Triage, inline, or promote to ADR per ATGP."
+    Write-Error "task_state.md contains $gotchas gotchas (max 5 active allowed). Triage, inline, or promote to ADR per Known Edge Cases limit (max 5 items)."
 } else {
     Write-Host "PASS: task_state.md is $($item.Length) bytes, $lines lines, and $gotchas active gotchas." -ForegroundColor Green
 }

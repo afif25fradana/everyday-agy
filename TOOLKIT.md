@@ -88,6 +88,7 @@ npm install -g @ast-grep/cli
 | **coding-standards** | `/coding-standards` | Baseline naming, immutability, type safety, and defensive error-handling conventions. | Universal Engineering Standards |
 | **clean-docs** | `/clean-docs` | Enforces plain-spoken repo prose, humanized conventional commits, and zero AI process leaks. | **Original Work (@afif25fradana)** |
 | **documentation-and-adrs** | `/documentation-and-adrs` | Documents architectural decisions, trade-offs, and context using Michael Nygard's ADR format. | Michael Nygard Standard /<br>[joelparkerhenderson/architecture-decision-record](https://github.com/joelparkerhenderson/architecture-decision-record) |
+| **generative_ui** | *Invoked by ui-crafter* | Renders rich interactive HTML widgets inline in chat or as standalone artifacts. | Google Antigravity Built-in (`~/.gemini/antigravity/builtin/skills/generative_ui`) |
 
 ---
 
@@ -108,18 +109,17 @@ These skills and plugins are maintained in their own upstream repositories with 
 
 ## 5. Custom Subagents
 
-Eleven specialized agents available for delegation in Antigravity:
+Ten specialized agents available for delegation in Antigravity:
 
 | Agent Name | Model Tier | Tools Boundary | Core Responsibility |
 |---|:---:|---|---|
 | **system-architect** | `model: inherit` | Read, Write, Run, Ask | Contract-first API design, Socratic planning, and Nygard ADR documentation. |
 | **code-auditor** | `model: inherit` | Read, Artifact Write, Run *(Read-Only)* | Repository health audits, security vulnerability analysis, and test integrity. |
-| **database-reviewer** | `model: inherit` | Read, Artifact Write, Run *(Read-Only)* | SQL schema design, zero-downtime migrations, and N+1 query optimization. |
+| **database-reviewer** | `model: inherit` | Read, Migration/ADR/Artifact Write, Run | SQL schema design, zero-downtime migrations, and N+1 query optimization. |
 | **silent-failure-hunter** | `model: inherit` | Read, Artifact Write, Run *(Read-Only)* | Hunts silent failures, swallowed exceptions, and empty error handling blocks. |
 | **spec-verifier** | `model: inherit` | Read, Artifact Write, Search, Run *(Read-Only)* | Cross-checks proposed fixes and API contracts against Context7 MCP and official vendor docs. |
-| **public-docs-craftsman** | `model: inherit` | Read, Write, Replace, Run, Ask | Public repository documentation, companion sub-docs, and GitHub Community Standards. |
 | **build-error-resolver** | `model: flash` | Read, Replace, Run *(No write)* | Resolves compiler, typecheck, and build errors with shortest working diffs. |
 | **tdd-guide** | `model: flash` | Read, Write, Replace, Run | Guides Test-Driven Development workflows (Red-Green-Refactor cycles; Iron Law adapted from [obra/superpowers](https://github.com/obra/superpowers)). |
-| **docs-architect** | `model: flash` | Read, Write, Replace, Run, Ask | Modernizes technical documentation and synchronizes AI-Context repositories. |
+| **docs-architect** | `model: flash` | Read, Write, Replace, Run, Ask | Modernizes technical documentation, Nygard ADRs, public repository docs, and synchronizes AI-Context repositories (ADR-0017). |
 | **maintenance-bot** | `model: flash` | Read, Write, Replace, Run, Ask | Dependabot PR triage, CI failure diagnosis, and CVE remediation. |
 | **ui-crafter** | `model: flash` | Read, Write, Replace, Run, Ask | Modern web UI widget creation, WCAG AA accessibility, and Generative UI design. |

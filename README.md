@@ -77,10 +77,10 @@ everyday-agy/
 ├── GEMINI.md            # Active operational rules, workflow guardrails, and security boundaries
 ├── TOOLKIT.md           # Catalog of CLI tools, MCP snippets, and skill upstream links
 ├── config/
-│   ├── agents/          # 11 specialized subagents configured with hybrid model tiering (ADR-0004)
+│   ├── agents/          # 10 specialized subagents configured with hybrid model tiering (ADR-0004, ADR-0017)
 │   └── skills/          # 13 bespoke and engine-adapted workflow skills
 ├── docs/
-│   └── adr/             # Architectural Decision Records (ADR-0001 through ADR-0016)
+│   └── adr/             # Architectural Decision Records (ADR-0001 through ADR-0017)
 ├── sync.ps1             # Pulls live configs from ~/.gemini/ into this repo
 └── restore.ps1          # Deploys this repo into ~/.gemini/ with automatic backup
 ```
@@ -94,7 +94,7 @@ The global rules file stays compact by defining only active behavioral boundarie
 - Security boundaries: deny paths (`.env`, `~/.ssh`, token MCP configs), AST command interception (`Test-PowerShellCommandSafety.ps1` regression test suite), and quarantine for external inputs.
 
 ### Specialized Agent Roles (`config/agents/`)
-Eleven specialized agent configurations handle task delegation. Analytical roles run on `model: inherit` (ADR-0004) to retain the full reasoning capacity of the primary model:
+Ten specialized agent configurations handle task delegation. Analytical roles run on `model: inherit` (ADR-0004) to retain the full reasoning capacity of the primary model:
 - `system-architect`: Contract-first API design, dependency topology, and ADR drafting.
 - `code-auditor`: Read-only security attack surface reviews and repository hygiene audits.
 - `database-reviewer`: PostgreSQL schemas, indexing strategies, and zero-downtime expand/contract migrations.
@@ -102,8 +102,7 @@ Eleven specialized agent configurations handle task delegation. Analytical roles
 - `tdd-guide`: Red-Green-Refactor test cycles, mock-cheating detection, and de-sloppify test hygiene.
 - `build-error-resolver`: Scoped TypeScript compiler and build fixes with shortest working diffs.
 - `ui-crafter`: Modern web primitives, WCAG 2.2 AA accessibility, and Generative UI widgets.
-- `docs-architect`: Technical documentation maintenance and AI context synchronization.
-- `public-docs-craftsman`: Public repository documentation, companion sub-docs (TOOLKIT.md), and GitHub Community Standards health files.
+- `docs-architect`: Technical documentation maintenance, Nygard ADR authoring, public repository docs, and AI context synchronization (ADR-0017).
 - `maintenance-bot`: Dependabot PR triage, CI failure diagnosis, and CVE remediation.
 - `spec-verifier`: Cross-checks proposed fixes and API signatures against Context7 MCP and official vendor docs (anti-hallucination, read-only).
 

@@ -3,7 +3,7 @@ name: council-review
 description: >
   Orchestrate a deliberative Multi-Agent Council Review panel for high-stakes architectural evaluations,
   deep code audits, or pre-release verification. Synthesizes audit-context-building (fact grounding),
-  grill-me (socratic scoping), and teamwork (adversarial peer-review & Victory Auditor certification)
+  ask_question (socratic scoping), and teamwork (adversarial peer-review & Victory Auditor certification)
   powered by specialized custom subagents. Trigger when the user types /council, /council-review, or says
   "council review", "dewan pakar", "multi-agent audit", "deliberative review", or asks for a council-based evaluation.
 ---
@@ -40,7 +40,7 @@ A high-rigor, evidence-backed evaluation framework combining Anthropic's **Evalu
 2. **Cold Fact Grounding First**: No council member may offer opinions, ratings, or critiques without first grounding observations in verified codebase guarantees and caller topologies per [`audit-context-building`](../audit-context-building/SKILL.md).
 3. **Socratic Operator Alignment**: Council composition, evaluation depth, and acceptance criteria are locked via structured dialog (`ask_question`) before dispatching agent teams.
 4. **Anti-Sycophancy Gate**: Explorers and reviewers are barred from giving unearned praise. Scores >= 4.50 require concrete proof or automated fault injection. Every seat must surface real gaps.
-5. **Adversarial Verification Gate**: Preliminary findings must be challenged by independent reviewers (stress-testing line citations, logic consistency, and 16-cell arithmetic closure) before final handoff.
+5. **Adversarial Verification Gate**: Preliminary findings must be challenged by independent reviewers (stress-testing line citations, logic consistency, and arithmetic closure) before final handoff.
 
 ---
 
@@ -57,7 +57,7 @@ A high-rigor, evidence-backed evaluation framework combining Anthropic's **Evalu
                        │
                        ▼
 ┌──────────────────────────────────────────────┐
-│  Pillar 2: Socratic Council Formation        │  <-- grill-me (ask_question)
+│  Pillar 2: Socratic Council Formation        │  <-- ask_question
 │  (Select 3-5 custom agent seats, criteria)   │
 └──────────────────────┬───────────────────────┘
                        │
@@ -87,7 +87,7 @@ Before convening the Council, establish an objective factual baseline to prevent
 
 ---
 
-### Pillar 2: Socratic Council Formation (`grill-me`)
+### Pillar 2: Socratic Council Formation (`ask_question`)
 
 Engage the operator interactively using `ask_question` (one question at a time) to eliminate ambiguity:
 
@@ -170,7 +170,7 @@ Generate a comprehensive evaluation report saved to `<appDataDir>\scratch\<proje
 
 ## Acceptance Criteria & Adversarial Verification
 - [ ] Evaluation report exists at `<appDataDir>\scratch\<project>\council_evaluation_report.md`
-- [ ] Report contains numerical scorecards (1.0 to 5.0) across all seats with normalized 16-cell arithmetic closure
+- [ ] Report contains numerical scorecards (1.0 to 5.0) across all seats with normalized arithmetic closure ($4 \times N_{\text{seats}}$ cells)
 - [ ] Report lists concrete line-number citations for every identified discrepancy (`file.ext#Lxx-Lyy`)
 - [ ] Anti-Sycophancy Mandate: Scores >= 4.50 are prohibited unless backed by automated fault injection or rigorous proof. Every seat must surface at least 2 critical/high gap observations
 - [ ] Remediation Verification: Every action item in the optimization roadmap is cross-checked against Context7 or official documentation

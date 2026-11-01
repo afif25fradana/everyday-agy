@@ -47,13 +47,13 @@ Following a dual-agent audit (Claude Opus 4.6 and Gemini 3.8 Flash) combined wit
    - Veto archived third-party rule sets in favor of official upstream `ast-grep` catalog documentation.
    - Veto shadow skills for native Antigravity slash commands (`/grill-me`).
    - Veto complex PowerShell PageRank graph emulators in favor of standard `rtk rg` caller tracing.
-   - Adopt `Betterleaks` as the modern, active drop-in successor to `Gitleaks`.
+   - Adopt active regex credential scanning patterns in CI and deployment scripts.
 
 ## Consequences
 
 ### Positive
 - **Eliminates High-Risk AST Bypass Vectors**: Direct .NET deletions and process-based bypasses are intercepted before execution with zero overhead.
-- **Continuous Safety Regression Prevention**: CI automatically executes 22 functional test cases on the AST validator on every push.
+- **Continuous Safety Regression Prevention**: CI automatically executes an automated regression test suite on the AST validator on every push.
 - **Symmetric Credential Defense**: Both inbound (`sync.ps1`) and outbound (`restore.ps1`) configurations are guarded by pre-flight secret scans.
 - **Zero Catalog Bloat**: Rejected 4 redundant or obsolete upstream tools, preserving context window economics per ADR-0002 and ADR-0003.
 

@@ -47,8 +47,8 @@ jobs:
         shell: pwsh
         run: |
           $agents = Get-ChildItem -Path "config/agents" -Directory
-          if ($agents.Count -lt 5) {
-            Write-Error "Expected at least 5 agents, found $($agents.Count)"
+          if ($agents.Count -lt 10) {
+            Write-Error "Expected at least 10 agents, found $($agents.Count)"
             exit 1
           }
           foreach ($a in $agents) {
@@ -109,7 +109,7 @@ jobs:
             '-----BEGIN\s+([A-Z0-9_-]+\s+)?PRIVATE\s+KEY-----',
             '\b(AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z\-_]{35}|sk-[a-zA-Z0-9]{20,})\b'
           )
-          $files = Get-ChildItem -Path "GEMINI.md", "README.md", "TOOLKIT.md", "config", "docs" -Recurse -File -Include "*.md", "*.json", "*.ps1", "*.mjs", "*.py", "*.yml", "*.yaml", "LICENSE*"
+          $files = Get-ChildItem -Path "GEMINI.md", "README.md", "TOOLKIT.md", "sync.ps1", "restore.ps1", "config", "docs", ".github" -Recurse -File -Include "*.md", "*.json", "*.ps1", "*.mjs", "*.py", "*.yml", "*.yaml", "LICENSE*"
           foreach ($f in $files) {
             $content = Get-Content $f.FullName
             foreach ($line in $content) {

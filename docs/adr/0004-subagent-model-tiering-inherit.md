@@ -32,4 +32,4 @@ Adopt a hybrid model tiering strategy:
 
 ## Consequences
 - **Positive**: Architects and auditors gain full flagship reasoning power whenever invoked from high-capability sessions without manual model switching.
-- **Cost Efficiency**: Routine workers stay lightweight and blazing fast on Flash.
+- **Cost Efficiency**: Routine workers stay lightweight and fast on Flash.

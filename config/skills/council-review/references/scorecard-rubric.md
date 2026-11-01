@@ -40,7 +40,7 @@ Every Council seat independently evaluates the subject across four standard axes
 
 ## 2. Mathematical Reconciliation & Arithmetic Closure Rules
 
-To prevent arbitrary or hallucinated scoring, the Chairman synthesis must satisfy exact arithmetic closure across all 16 cells:
+To prevent arbitrary or hallucinated scoring, the Chairman synthesis must satisfy exact arithmetic closure across all evaluated cells ($4 \times N_{\text{seats}}$ cells):
 
 1. **Seat Composite Score (Row Average)**:
    $$\text{Seat Composite} = \frac{\text{Rigor} + \text{Ergonomics} + \text{Token} + \text{Spec}}{4}$$
@@ -48,7 +48,7 @@ To prevent arbitrary or hallucinated scoring, the Chairman synthesis must satisf
    $$\text{Column Average} = \frac{\sum_{i=1}^{N} \text{Score}_{i}}{N}$$
 3. **Grand Mean Closure**:
    The Overall Council Composite Average must match both the mean of row composites and the mean of column averages:
-   $$\text{Grand Mean} = \frac{\sum \text{All 16 Cells}}{16} = \frac{\sum \text{Seat Composites}}{N_{\text{seats}}} = \frac{\sum \text{Column Averages}}{4}$$
+   $$\text{Grand Mean} = \frac{\sum \text{All Cells}}{4 \times N_{\text{seats}}} = \frac{\sum \text{Seat Composites}}{N_{\text{seats}}} = \frac{\sum \text{Column Averages}}{4}$$
 4. **Grading Scale**:
    - `4.50 - 5.00`: **Grade A+ (Exemplary)**
    - `4.00 - 4.49`: **Grade A (High Distinction)**
@@ -118,7 +118,7 @@ Identified deficiencies must be mapped to four discrete urgency tiers:
 - **Phase 2: Ergonomics & Friction**
 - **Phase 3: Token Hygiene & Progressive Disclosure**
 - **Phase 4: Community Upgrades**
-*(Note: All remediation actions, library recommendations, and API signatures must be verified against Context7 MCP or official documentation by Seat 10 before inclusion.)*
+*(Note: All remediation actions, library recommendations, and API signatures must be verified against Context7 MCP or official documentation by the spec-verifier seat before inclusion.)*
 
 ---
 

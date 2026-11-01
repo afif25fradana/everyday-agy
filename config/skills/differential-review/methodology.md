@@ -88,7 +88,7 @@ For each changed file:
    ```pwsh
    # When was it added? Why?
    rtk git log -S "removed_code" --all --oneline
-   git blame <baseline> -- file.sol | rg "pattern"
+   rtk git blame <baseline> -- file.sol | rtk rg "pattern"
    ```
 
    **Red flags:**
@@ -127,10 +127,10 @@ For each changed file:
 **Identify coverage gaps:**
 ```pwsh
 # Production code changes (exclude tests)
-git diff <range> --name-only | rg -v "test"
+rtk git diff <range> --name-only | rtk rg -v "test"
 
 # Test changes
-git diff <range> --name-only | rg "test"
+rtk git diff <range> --name-only | rtk rg "test"
 
 # For each changed function, search for tests
 rtk rg "test.*functionName" test -g "*.sol" -g "*.js"
@@ -148,7 +148,7 @@ rtk rg "test.*functionName" test -g "*.sol" -g "*.js"
 **Calculate impact:**
 ```pwsh
 # Count callers for each modified function
-rg "functionName\(" -g "*.sol" . | Measure-Object -Line
+rtk rg "functionName\(" -g "*.sol" . | Measure-Object -Line
 ```
 
 **Classify blast radius:**
@@ -203,7 +203,7 @@ rg "functionName\(" -g "*.sol" . | Measure-Object -Line
    - WHY is this approach chosen?
    - WHY could this fail in production?
 
-**If `audit-context-building` skill is NOT available**, manually perform the line-by-line analysis above using view_file, rtk rg, and code tracing.
+**If `audit-context-building` skill is NOT available**, manually perform the line-by-line analysis above using read_file (Parent) / view_file (Subagent), rtk rg, and code tracing.
 
 **Cross-cutting pattern detection:**
 ```pwsh
@@ -212,7 +212,7 @@ rtk rg "require.*amount > 0" -g "*.sol" .
 rtk rg "onlyOwner" -g "*.sol" .
 
 # Check if any removed in diff
-git diff <range> | rg "^-.*require.*amount > 0"
+rtk git diff <range> | rtk rg "^-.*require.*amount > 0"
 ```
 
 **Flag if removal breaks defense-in-depth.**

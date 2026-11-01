@@ -105,6 +105,14 @@ $srcAgents = Join-Path $configHome "agents"
 if (Test-Path $srcAgents) {
     $dstAgents = Join-Path (Join-Path $scriptRoot "config") "agents"
     New-Item -ItemType Directory -Force -Path $dstAgents | Out-Null
+    # Prune repo agents that no longer exist in configHome (prevent zombie resurrection)
+    $activeAgentNames = @(Get-ChildItem -Path $srcAgents -Directory | ForEach-Object { $_.Name })
+    Get-ChildItem -Path $dstAgents -Directory | ForEach-Object {
+        if ($_.Name -notin $activeAgentNames) {
+            Remove-Item -Path $_.FullName -Recurse -Force
+            Write-Host "[CLEANUP] Pruned deleted agent from repo: $($_.Name)" -ForegroundColor DarkGray
+        }
+    }
     Copy-Item -Path (Join-Path $srcAgents "*") -Destination $dstAgents -Recurse -Force
     $agentCount = (Get-ChildItem -Path $dstAgents -Directory).Count
     Write-Host "[OK] Synced $agentCount Custom Agents" -ForegroundColor Green
@@ -116,6 +124,13 @@ if (Test-Path $srcSkills) {
     $dstSkills = Join-Path (Join-Path $scriptRoot "config") "skills"
     New-Item -ItemType Directory -Force -Path $dstSkills | Out-Null
     $customSkills = Get-ChildItem -Path $srcSkills -Directory | Where-Object { $_.Name -notin $externalSkills }
+    $activeCustomSkillNames = @($customSkills | ForEach-Object { $_.Name })
+    Get-ChildItem -Path $dstSkills -Directory | ForEach-Object {
+        if ($_.Name -notin $activeCustomSkillNames) {
+            Remove-Item -Path $_.FullName -Recurse -Force
+            Write-Host "[CLEANUP] Pruned deleted skill from repo: $($_.Name)" -ForegroundColor DarkGray
+        }
+    }
     foreach ($cs in $customSkills) {
         $targetDir = Join-Path $dstSkills $cs.Name
         New-Item -ItemType Directory -Force -Path $targetDir | Out-Null

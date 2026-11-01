@@ -5,9 +5,9 @@ Ready-to-paste atomic prompts for Antigravity sessions. Governed by the payload 
 
 ---
 
-## 1. Phase 1 & 2: Diagnostic Audit & Gate 1 Proposal Packaging
+## 1. Phase 1 & 2: Diagnostic Audit & Gate 1 Proposal Packaging (Tier 2/3 & Package Additions)
 
-Use when investigating a bug or planning a feature to produce a compliant `# Review Request: Gate 1 (Pre-Execution Proposal)` before touching any code.
+Use for multi-file refactors, architecture/schema modifications (Tier 2/3), or package installations to produce a compliant `# Review Request: Gate 1 (Pre-Execution Proposal)` before touching any code. (For Tier 0 and Tier 1, use the autonomous fast-path templates below).
 
 ```markdown
 # Phase
@@ -81,9 +81,58 @@ Stop after presenting [TRIVIAL REVIEW]. Await approval before commit.
 
 ---
 
+## 2.2 Tier 1: Small Feature / Bugfix Autonomous Execution (Failure-First TDD -> Gate 2)
+
+Use for single-module bugfixes, contained features, or localized enhancements. Executes autonomously after establishing a checkpoint without a pre-execution Gate 1 proposal per ADR-0015 and GEMINI.md.
+
+```markdown
+# Phase
+Tier 1: Small Feature / Bugfix Autonomous Execution (Single Module)
+
+# Scope Lock (Single module or contained enhancement)
+[exact file paths / module boundary]
+
+# Task / Bug Symptom
+[concise description of bug or feature target]
+
+# Execution Instructions
+1. **Investigation**: Trace callers via `rtk rg` and inspect target code via `read_file`.
+2. **Rollback Point First**: Establish verified rollback checkpoint via `New-AuditCheckpoint.ps1 -Task "<task_name>"`.
+3. **Failure-First TDD (RED)**: Write or run a minimal reproducible test script capturing the defect or requirement. Confirm it fails for the intended reason.
+4. **Autonomous Execution (GREEN)**: Apply the minimal fix using `edit_file` / `write_file`. Shortest working diff wins.
+5. **Local Verification**: Run the project test suite. Confirm exit code 0 and >0 passed assertions (0 failed).
+6. **Five-Axis Self-Audit**: Audit diff against the 5 axes in [`SKILL.md`](../SKILL.md#3-five-axis-pre-flight-rubric).
+7. **Gate 2 Packaging**: Package payload as an Antigravity UserFacing Artifact (`<appDataDir>\brain\<conversation-id>/gate2_handoff.md`):
+
+# Review Request: Gate 2 (Post-Execution Handoff & Diff)
+- **Task**: [Task Title]
+- **Git HEAD SHA**: [sha]
+
+## Summary of Outcome & Root Cause Fix
+[summary]
+
+## Diff & Impact
+### Diffstat & Full Unified Diff
+[diffstat and diff]
+
+## Mandatory Verification Evidence
+- **CLI Command**: [exact test command]
+- **Exit Code**: 0
+- **Verbatim Output**:
+[verbatim stdout/stderr snippet showing passed assertions with mock tokens scrubbed to <TEST_HASH_SANITIZED>]
+
+## Five-Axis Pre-Flight Self-Audit
+- All 5 axes verified (Correctness, Security, Ponytail/YAGNI, Edge Cases, Test Integrity).
+
+# Stop Condition
+Stop after presenting Gate 2 artifact. Await explicit approval before git commit.
+```
+
+---
+
 ## 3. Phase 3–5: Execution, Local Verification & Gate 2 Handoff Packaging
 
-Use when Gate 1 is approved to execute changes, run tests, capture real evidence, and package the Gate 2 payload per [`handoff-spec.md`](./handoff-spec.md#23-gate-2-post-execution-handoff--diff).
+Use when Gate 1 is approved to execute changes, run tests, capture real evidence, and package the Gate 2 payload per [`handoff-spec.md`](./handoff-spec.md#23-gate-2-post-execution-handoff--diff-review).
 
 ```markdown
 # Phase
@@ -130,7 +179,7 @@ Stop immediately after presenting Gate 2. Do not commit or push until review app
 
 ## 4. Return Loop: Dispute Resolution & Factual Queries
 
-Use when a Reviewer issues `QUESTIONS FOR IMPLEMENTER` or asks to verify a symbol, caller, or invariant per [`handoff-spec.md`](./handoff-spec.md#62-factual-code-dispute-format).
+Use when a Reviewer issues `QUESTIONS FOR IMPLEMENTER` or asks to verify a symbol, caller, or invariant per [`handoff-spec.md`](./handoff-spec.md#62-factual-code-dispute-format-responding-to-questions-for-implementer).
 
 ```markdown
 # Phase
@@ -141,7 +190,7 @@ Return Loop: Factual Code Dispute Resolution
 
 # Instructions
 1. Execute `rtk rg "[symbol]"` across the repository to locate definition and caller sites.
-2. Package findings per [`handoff-spec.md`](./handoff-spec.md#62-factual-code-dispute-format):
+2. Package findings per [`handoff-spec.md`](./handoff-spec.md#62-factual-code-dispute-format-responding-to-questions-for-implementer):
 
 # Implementer Response: Factual Code Resolution
 - **Target Question / Symbol**: [symbol]

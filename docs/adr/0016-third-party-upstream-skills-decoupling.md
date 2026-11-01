@@ -11,7 +11,7 @@ Following the successful precedent of ADR-0006 (decoupling official Marketplace 
 1. `design-taste-frontend` (Leonxlnx's taste-skill v2): 46 files, ~37,000 lines, including large curated JSON databases (`sites.json`, `photos.json`, `sections.json`) and `.mjs` scripts.
 2. `ponytail` (Dietrich Gebert's ponytail suite): 6 distinct skill folders (`ponytail`, `ponytail-audit`, `ponytail-debt`, `ponytail-gain`, `ponytail-help`, `ponytail-review`).
 
-An external audit (via Qwen in agent mode) noted that these bundled upstream suites accounted for ~38,000 lines (roughly 88% of the repository's total line volume), distorting GitHub language metrics (labeling a PowerShell/Markdown dotfiles repository as "JavaScript") and duplicating upstream repositories that maintain their own dedicated Antigravity installers (`npx taste-skill`, `npx ponytail-ai`).
+An external audit (via Qwen in agent mode) noted that these bundled upstream suites accounted for ~38,000 lines (roughly 88% of the repository's total line volume), distorting GitHub language metrics (labeling a PowerShell/Markdown dotfiles repository as "JavaScript") and duplicating upstream repositories that maintain their own dedicated Antigravity skill installations (e.g. `npx skills add https://github.com/Leonxlnx/taste-skill --skill "design-taste-frontend"`, `npx skills add https://github.com/dietrichgebert/ponytail --skill ponytail`).
 
 ## Decision
 1. **Decouple Upstream Community Suites from Git Tracking**:

@@ -68,11 +68,12 @@ if ($FilePath) {
         }
         $untrackedBaseline = Join-Path $scratchDir "untracked_baseline.txt"
         $untrackedFiles = Invoke-GitCmd @("-c", "core.quotePath=false", "ls-files", "--others", "--exclude-standard")
+        $untrackedDirs = Invoke-GitCmd @("-c", "core.quotePath=false", "ls-files", "--others", "--exclude-standard", "--directory")
         if ($LASTEXITCODE -ne 0) {
             Write-Error "Failed to record untracked files baseline."
             exit 1
         }
-        @($untrackedFiles) | Set-Content -Path $untrackedBaseline -Encoding utf8
+        (@($untrackedFiles) + @($untrackedDirs)) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique | Set-Content -Path $untrackedBaseline -Encoding utf8
         $rawSha = ((Invoke-GitCmd @("rev-parse", "HEAD")) | Out-String).Trim()
         $headSha = $rawSha.Substring(0, [Math]::Min(12, $rawSha.Length))
         Write-Output "Checkpoint created: git branch $branchName (sha $headSha)"

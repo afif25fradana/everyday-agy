@@ -33,7 +33,7 @@ While ADR-0008 established the Tri-Pillar Council Review framework (`council-rev
 ## Consequences
 
 ### Positive
-- **Guaranteed Citation Integrity**: Completely eliminates fake or hallucinated citations in thesis drafts through forensic web verification.
+- **Defensive Citation Verification**: Rigorously intercepts unverified or hallucinated citations in thesis drafts through forensic web verification.
 - **Pre-Collection Methodology Validation**: Catches econometrics errors and proxy formula mistakes before time-consuming data collection begins.
 - **Realistic Defense Preparation**: Equips students and researchers with anticipated examiner counterarguments and methodological defenses.
 - **Zero Repo Bloat**: Implemented as a modular, on-demand skill without modifying global runtime invariants.

@@ -26,7 +26,7 @@ However, ECC also demonstrated high-leverage algorithmic breakthroughs: an Evide
 2. **Implement Pre-Execution PowerShell AST Security Validator (`Test-PowerShellCommandSafety.ps1`)**:
    - Reject ECC's 2,245-line JavaScript regex parser.
    - Author a lean (~60 lines) native PowerShell script in `config/skills/audit-dev-workflow/scripts/Test-PowerShellCommandSafety.ps1` utilizing `[System.Management.Automation.Language.Parser]`.
-   - The script inspects the parsed command AST tokens for forbidden destructive cmdlets (`Remove-Item -Recurse -Force`, `Format-Volume`, `Clear-Disk`, `git push --force`, bypass flags `--no-verify`) with 100% precision and $<5$ms execution overhead, halting execution prior to command dispatch.
+   - The script inspects the parsed command AST tokens for forbidden destructive cmdlets (`Remove-Item -Recurse -Force`, `Format-Volume`, `Clear-Disk`, `git push --force`, bypass flags `--no-verify`) with high-precision AST inspection and $<5$ms execution overhead, halting execution prior to command dispatch.
 
 3. **Establish Explicit Credential & Path Deny-List in `GEMINI.md`**:
    - Insert an immutable `<!-- security-boundaries -->` block into `GEMINI.md` defining strict deny paths:
@@ -65,10 +65,10 @@ However, ECC also demonstrated high-leverage algorithmic breakthroughs: an Evide
 ## Consequences
 
 ### Positive
-- **Eliminates Prompt-Level Security Vulnerabilities**: Closes the prompt-level advisory fallacy by intercepting destructive commands at the PowerShell AST compiler layer before execution.
+- **Intercepts Known Destructive AST Execution Patterns**: Closes the prompt-level advisory fallacy by intercepting destructive commands at the PowerShell AST compiler layer before execution.
 - **Protects Context Budget & Token Economy**: Prevents ~20,215 tokens of prompt bloat per turn by rejecting the monolithic catalog, while keeping `task_state.md` strictly within $\le 8$ KB / $\le 100$ lines.
 - **Deduplicates Review Noise**: Cuts multi-agent verification token expenditure and latency by >50% via evidence-normalized deduplication.
-- **Guarantees Windows Runtime Stability**: Replaces broken Unix daemons and brittle Node scripts with native PowerShell 7.6 / .NET primitives, eliminating Job Object process terminations and syntax crashes.
+- **Enhances Windows Runtime Stability**: Replaces broken Unix daemons and brittle Node scripts with native PowerShell 7.6 / .NET primitives, eliminating Job Object process terminations and syntax crashes.
 - **Preserves Lean Ergonomics**: Scales ceremony to blast radius via Step 0 routing, avoiding multi-agent overhead on trivial bug fixes.
 
 ### Negative & Operational Requirements

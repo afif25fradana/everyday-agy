@@ -21,11 +21,11 @@ This specification defines the communication contracts, trigger headers, quantit
 - **Quantitative Limits**: Modifies `<= 2` files AND `<= 3` lines of executable code (or `<= 5` lines of non-executable docs/comments).
 - **Qualitative Limits**: ZERO changes to business logic, conditionals, loops, state transitions, error handlers, public API signatures, schemas, or security boundaries.
 - **Required Payload**: Diffstat and full inline unified diff (`+`/`-`).
-- **Bypass Rule**: Qualifying Tier 0 changes bypass formal Gate 1 ceremony upon simple chat approval, proceeding from Phase 2 checkpoint to Phase 3 execution and submitting `[TRIVIAL REVIEW]` before commit.
+- **Bypass Rule**: Qualifying Tier 0 changes bypass formal Gate 1 ceremony, executing autonomously immediately following verified checkpoint creation (`New-AuditCheckpoint.ps1`), and submitting `[TRIVIAL REVIEW]` before commit per ADR-0015.
 
 ### 2.2 Gate 1 (Pre-Execution Proposal Review)
 - **Trigger Header**: `# Review Request: Gate 1 (Pre-Execution Proposal)`
-- **Lifecycle Timing**: Generated AFTER Phase 1 (Diagnostic Audit) and Phase 2 (Checkpoint), strictly BEFORE modifying files.
+- **Lifecycle Timing**: Generated AFTER Phase 1 (Diagnostic Audit) and Phase 2 (Checkpoint), strictly BEFORE modifying files (mandatory for Tier 2/3 and package installations; skipped for Tier 0 and Tier 1 per ADR-0015).
 - **Required Payload**:
   1. Task & Context summary.
   2. Root cause validation with exact target coordinates (`file.ext#Lxx-Lyy`).

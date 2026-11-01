@@ -1,7 +1,7 @@
 # ADR-0007: Defensive Audit-First Development Workflow Harmonization and Anti-Cheating Architecture
 
 ## Status
-Accepted
+Superseded by ADR-0013, ADR-0014, and ADR-0015
 
 ## Date
 2026-10-22

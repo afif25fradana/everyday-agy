@@ -159,6 +159,6 @@ function processOrder(payload: any) {
 
 ## Related Skills & Agents
 
-- [`ponytail`](../ponytail/SKILL.md) - Minimalist, YAGNI implementation discipline.
+- [`ponytail`](https://github.com/DietrichGebert/ponytail) - Minimalist, YAGNI implementation discipline.
 - `antislop-code` (plugin skill) - Comment hygiene and anti-slop rules.
 - [`code-auditor`](../../agents/code-auditor/agent.md) - Code quality and security auditing specialist.

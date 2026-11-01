@@ -21,14 +21,14 @@ Enforces strict size limits (target: **<= 8,192 bytes** and **<= 100 lines**) wh
 - **Git as the Single Source of Truth for History**:
   - Do not maintain a separate `phase_history.md` dumping ground. Past commits and completed task records are already 100% preserved in Git history (`rtk git log`).
   - Major historical research, native GUI deep-dives, or retired planning specs belong in `docs/archive/`.
-- **Gotchas vs. ADR Boundary (Antigravity Tactical Gotcha Protocol - ATGP)**:
-  - **Single-Line Gotcha Syntax**: Tactical edge cases in `## Known Edge Cases` must follow the strict ATGP single-line format:
+- **Gotchas vs. ADR Boundary**:
+  - **Single-Line Gotcha Syntax**: Tactical edge cases in `## Known Edge Cases` follow the single-line format:
     `- [DOMAIN/SUBSYS] <Trigger>: <Workaround> (HEAD: <Short-SHA>)`
   - **Bounded Capacity**: Maximum of **5 active gotchas** ($\le 20$ lines total) allowed in `task_state.md`.
-  - **Three-Tier Promotion Lifecycle**:
-    1. *Tier 1 (Micro-Capture)*: Fast capture into `## Known Edge Cases` in `task_state.md` during active tasks.
-    2. *Tier 2 (Code Inlining)*: Permanent tactical workarounds are inlined directly into source code comments per `antislop-code` (explaining *why*).
-    3. *Tier 3 (ADR Promotion)*: Gotchas impacting protocols, dependencies, or security boundaries are promoted to `docs/adr/` per `documentation-and-adrs` and purged from `task_state.md`.
+  - **Gotcha Promotion Lifecycle**:
+    1. *Active Capture*: Record tactical pitfalls into `## Known Edge Cases` during execution.
+    2. *Code Inlining*: Permanent tactical workarounds are inlined directly into code comments per `clean-docs` (explaining *why*).
+    3. *ADR Promotion*: Significant decisions altering protocols, dependencies, or security boundaries are promoted to `docs/adr/` and removed from `task_state.md`.
   - **Tactical Gotchas**: Immediate pitfalls, OS quirks, or concurrency locks belong in `## Known Edge Cases` in `task_state.md` (or inline code comments per `antislop-code`).
   - **Architectural Decisions**: Decisions that choose dependencies, protocols, security policies, or data models must be documented in `docs/adr/000x-...md` per `documentation-and-adrs`. Edge cases that inspired an ADR should simply include a link: `[ADR-0004: Subagent Cognitive Model Tiering](../../../docs/adr/0004-subagent-model-tiering-inherit.md)`.
 - **Atomic Git Tracking**: Always stage and commit files explicitly with `rtk git add task_state.md` in the target context repository (or code repo in Single-Repo mode). Never accidentally leak confidential planning notes into public releases.

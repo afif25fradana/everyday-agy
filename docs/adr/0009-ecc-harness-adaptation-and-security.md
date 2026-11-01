@@ -1,7 +1,7 @@
 # ADR-0009: Everything Claude Code (ECC) Selective Adaptation, Pre-Execution AST Security, and Bounded Gotcha Harvesting
 
 ## Status
-Accepted
+Accepted (Partially Superseded by ADR-0015)
 
 ## Date
 2026-10-23

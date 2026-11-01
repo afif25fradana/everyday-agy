@@ -3,10 +3,17 @@ param(
     [string]$Task,
 
     [Parameter(Mandatory = $false)]
-    [string]$FilePath
+    [string]$FilePath,
+
+    [Parameter(Mandatory = $false)]
+    [string]$RepoPath
 )
 
 $ErrorActionPreference = "Stop"
+if ($RepoPath -and (Test-Path -Path $RepoPath)) {
+    Set-Location -LiteralPath $RepoPath
+}
+
 $safeTask = ($Task -replace '[^A-Za-z0-9_-]', '-')
 $scratchDir = "$env:USERPROFILE\.gemini\antigravity\scratch\$safeTask"
 if (-not (Test-Path -Path $scratchDir)) {
@@ -27,14 +34,23 @@ if ($FilePath) {
         Write-Error "Target file not found: $FilePath"
         exit 1
     }
-    $fileName = Split-Path -Leaf $FilePath
-    $backupPath = Join-Path $scratchDir "$fileName.bak"
-    Copy-Item -Path $FilePath -Destination $backupPath -Force
+    $resolvedPath = (Resolve-Path -LiteralPath $FilePath).Path
+    $pathBytes = [System.Text.Encoding]::UTF8.GetBytes($resolvedPath.ToLowerInvariant())
+    $sha1 = [System.Security.Cryptography.SHA1]::Create()
+    try {
+        $pathHash = ([BitConverter]::ToString($sha1.ComputeHash($pathBytes))).Replace('-', '').ToLower().Substring(0, 8)
+    } finally {
+        $sha1.Dispose()
+    }
+    $leafName = Split-Path -Leaf $resolvedPath
+    $backupPath = Join-Path $scratchDir "${pathHash}_${leafName}.bak"
+    Copy-Item -Path $resolvedPath -Destination $backupPath -Force
+
     $sha = [System.Security.Cryptography.SHA256]::Create()
     try { $fullHash = ([BitConverter]::ToString($sha.ComputeHash([System.IO.File]::ReadAllBytes($backupPath)))).Replace('-', '').ToLower() }
     finally { $sha.Dispose() }
     $shortHash = $fullHash.Substring(0, 12)
-    "$fullHash  $backupPath" | Add-Content -Path (Join-Path $scratchDir "hashes.txt")
+    "$fullHash  $backupPath  $resolvedPath" | Add-Content -Path (Join-Path $scratchDir "hashes.txt")
     Write-Output "Checkpoint created: $backupPath (sha $shortHash)"
 } else {
     $gitCheck = Invoke-GitCmd @("rev-parse", "--is-inside-work-tree") 2>$null
@@ -51,7 +67,7 @@ if ($FilePath) {
             exit 1
         }
         $untrackedBaseline = Join-Path $scratchDir "untracked_baseline.txt"
-        $untrackedFiles = Invoke-GitCmd @("ls-files", "--others", "--exclude-standard")
+        $untrackedFiles = Invoke-GitCmd @("-c", "core.quotePath=false", "ls-files", "--others", "--exclude-standard")
         if ($LASTEXITCODE -ne 0) {
             Write-Error "Failed to record untracked files baseline."
             exit 1

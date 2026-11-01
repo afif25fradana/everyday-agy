@@ -1,7 +1,7 @@
 # ADR-0002: Domain-Partitioned Skills vs Greedy References
 
 ## Status
-Accepted
+Superseded by ADR-0016
 
 ## Date
 2026-10-22

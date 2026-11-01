@@ -55,10 +55,15 @@ The environment registers verified command-line tools in `GEMINI.md`. External c
 | Command / Tool | Category | Role in Environment |
 |---|---|---|
 | `rtk` | Token Proxy | Compresses CLI outputs and filters token waste before sending to the model |
-| `ast-grep` (`sg`) | Structural Search | Performs multiline, syntax-tree-accurate code search and refactoring |
+| `git` | Version Control | Primary version control system for tracking, branching, and checkpoints |
 | `gh` | GitHub CLI | Automates PR creation, non-interactive CI monitoring, and PR review comments |
+| `ast-grep` (`sg`) | Structural Search | Performs multiline, syntax-tree-accurate code search and refactoring |
 | `ripgrep` (`rg`) | Text Search | Traces upstream callers, symbols, and references across files |
 | `pwsh` | Shell | Preferred execution shell (PowerShell 7+) on Windows hosts |
+| `node` / `npm` | JS/TS Runtime | JavaScript runtime and package manager |
+| `python` / `pip` | Python Runtime | Python runtime and package installer |
+| `java` (JBR 25) | Java Runtime | JetBrains Runtime Java environment for IDE tools |
+| `code` / `opencode` | Editor / CLI | Visual Studio Code launcher and OpenCode assistant CLI |
 | `fzf` | Interactive Filter | Fuzzy directory and file navigation helper |
 | `ffmpeg` | Media Utility | Media inspection and asset optimization |
 | `adb` | Device Bridge | Android debugging bridge for mobile testing workflows |
@@ -86,7 +91,7 @@ The global rules file stays compact by defining only active behavioral boundarie
 - Checkpoint-gated execution: autonomous execution and verification for small fixes (Tier 0/1); explicit approval before multi-file or architectural changes (Tier 2/3, ADR-0015).
 - Rollback safety: maintain a clean git checkpoint before modifying files.
 - Lean chat: concise status responses (1 to 3 lines) pointing to structured artifacts for review payloads.
-- Security boundaries: deny paths (`.env`, `~/.ssh`, token MCP configs), AST command interception (`Test-PowerShellCommandSafety.ps1` with 35 CI test cases), and quarantine for external inputs.
+- Security boundaries: deny paths (`.env`, `~/.ssh`, token MCP configs), AST command interception (`Test-PowerShellCommandSafety.ps1` regression test suite), and quarantine for external inputs.
 
 ### Specialized Agent Roles (`config/agents/`)
 Eleven specialized agent configurations handle task delegation. Analytical roles run on `model: inherit` (ADR-0004) to retain the full reasoning capacity of the primary model:
@@ -98,7 +103,7 @@ Eleven specialized agent configurations handle task delegation. Analytical roles
 - `build-error-resolver`: Scoped TypeScript compiler and build fixes with shortest working diffs.
 - `ui-crafter`: Modern web primitives, WCAG 2.2 AA accessibility, and Generative UI widgets.
 - `docs-architect`: Technical documentation maintenance and AI context synchronization.
-- `public-docs-craftsman`: Public repository documentation, companion sub-docs (TOOLKIT.md, technical.md), and GitHub Community Standards health files.
+- `public-docs-craftsman`: Public repository documentation, companion sub-docs (TOOLKIT.md), and GitHub Community Standards health files.
 - `maintenance-bot`: Dependabot PR triage, CI failure diagnosis, and CVE remediation.
 - `spec-verifier`: Cross-checks proposed fixes and API signatures against Context7 MCP and official vendor docs (anti-hallucination, read-only).
 
@@ -115,7 +120,7 @@ Thirteen modular skills are maintained directly within `config/skills/`. Third-p
 Refer to the upstream repositories for their official Antigravity installation instructions:
 - [**Taste-Skill (`design-taste-frontend`)**](https://github.com/Leonxlnx/taste-skill): Anti-slop frontend art direction distilled from 247 curated design galleries (Leonxlnx, MIT).
 - [**Ponytail Suite**](https://github.com/DietrichGebert/ponytail): Minimal diff enforcement, repo quality audits, technical debt ledgers, and PR reviews (DietrichGebert, MIT).
-- [**Antislop Suite**](https://github.com/antislop-ai/antislop): Content and code comment hygiene for AI coding agents (MIT).
+- [**Anti-Slop Suite**](https://github.com/miqdadbadjuber/anti-slop): Content and code comment hygiene for AI coding agents (MIT).
 - [**Chrome DevTools & Modern Web Guidance**](https://antigravity.google): Official Google developer tooling plugins available in the Antigravity Plugin Marketplace.
 
 #### Core Tracked Workflows
@@ -162,6 +167,6 @@ Technical decisions, constraints, and trade-offs are recorded as permanent Nygar
 ## License
 
 Dual-licensed under MIT and CC BY-SA 4.0:
-- Repository scripts, custom subagents, and bespoke skills (`council-review`, `audit-dev-workflow`, `sync-task-state`) are licensed under the [MIT License](./LICENSE).
+- Repository scripts, custom subagents, and bespoke skills (`council-review`, `academic-council`, `audit-dev-workflow`, `sync-task-state`, `clean-docs`) are licensed under the [MIT License](./LICENSE).
 - Adapted Trail of Bits security skills (`audit-context-building`, `differential-review`) are licensed under [Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](./config/skills/audit-context-building/LICENSE).
-- Bundled third-party community skills (`ponytail`, `design-taste-frontend`, `antislop`) retain their respective upstream MIT licenses (see subfolder `LICENSE` files).
+- Decoupled upstream community skills (`ponytail`, `taste-skill`, `anti-slop`) are referenced under their respective upstream MIT licenses.

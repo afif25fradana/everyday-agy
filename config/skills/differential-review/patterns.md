@@ -61,9 +61,9 @@ function processExit() {
 
 **Detection:**
 ```pwsh
-git diff <range> | rg "^-.*require"
-git diff <range> | rg "^-.*assert"
-git diff <range> | rg "^-.*revert"
+rtk git diff <range> | rtk rg "^-.*require"
+rtk git diff <range> | rtk rg "^-.*assert"
+rtk git diff <range> | rtk rg "^-.*revert"
 ```
 
 **Questions to ask:**
@@ -143,9 +143,9 @@ function withdraw() {
 
 **Detection:**
 ```pwsh
-git diff <range> | rg "^-.*onlyOwner"
-git diff <range> | rg "^-.*onlyAdmin"
-git diff <range> | rg "^-.*require.*msg.sender"
+rtk git diff <range> | rtk rg "^-.*onlyOwner"
+rtk git diff <range> | rtk rg "^-.*onlyAdmin"
+rtk git diff <range> | rtk rg "^-.*require.*msg.sender"
 ```
 
 **Questions:**
@@ -218,7 +218,7 @@ require(block.number > deadlineBlock, "Too early");
 
 **Detection:**
 ```pwsh
-git diff <range> | rg "\.call|\.send|\.transfer"
+rtk git diff <range> | rtk rg "\.call|\.send|\.transfer"
 ```
 
 **Example:**
@@ -262,22 +262,22 @@ function distributeRewards() {
 
 **Find removed security checks:**
 ```pwsh
-git diff <range> | rg "^-" | rg "require|assert|revert"
+rtk git diff <range> | rtk rg "^-" | rtk rg "require|assert|revert"
 ```
 
 **Find new external calls:**
 ```pwsh
-git diff <range> | rg "^\+" | rg "\.call|\.delegatecall|\.staticcall"
+rtk git diff <range> | rtk rg "^\+" | rtk rg "\.call|\.delegatecall|\.staticcall"
 ```
 
 **Find changed access modifiers:**
 ```pwsh
-git diff <range> | rg "onlyOwner|onlyAdmin|internal|private|public|external"
+rtk git diff <range> | rtk rg "onlyOwner|onlyAdmin|internal|private|public|external"
 ```
 
 **Find arithmetic changes:**
 ```pwsh
-git diff <range> | rg "\+|\-|\*|/"
+rtk git diff <range> | rtk rg "\+|\-|\*|/"
 ```
 
 ---

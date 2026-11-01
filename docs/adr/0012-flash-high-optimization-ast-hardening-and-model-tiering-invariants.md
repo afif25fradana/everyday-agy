@@ -1,7 +1,7 @@
 # ADR-0012: Flash High Optimization, AST Hardening, and Cognitive Tiering Invariants
 
 ## Status
-Accepted
+Accepted (Partially Superseded by ADR-0015)
 
 ## Date
 2026-10-28

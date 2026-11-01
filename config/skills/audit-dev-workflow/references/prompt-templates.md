@@ -63,8 +63,9 @@ Tier 0: Trivial Fast-Path (Cosmetic / Non-Logic Change)
 
 # Execution Instructions
 1. Verify change touches zero logic, conditionals, loops, state transitions, or security checks.
-2. Apply edit directly using `edit_file`.
-3. Package output strictly as:
+2. Establish verified rollback checkpoint: `New-AuditCheckpoint.ps1 -Task "<task_name>"`.
+3. Apply edit directly using `edit_file`.
+4. Package output strictly as:
 
 [TRIVIAL REVIEW]
 - **Task**: [Task Description]

@@ -12,10 +12,11 @@ skills:
   # Repository Skills (config/skills/)
   - clean-docs
   - audit-dev-workflow
-  - ponytail
   - audit-context-building
   - gh-workflow
-  # External Marketplace Plugins (ADR-0006: npx antislop-ai)
+  # External Upstream Skills (ADR-0016: https://github.com/DietrichGebert/ponytail)
+  - ponytail
+  # External Upstream Plugins (ADR-0016: https://github.com/miqdadbadjuber/anti-slop)
   - antislop-copywriting
   - antislop-code
 ---

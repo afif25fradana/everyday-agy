@@ -9,9 +9,10 @@ tools:
 skills:
   # Repository Skills (config/skills/)
   - audit-dev-workflow
-  - ponytail
   - differential-review
-  # External Marketplace Plugins (ADR-0006: npx antislop-ai)
+  # External Upstream Skills (ADR-0016: https://github.com/DietrichGebert/ponytail)
+  - ponytail
+  # External Upstream Plugins (ADR-0016: https://github.com/miqdadbadjuber/anti-slop)
   - antislop-code
 ---
 

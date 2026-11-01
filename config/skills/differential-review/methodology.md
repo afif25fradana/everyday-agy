@@ -13,7 +13,7 @@ If `audit-context-building` skill is available:
 rtk git checkout <baseline_commit>
 ```
 
-Deploy a read-only research subagent (`invoke_subagent` with `TypeName: "research"`, `Role: "Codebase Context Auditor"`) following `audit-context-building` using `rtk rg` and `view_file`, saving baseline context in `$HOME/.gemini/antigravity/scratch/<task>/baseline-context/`.
+Deploy a read-only specialist subagent (`invoke_subagent` with `TypeName: "code-auditor"`, `Role: "Codebase Context Auditor"`) following `audit-context-building` using `rtk rg` and `view_file`, saving baseline context in `$HOME/.gemini/antigravity/scratch/<task>/baseline-context/`.
 - **Scope**: entire relevant project (e.g., `packages/contracts/contracts/` for Solidity, `src/` for Rust, or repository root).
 - **Focus**: invariants, trust-boundaries, validation-patterns, call-graphs, state-flows.
 
@@ -55,7 +55,7 @@ rtk git diff <base>..<head> --name-only
 
 **Assess codebase size:**
 ```pwsh
-rg --files -g "*.sol" -g "*.rs" -g "*.go" -g "*.ts" . | Measure-Object -Line
+rtk rg --files -g "*.sol" -g "*.rs" -g "*.go" -g "*.ts" . | Measure-Object -Line
 ```
 
 **Classify complexity:**
@@ -170,7 +170,7 @@ rg "functionName\(" -g "*.sol" . | Measure-Object -Line
 
 ## Phase 4: Deep Context Analysis
 
-**If `audit-context-building` skill is available**, deploy a read-only research subagent (`invoke_subagent` with `TypeName: "research"`, `Role: "Codebase Context Auditor"`) following `audit-context-building` using `rtk rg` and `view_file`, saving context in `$HOME/.gemini/antigravity/scratch/<task>/audit-context/`, to help answer all the questions below for each HIGH RISK changed function:
+**If `audit-context-building` skill is available**, deploy a read-only specialist subagent (`invoke_subagent` with `TypeName: "code-auditor"`, `Role: "Codebase Context Auditor"`) following `audit-context-building` using `rtk rg` and `view_file`, saving context in `$HOME/.gemini/antigravity/scratch/<task>/audit-context/`, to help answer all the questions below for each HIGH RISK changed function:
 
 **The audit-context-building skill will help you answer:**
 

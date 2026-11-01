@@ -15,7 +15,10 @@ $configHome = Join-Path $geminiHome "config"
 # 1. Credential Scanner Definition & Pre-Flight Verification
 $secretPatterns = @(
     @{ Kind = "Bearer token"; Pattern = 'Bearer\s+(?!<)[A-Za-z0-9_\-\.]{12,}' },
-    @{ Kind = "Credential assignment"; Pattern = '["'']?(?:api[_-]?key|access[_-]?token|secret[_-]?key|token)["'']?\s*[:=]\s*["''](?!<)[^\s"'']{16,}["'']' }
+    @{ Kind = "Credential assignment"; Pattern = '["'']?(?:api[_-]?key|access[_-]?token|secret[_-]?key|token)["'']?\s*[:=]\s*["''](?!<)[^\s"'']{16,}["'']' },
+    @{ Kind = "GitHub Token"; Pattern = '\b(ghp|github_pat)_[A-Za-z0-9_]{20,}' },
+    @{ Kind = "Private Key Header"; Pattern = '-----BEGIN\s+([A-Z0-9_-]+\s+)?PRIVATE\s+KEY-----' },
+    @{ Kind = "Cloud API Key"; Pattern = '\b(AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z\-_]{35}|sk-[a-zA-Z0-9]{20,})\b' }
 )
 
 function Assert-NoCredentialsInFile($filePath) {
@@ -132,5 +135,5 @@ Write-Host ">>> Note: For Context7 MCP setup, refer to README.md and TOOLKIT.md.
 Write-Host ">>> Tip: Recommended upstream skills & plugins (refer to official docs for Antigravity install):" -ForegroundColor Cyan
 Write-Host "    - Taste-Skill (design-taste-frontend): https://github.com/Leonxlnx/taste-skill" -ForegroundColor DarkGray
 Write-Host "    - Ponytail (lazy dev mode & audits):  https://github.com/DietrichGebert/ponytail" -ForegroundColor DarkGray
-Write-Host "    - Antislop (clean copywriting & UI):  https://github.com/antislop-ai/antislop" -ForegroundColor DarkGray
+Write-Host "    - Anti-Slop (clean copywriting & UI): https://github.com/miqdadbadjuber/anti-slop" -ForegroundColor DarkGray
 Write-Host "    - Chrome DevTools & Web Guidance:     Install via Antigravity Marketplace" -ForegroundColor DarkGray

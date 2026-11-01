@@ -37,17 +37,16 @@ respective upstream licenses:
    See config/skills/audit-context-building/LICENSE and
    config/skills/differential-review/LICENSE for complete license texts.
 
-2. Ponytail Minimal Diff & Quality Review Suite (MIT License):
-   - config/skills/ponytail/ (and associated sub-skills)
-   Copyright (c) 2026 DietrichGebert (https://github.com/DietrichGebert/ponytail)
-   Licensed under the MIT License. See config/skills/ponytail/LICENSE.
+2. Bespoke Workflow Skills (MIT License):
+   - config/skills/academic-council/
+   - config/skills/audit-dev-workflow/
+   - config/skills/clean-docs/
+   - config/skills/council-review/
+   - config/skills/sync-task-state/
+   Licensed under the primary repository MIT License.
 
-3. Frontend Taste Skill (MIT License):
-   - config/skills/design-taste-frontend/
-   Copyright (c) 2026 Leonxlnx (https://github.com/Leonxlnx/taste-skill)
-   Licensed under the MIT License. See config/skills/design-taste-frontend/LICENSE.
-
-4. Antislop Code & Design Filter Plugin (MIT License):
-   - config/plugins/antislop/
-   Copyright (c) 2026 miqdadbadjuber (https://github.com/miqdadbadjuber/anti-slop)
-   Licensed under the MIT License. See config/plugins/antislop/LICENSE.
+3. External Recommended Tooling & Upstream Skills (Referenced):
+   - Ponytail Suite: Copyright (c) 2026 DietrichGebert (https://github.com/DietrichGebert/ponytail, MIT License)
+   - Frontend Taste-Skill: Copyright (c) 2026 Leonxlnx (https://github.com/Leonxlnx/taste-skill, MIT License)
+   - Anti-Slop Suite: Copyright (c) 2026 Miqdad Badjuber (https://github.com/miqdadbadjuber/anti-slop, MIT License)
+   Maintained independently by their respective upstream repositories.

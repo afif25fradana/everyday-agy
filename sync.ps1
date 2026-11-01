@@ -20,7 +20,10 @@ if (-not (Test-Path $geminiHome)) {
 # 1. Credential Scanner Definition
 $secretPatterns = @(
     @{ Kind = "Bearer token"; Pattern = 'Bearer\s+(?!<)[A-Za-z0-9_\-\.]{12,}' },
-    @{ Kind = "Credential assignment"; Pattern = '["'']?(?:api[_-]?key|access[_-]?token|secret[_-]?key|token)["'']?\s*[:=]\s*["''](?!<)[^\s"'']{16,}["'']' }
+    @{ Kind = "Credential assignment"; Pattern = '["'']?(?:api[_-]?key|access[_-]?token|secret[_-]?key|token)["'']?\s*[:=]\s*["''](?!<)[^\s"'']{16,}["'']' },
+    @{ Kind = "GitHub Token"; Pattern = '\b(ghp|github_pat)_[A-Za-z0-9_]{20,}' },
+    @{ Kind = "Private Key Header"; Pattern = '-----BEGIN\s+([A-Z0-9_-]+\s+)?PRIVATE\s+KEY-----' },
+    @{ Kind = "Cloud API Key"; Pattern = '\b(AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z\-_]{35}|sk-[a-zA-Z0-9]{20,})\b' }
 )
 
 # Plugins and skills excluded from sync (maintained by upstream repositories with dedicated Antigravity installers)

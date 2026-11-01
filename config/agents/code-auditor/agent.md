@@ -11,11 +11,12 @@ skills:
   - audit-dev-workflow
   - coding-standards
   - clean-docs
-  - ponytail
   - differential-review
   - sync-task-state
   - audit-context-building
-  # External Marketplace Plugins (ADR-0006: npx antislop-ai / Chrome DevTools)
+  # External Upstream Skills (ADR-0016: https://github.com/DietrichGebert/ponytail)
+  - ponytail
+  # External Marketplace Plugins (ADR-0016: https://github.com/miqdadbadjuber/anti-slop / Chrome DevTools)
   - antislop-code
   - antislop-copywriting
   - memory-leak-debugging

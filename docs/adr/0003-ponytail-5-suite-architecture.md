@@ -1,7 +1,7 @@
 # ADR-0003: Preservation of Ponytail 5 Discrete Modal Architecture
 
 ## Status
-Accepted
+Superseded by ADR-0016
 
 ## Date
 2026-10-22

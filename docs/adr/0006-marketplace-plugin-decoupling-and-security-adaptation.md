@@ -1,7 +1,7 @@
 # ADR-0006: Marketplace Plugin Decoupling and Security Skill Adaptation
 
 ## Status
-Accepted
+Superseded by ADR-0011 and ADR-0016
 
 ## Date
 2026-10-22

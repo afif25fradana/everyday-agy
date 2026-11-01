@@ -41,9 +41,9 @@ $commandElements = $ast.FindAll({ $args[0] -is [System.Management.Automation.Lan
 foreach ($cmdAst in $commandElements) {
     $rawCmdName = $cmdAst.GetCommandName()
 
-    # Block indirect dynamic expression invocations (e.g. & (Get-Command Remove-Item))
+    # Block indirect dynamic expression invocations (e.g. & (Get-Command Remove-Item) or . (Get-Command Remove-Item))
     if (-not $rawCmdName) {
-        if ($cmdAst.InvocationOperator -eq 'Ampersand') {
+        if ($cmdAst.InvocationOperator -in @('Ampersand', 'Dot')) {
             $firstEl = $cmdAst.CommandElements[0]
             if ($firstEl -is [System.Management.Automation.Language.ParenExpressionAst] -or
                 $firstEl -is [System.Management.Automation.Language.VariableExpressionAst]) {
@@ -63,11 +63,36 @@ foreach ($cmdAst in $commandElements) {
         exit 1
     }
     if ($cmdName -in @('powershell', 'pwsh')) {
-        foreach ($el in $cmdAst.CommandElements[1..($cmdAst.CommandElements.Count - 1)]) {
-            if ($el.Extent.Text -match '^-(c|co|com|comm|comma|comman|command|e|en|enc|enco|encod|encode|encoded|encodedc|encodedco|encodedcom|encodedcomm|encodedcomma|encodedcomman|encodedcommand)\b') {
+        $skipNextArg = $false
+        for ($i = 1; $i -lt $cmdAst.CommandElements.Count; $i++) {
+            $t = $cmdAst.CommandElements[$i].Extent.Text
+            if ($skipNextArg) {
+                $skipNextArg = $false
+                continue
+            }
+            # Legitimate script file execution (-File or -f)
+            if ($t -match '^-(f|file)\b') {
+                break
+            }
+            # Explicit inline script / command flags
+            if ($t -match '^-(c|co|com|comm|comma|comman|command|e|en|enc|enco|encod|encode|encoded|encodedc|encodedco|encodedcom|encodedcomm|encodedcomma|encodedcomman|encodedcommand)\b') {
                 Write-Error "Safety Violation: Prohibited inline subshell evaluation '$($cmdAst.Extent.Text)' detected."
                 exit 1
             }
+            # Parameters expecting a companion value token
+            if ($t -match '^-(executionpolicy|ep|ex|windowstyle|w|configurationname|config|custompipename|outputformat|of|inputformat|if|workingdirectory|wd|settingsfile)\b') {
+                if ($t -notmatch '[:=]') {
+                    $skipNextArg = $true
+                }
+                continue
+            }
+            # Known switch flags
+            if ($t -match '^-') {
+                continue
+            }
+            # Positional inline command without -File
+            Write-Error "Safety Violation: Prohibited inline subshell evaluation '$($cmdAst.Extent.Text)' detected."
+            exit 1
         }
     }
 
@@ -92,10 +117,18 @@ foreach ($cmdAst in $commandElements) {
             }
             if ($text -match '^-(r|re|rec|recu|recur|recurs|recurse)(:\$?true)?$' -or $text -match '^/s$') { $hasRecurse = $true }
             if ($text -match '^-(f|fo|for|forc|force)(:\$?true)?$' -or $text -match '^/q$') { $hasForce = $true }
-            if ($text -match '^[/\\]+$|^[a-zA-Z]:[/\\]*$|^~[/\\]*' -or $text -in @('$env:SystemDrive', '$HOME', '$env:USERPROFILE')) { $targetRoot = $true }
+            # Check root targets, drive roots, root wildcards, home, and environment path variables (ADR-0011 & ADR-0015)
+            if ($text -match '^[/\\]+(\*.*)?$' -or
+                $text -match '^[a-zA-Z]:[/\\]*(\*.*)?$' -or
+                $text -match '^~[/\\]*(\*.*)?$' -or
+                $text -match '^\$(HOME|env:(USERPROFILE|SystemDrive))([/\\]+(\*.*)?)?$' -or
+                $text -in @('$env:SystemDrive', '$HOME', '$env:USERPROFILE')) {
+                $targetRoot = $true
+            }
         }
 
-        if ($hasRecurse -or ($hasForce -and $targetRoot)) {
+        # Block recursive deletions OR root deletions regardless of -Force (ADR-0011#L29)
+        if ($hasRecurse -or $targetRoot) {
             Write-Error "Safety Violation: Prohibited recursive or root deletion '$($cmdAst.Extent.Text)' detected."
             exit 1
         }
@@ -115,12 +148,32 @@ foreach ($cmdAst in $commandElements) {
                 $skipNext = $false
                 continue
             }
-            # Skip commit/tag message payload tokens and global git path/config flags before subcommand
-            if ($t -in @('-m', '--message', '-C', '-c', '--git-dir', '--work-tree', '--namespace')) {
+            # Skip commit/tag message payload tokens and global git directory/worktree flags before subcommand
+            if ($t -in @('-m', '--message', '--git-dir', '--work-tree', '--namespace') -or $t -ceq '-C') {
                 $skipNext = $true
                 continue
             }
-            if ($t -match '^(-m|--message=|--git-dir=|--work-tree=|--namespace=|-C|-c)') {
+            # Intercept dangerous git -c configuration overrides (core.hooksPath, core.fsmonitor, alias.*)
+            if ($t -ceq '-c') {
+                if ($i + 1 -lt $cmdAst.CommandElements.Count) {
+                    $cfgPayload = $cmdAst.CommandElements[$i + 1].Extent.Text
+                    if ($cfgPayload -match '(?i)^(core\.(hookspath|fsmonitor|sshcommand|askpass)|alias\.)') {
+                        Write-Error "Safety Violation: Prohibited git -c security override '$cfgPayload' detected."
+                        exit 1
+                    }
+                }
+                $skipNext = $true
+                continue
+            }
+            if ($t -cmatch '^-c(?<cfg>.+)$') {
+                $cfgPayload = $Matches['cfg'] -replace '^=', ''
+                if ($cfgPayload -match '(?i)^(core\.(hookspath|fsmonitor|sshcommand|askpass)|alias\.)') {
+                    Write-Error "Safety Violation: Prohibited git -c security override '$cfgPayload' detected."
+                    exit 1
+                }
+                continue
+            }
+            if ($t -match '^(-m|--message=|--git-dir=|--work-tree=|--namespace=)' -or $t -cmatch '^-C') {
                 continue
             }
             $argTokens += $t
@@ -146,9 +199,20 @@ foreach ($cmdAst in $commandElements) {
                 Write-Error "Safety Violation: Prohibited git commit --no-verify bypass flag detected."
                 exit 1
             }
-            if ($subCmd -in @('checkout', 'restore') -and $subArgs -match '(^|\s)(-f\b|--force\b|\.$)') {
-                Write-Error "Safety Violation: Prohibited destructive git '$subCmd' discard detected. Use Restore-AuditCheckpoint.ps1 instead."
-                exit 1
+            if ($subCmd -eq 'restore') {
+                # Permit un-staging index changes (git restore --staged .), block destructive worktree discards
+                $hasStagedOnly = ($subArgs -match '(?i)(^|\s)(--staged|-S\b)') -and ($subArgs -notmatch '(?i)(^|\s)(--worktree|-W\b)')
+                if (-not $hasStagedOnly) {
+                    Write-Error "Safety Violation: Prohibited destructive git 'restore' discard detected. Use Restore-AuditCheckpoint.ps1 instead."
+                    exit 1
+                }
+            }
+            if ($subCmd -eq 'checkout') {
+                # Permit branch checkouts (git checkout -b <branch> .), block destructive force/discard
+                if ($subArgs -match '(^|\s)(-f\b|--force\b)' -or ($subArgs -match '(\s|^)(--\s+)?(\.|\*)(?=\s|$)' -and $subArgs -notmatch '(?i)(^|\s)-b\b')) {
+                    Write-Error "Safety Violation: Prohibited destructive git 'checkout' discard detected. Use Restore-AuditCheckpoint.ps1 instead."
+                    exit 1
+                }
             }
             # Intercept uncheckpointed destructive git resets (allow only exact checkpoint-<task> target ref)
             if ($subCmd -eq 'reset' -and $subArgs -match '(^|\s)--hard\b') {
@@ -168,12 +232,12 @@ foreach ($cmdAst in $commandElements) {
     }
 }
 
-# 3. Direct .NET destructive method invocations (e.g. [System.IO.Directory]::Delete)
+# 3. Direct .NET destructive method invocations (e.g. [System.IO.Directory]::Delete, [IO.File]::Delete)
 $memberExpressions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.InvokeMemberExpressionAst] }, $true)
 foreach ($mem in $memberExpressions) {
     $exprText = $mem.Expression.Extent.Text
     $memberVal = $mem.Member.Extent.Text
-    if ($exprText -match 'System\.IO\.(Directory|File|Path)' -and $memberVal -eq 'Delete') {
+    if ($memberVal -eq 'Delete' -and ($exprText -match '(?i)(^|\[)(System\.)?IO\.(Directory|File|Path|DirectoryInfo|FileInfo)' -or $exprText -match '(?i)Get-Item|DirectoryInfo|FileInfo')) {
         Write-Error "Safety Violation: Prohibited direct .NET file deletion '$($mem.Extent.Text)' detected."
         exit 1
     }

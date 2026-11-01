@@ -222,4 +222,4 @@ than silently repurposing an existing field.
 
 - [`system-architect`](../../agents/system-architect/agent.md) - Contract and architectural boundary design.
 - [`audit-dev-workflow`](../audit-dev-workflow/SKILL.md) - Verification and testing gates.
-- [`ponytail`](../ponytail/SKILL.md) - Minimalist, non-speculative schema design.
+- [`ponytail`](https://github.com/DietrichGebert/ponytail) - Minimalist, non-speculative schema design.

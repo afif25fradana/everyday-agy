@@ -17,8 +17,8 @@ A high-rigor, evidence-backed evaluation framework combining Anthropic's **Evalu
 ## Mandatory Delegation Protocol (DO NOT BYPASS)
 
 > [!CAUTION]
-> **NEVER CALL SPECIALIST AGENTS DIRECTLY FROM THE PARENT AGENT.**
-> Calling `invoke_subagent(TypeName: "code-auditor")`, `invoke_subagent(TypeName: "system-architect")`, or any other individual specialist agent directly from the parent session completely bypasses the multi-tier council architecture. Direct calls execute flat, unverified, sycophantic runs that finish in 60 seconds with zero critical defects found.
+> **FOR TIER 3 COUNCIL EVALUATIONS, DISPATCH VIA TEAMWORK.**
+> Calling individual specialist agents directly from the parent session for a Tier 3 Council review bypasses multi-seat peer deliberation, adversarial cross-checking, and victory auditing.
 >
 > **The Parent Agent MUST dispatch EXACTLY ONE call to `teamwork`:**
 >

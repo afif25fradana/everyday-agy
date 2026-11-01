@@ -23,7 +23,7 @@ An external audit (via Qwen in agent mode) noted that these bundled upstream sui
    - Rather than hardcoding ephemeral shell installation commands in scripts, provide direct hyperlinks to the upstream project repositories where official Antigravity installation instructions are maintained:
      - [Taste-Skill (`design-taste-frontend`)](https://github.com/Leonxlnx/taste-skill)
      - [Ponytail Suite](https://github.com/DietrichGebert/ponytail)
-     - [Antislop Plugin](https://github.com/antislop-ai/antislop)
+     - [Anti-Slop Plugin](https://github.com/miqdadbadjuber/anti-slop)
 4. **Calibrate CI Integrity Thresholds**:
    - Update `.github/workflows/ci.yml` skill count threshold to `>= 10` (reflecting the 13 tracked bespoke skills).
    - Remove redundant `.gitattributes` linguist overrides.

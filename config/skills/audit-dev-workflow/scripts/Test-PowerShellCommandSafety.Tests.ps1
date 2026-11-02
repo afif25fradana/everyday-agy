@@ -102,6 +102,26 @@ $testCases = @(
     @{ Expected = "BLOCK"; Cmd = 'Get-ChildItem -Recurse | Remove-Item -Force'; Reason = "Pipelined recursive Remove-Item" },
     @{ Expected = "BLOCK"; Cmd = 'git restore .'; Reason = "git restore worktree discard" },
 
+    # Blocked: Double-dash wrappers, global git flags, compound switches, process execution & branch deletion
+    @{ Expected = "BLOCK"; Cmd = 'rtk -- git clean -fdx'; Reason = "rtk double-dash wrapper unwrapping" },
+    @{ Expected = "BLOCK"; Cmd = 'sudo -- git push --force'; Reason = "sudo double-dash wrapper unwrapping" },
+    @{ Expected = "BLOCK"; Cmd = 'git --no-pager clean -fdx'; Reason = "git --no-pager global flag displacement" },
+    @{ Expected = "BLOCK"; Cmd = 'git -P push --force'; Reason = "git -P global flag displacement" },
+    @{ Expected = "BLOCK"; Cmd = 'git -p clean -fdx'; Reason = "git -p global flag displacement" },
+    @{ Expected = "BLOCK"; Cmd = 'rm -rf ./dir'; Reason = "Compound POSIX -rf recursive deletion" },
+    @{ Expected = "BLOCK"; Cmd = 'rm -fr ./dir'; Reason = "Compound POSIX -fr recursive deletion" },
+    @{ Expected = "BLOCK"; Cmd = '$d.Delete($true)'; Reason = "Variable expression member .Delete() invocation" },
+    @{ Expected = "BLOCK"; Cmd = '[System.Diagnostics.Process]::Start("cmd.exe", "/c echo bypass")'; Reason = "Direct .NET Process::Start invocation" },
+    @{ Expected = "BLOCK"; Cmd = '[Diagnostics.Process]::Start("calc")'; Reason = "Direct short .NET Process::Start invocation" },
+    @{ Expected = "BLOCK"; Cmd = 'git push origin --delete main'; Reason = "git push --delete remote branch" },
+    @{ Expected = "BLOCK"; Cmd = 'git push origin -d main'; Reason = "git push -d remote branch" },
+    @{ Expected = "BLOCK"; Cmd = 'git branch -D main'; Reason = "git branch -D force delete" },
+    @{ Expected = "BLOCK"; Cmd = 'git restore -s HEAD .'; Reason = "git restore -s worktree discard" },
+    @{ Expected = "BLOCK"; Cmd = 'git -c clean.requireForce=false clean -dx'; Reason = "git -c clean.requireForce override" },
+    @{ Expected = "BLOCK"; Cmd = 'git -c core.editor=calc.exe commit'; Reason = "git -c core.editor override" },
+    @{ Expected = "BLOCK"; Cmd = 'Remove-Item ~/.ssh/id_rsa -Force'; Reason = "Remove-Item sensitive ~/.ssh target" },
+    @{ Expected = "BLOCK"; Cmd = 'Remove-Item $HOME/.aws/credentials -Force'; Reason = "Remove-Item sensitive ~/.aws target" },
+
     # Allowed: Standard developer commands
     @{ Expected = "ALLOW"; Cmd = 'git status'; Reason = "git status" },
     @{ Expected = "ALLOW"; Cmd = 'git push git@github.com:user/repo.git main'; Reason = "git push to SSH remote URL containing colon" },
@@ -113,6 +133,8 @@ $testCases = @(
     @{ Expected = "ALLOW"; Cmd = 'pwsh -NoProfile -ExecutionPolicy Bypass -File .\scripts\build.ps1'; Reason = "pwsh script run with execution policy bypass" },
     @{ Expected = "ALLOW"; Cmd = 'rtk git restore --staged .'; Reason = "rtk git restore staged un-stage" },
     @{ Expected = "ALLOW"; Cmd = 'git restore --staged .'; Reason = "git restore staged un-stage" },
+    @{ Expected = "ALLOW"; Cmd = 'git restore -S .'; Reason = "git restore -S uppercase staged un-stage" },
+    @{ Expected = "ALLOW"; Cmd = 'Remove-Item -Path "temp.txt" -for -ErrorAction SilentlyContinue -Filter "*.log"'; Reason = "Benign parameter abbreviation -for and -Filter" },
     @{ Expected = "ALLOW"; Cmd = 'git checkout -b feat/branch .'; Reason = "git checkout -b create branch" },
     @{ Expected = "ALLOW"; Cmd = 'git -c core.autocrlf=input status'; Reason = "benign git -c status" },
 

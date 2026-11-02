@@ -10,6 +10,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$PSNativeCommandUseErrorActionPreference = $false
 if ($RepoPath -and (Test-Path -Path $RepoPath)) {
     Set-Location -LiteralPath $RepoPath
 }
@@ -50,11 +51,19 @@ if ($FilePath) {
         Write-Error "Backup file not found in scratch: checked '$hashedBackup' and '$legacyBackup'"
         exit 1
     }
+    $parentDir = Split-Path -Parent $resolvedPath
+    if ($parentDir -and -not (Test-Path -LiteralPath $parentDir)) {
+        New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
+    }
     Copy-Item -Path $backupPath -Destination $resolvedPath -Force
     Write-Output "Checkpoint restored: $backupPath -> $resolvedPath"
 } else {
     $gitCheck = Invoke-GitCmd @("rev-parse", "--is-inside-work-tree") 2>$null
     if ($gitCheck -eq "true") {
+        $repoRoot = ((Invoke-GitCmd @("rev-parse", "--show-toplevel")) | Out-String).Trim()
+        if ($repoRoot -and (Test-Path -LiteralPath $repoRoot)) {
+            Set-Location -LiteralPath $repoRoot
+        }
         $branchName = "checkpoint-$safeTask"
         $branchExists = Invoke-GitCmd @("rev-parse", "--verify", "refs/heads/$branchName") 2>$null
         if ($LASTEXITCODE -eq 0 -and $branchExists) {

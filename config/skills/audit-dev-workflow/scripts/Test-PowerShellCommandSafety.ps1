@@ -65,7 +65,7 @@ foreach ($cmdAst in $commandElements) {
     $targetElements = @($cmdAst.CommandElements)
     if ($cmdName -in @('rtk', 'sudo', 'gsudo')) {
         $idx = 1
-        while ($idx -lt $targetElements.Count -and ($targetElements[$idx].Extent.Text -replace '^[''"]|[''"]$', '') -in @('proxy', 'exec')) {
+        while ($idx -lt $targetElements.Count -and ($targetElements[$idx].Extent.Text -replace '^[''"]|[''"]$', '') -in @('proxy', 'exec', '--')) {
             $idx++
         }
         if ($idx -lt $targetElements.Count) {
@@ -133,8 +133,18 @@ foreach ($cmdAst in $commandElements) {
                 Write-Error "Safety Violation: Prohibited parameter splatting '$text' on '$cmdName'."
                 exit 1
             }
-            if ($text -match '^-(r|re|rec|recu|recur|recurs|recurse)(:\$?true)?$' -or $text -match '^/s$') { $hasRecurse = $true }
-            if ($text -match '^-(f|fo|for|forc|force)(:\$?true)?$' -or $text -match '^/q$') { $hasForce = $true }
+            # Constrain POSIX compound short switch check to 2-4 clustered POSIX single-letter flags (r, f, i, v, d)
+            # preventing collision with PowerShell parameter prefix abbreviations (-for, -forc, -ver, -verb, -cred, -str)
+            $isPosixCluster = $text -match '^-(?i)[rfivd]{2,4}$'
+            if ($text -match '^-(r|re|rec|recu|recur|recurs|recurse)(:\$?true)?$' -or $text -match '^/s$' -or ($isPosixCluster -and $text -match '(?i)r')) { $hasRecurse = $true }
+            if ($text -match '^-(f|fo|for|forc|force)(:\$?true)?$' -or $text -match '^/q$' -or ($isPosixCluster -and $text -match '(?i)f')) { $hasForce = $true }
+            
+            # Check sensitive credential directory deletions (~/.ssh, ~/.aws, ~/.gnupg)
+            if ($text -match '(?i)^(~|\$HOME|\$env:USERPROFILE)[/\\]+(\.ssh|\.aws|\.gnupg)($|[/\\])' -or $text -match '(?i)[/\\](\.ssh|\.aws|\.gnupg)($|[/\\])') {
+                Write-Error "Safety Violation: Prohibited deletion of credential or sensitive directory '$text' detected."
+                exit 1
+            }
+
             # Check root targets, drive roots, root wildcards, home, and environment path variables (ADR-0011 & ADR-0015)
             if ($text -match '^[/\\]+(\*.*)?$' -or
                 $text -match '^[a-zA-Z]:[/\\]*(\*.*)?$' -or
@@ -175,16 +185,21 @@ foreach ($cmdAst in $commandElements) {
                 $skipNext = $false
                 continue
             }
+            # Filter Git global boolean flags (do not take arguments) including -P (pager disable)
+            $gitGlobalBools = @('--no-pager', '-p', '-P', '--paginate', '--bare', '--no-replace-objects', '--literal-pathspecs')
+            if ($t -in $gitGlobalBools) {
+                continue
+            }
             # Skip commit/tag message payload tokens and global git directory/worktree flags before subcommand
             if ($t -in @('-m', '--message', '--git-dir', '--work-tree', '--namespace') -or $t -ceq '-C') {
                 $skipNext = $true
                 continue
             }
-            # Intercept dangerous git -c configuration overrides (core.hooksPath, core.fsmonitor, alias.*)
+            # Intercept dangerous git -c configuration overrides (core.hooksPath, core.editor, clean.requireForce, alias.*)
             if ($t -ceq '-c') {
                 if ($i + 1 -lt $targetElements.Count) {
                     $cfgPayload = $targetElements[$i + 1].Extent.Text -replace '^[''"]|[''"]$', ''
-                    if ($cfgPayload -match '(?i)^(core\.(hookspath|fsmonitor|sshcommand|askpass)|alias\.)') {
+                    if ($cfgPayload -match '(?i)^(core\.(hookspath|fsmonitor|sshcommand|askpass|editor)|clean\.requireforce|sequence\.editor|safe\.directory|alias\.)') {
                         Write-Error "Safety Violation: Prohibited git -c security override '$cfgPayload' detected."
                         exit 1
                     }
@@ -194,7 +209,7 @@ foreach ($cmdAst in $commandElements) {
             }
             if ($t -cmatch '^-c(?<cfg>.+)$') {
                 $cfgPayload = ($Matches['cfg'] -replace '^=', '') -replace '^[''"]|[''"]$', ''
-                if ($cfgPayload -match '(?i)^(core\.(hookspath|fsmonitor|sshcommand|askpass)|alias\.)') {
+                if ($cfgPayload -match '(?i)^(core\.(hookspath|fsmonitor|sshcommand|askpass|editor)|clean\.requireforce|sequence\.editor|safe\.directory|alias\.)') {
                     Write-Error "Safety Violation: Prohibited git -c security override '$cfgPayload' detected."
                     exit 1
                 }
@@ -207,17 +222,28 @@ foreach ($cmdAst in $commandElements) {
         }
 
         if ($argTokens.Count -gt 0) {
-            $subCmd = $argTokens[0]
+            # Robust subcommand resolution: locate the first non-flag argument token as $subCmd
+            $subCmd = $null
+            for ($j = 0; $j -lt $argTokens.Count; $j++) {
+                if ($argTokens[$j] -notmatch '^-') {
+                    $subCmd = $argTokens[$j]
+                    break
+                }
+            }
             $subArgs = ($argTokens -join ' ')
 
             if ($subCmd -eq 'push') {
                 $hasForceFlag = $subArgs -match '(^|\s)(-f\b|--force\b|--force-with-lease\b|--force-if-includes\b)'
                 $hasForceRefspec = $subArgs -match '(^|\s)\+[A-Za-z0-9_./-]+'
-                $hasRemoteDeletion = $subArgs -match '(^|\s):[A-Za-z0-9_./-]+($|\s)'
+                $hasRemoteDeletion = $subArgs -match '(^|\s)(:[A-Za-z0-9_./-]+|--delete\b|-d\b)($|\s)'
                 if ($hasForceFlag -or $hasForceRefspec -or $hasRemoteDeletion) {
                     Write-Error "Safety Violation: Prohibited git push force or remote deletion detected."
                     exit 1
                 }
+            }
+            if ($subCmd -eq 'branch' -and $subArgs -match '(^|\s)(-D\b|--delete\s+-f\b|--delete\s+--force\b)') {
+                Write-Error "Safety Violation: Prohibited destructive git branch force deletion detected."
+                exit 1
             }
             if ($subCmd -eq 'clean' -and $subArgs -match '(^|\s)(-[a-zA-Z]*f|--force\b)') {
                 Write-Error "Safety Violation: Prohibited git clean force flag detected."
@@ -229,7 +255,8 @@ foreach ($cmdAst in $commandElements) {
             }
             if ($subCmd -eq 'restore') {
                 # Permit un-staging index changes (git restore --staged .), block destructive worktree discards
-                $hasStagedOnly = ($subArgs -match '(?i)(^|\s)(--staged|-S\b)') -and ($subArgs -notmatch '(?i)(^|\s)(--worktree|-W\b)')
+                # Must be strictly case-sensitive (-S vs -s) and reject -s/--source
+                $hasStagedOnly = ($subArgs -cmatch '(^|\s)(--staged|-S\b)') -and ($subArgs -notmatch '(?i)(^|\s)(--worktree|-W\b)') -and ($subArgs -cnotmatch '(^|\s)(-s\b|--source\b)')
                 if (-not $hasStagedOnly) {
                     Write-Error "Safety Violation: Prohibited destructive git 'restore' discard detected. Use Restore-AuditCheckpoint.ps1 instead."
                     exit 1
@@ -268,13 +295,24 @@ foreach ($cmdAst in $commandElements) {
     }
 }
 
-# 3. Direct .NET destructive method invocations & dynamic reflection execution
+# 3. Direct .NET destructive method invocations, process execution & dynamic reflection execution
 $memberExpressions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.InvokeMemberExpressionAst] }, $true)
 foreach ($mem in $memberExpressions) {
     $exprText = $mem.Expression.Extent.Text
     $memberVal = $mem.Member.Extent.Text -replace '^[''"]|[''"]$', ''
-    if ($memberVal -eq 'Delete' -and ($exprText -match '(?i)(^|\[)(System\.)?IO\.(Directory|File|Path|DirectoryInfo|FileInfo)' -or $exprText -match '(?i)\b(Get-Item|Get-ChildItem|gi|gci|dir|ls|DirectoryInfo|FileInfo)\b')) {
-        Write-Error "Safety Violation: Prohibited direct .NET file deletion '$($mem.Extent.Text)' detected."
+
+    # Intercept direct process execution via .NET Process::Start (GAP-CRIT-04)
+    if ($memberVal -eq 'Start' -and $exprText -match '(?i)(^|\[\s*)(System\.)?Diagnostics\.Process(\s*\]|:|$)') {
+        Write-Error "Safety Violation: Prohibited direct .NET process execution '$($mem.Extent.Text)' detected."
+        exit 1
+    }
+
+    # Intercept destructive .NET deletions on files, directories, and IO object variables
+    if ($memberVal -eq 'Delete' -and (
+        $exprText -match '(?i)(^|\[\s*)(System\.)?IO\.(Directory|File|Path|DirectoryInfo|FileInfo)' -or
+        $exprText -match '(?i)\b(Get-Item|Get-ChildItem|gi|gci|dir|ls|DirectoryInfo|FileInfo)\b' -or
+        $mem.Expression -is [System.Management.Automation.Language.VariableExpressionAst])) {
+        Write-Error "Safety Violation: Prohibited direct .NET file/directory deletion '$($mem.Extent.Text)' detected."
         exit 1
     }
     if ($memberVal -in @('Invoke', 'InvokeReturnAsIs', 'InvokeScript') -and $exprText -match '(?i)(scriptblock|InvokeCommand|PowerShell)') {

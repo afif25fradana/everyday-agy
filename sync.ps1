@@ -41,7 +41,12 @@ $externalSkills = @(
 
 function Assert-NoCredentialsInFile($filePath) {
     if (-not (Test-Path $filePath)) { return }
-    $lines = Get-Content -Path $filePath -ErrorAction SilentlyContinue
+    try {
+        $lines = Get-Content -Path $filePath -ErrorAction Stop
+    } catch {
+        Write-Error "Security Audit Failure: Unable to read file for credential verification ($filePath): $($_.Exception.Message). Aborting to prevent credential leaks."
+        exit 1
+    }
     foreach ($line in $lines) {
         foreach ($sp in $secretPatterns) {
             if ($line -match $sp.Pattern) {

@@ -8,14 +8,19 @@ on:
 
 jobs:
   validate:
-    name: Validate Repository Integrity
-    runs-on: ubuntu-latest
+    name: Validate Integrity (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
 
       - name: Verify essential root files
+        shell: bash
         run: |
           for file in GEMINI.md README.md TOOLKIT.md LICENSE sync.ps1 restore.ps1; do
             if [ ! -f "$file" ]; then
@@ -38,15 +43,22 @@ jobs:
             Write-Host "[PASS] Syntax verified: $($_.Name)"
           }
 
-      - name: Run PowerShell AST Command Safety Test Suite
+      - name: Run PowerShell AST Command Safety Test Suite (pwsh)
         shell: pwsh
         run: |
           pwsh -NoProfile -ExecutionPolicy Bypass -File "config/skills/audit-dev-workflow/scripts/Test-PowerShellCommandSafety.Tests.ps1"
 
-      - name: Run Audit Checkpoint & Rollback Test Suite
+      - name: Run Audit Checkpoint & Rollback Test Suite (pwsh)
         shell: pwsh
         run: |
           pwsh -NoProfile -ExecutionPolicy Bypass -File "config/skills/audit-dev-workflow/scripts/AuditCheckpoint.Tests.ps1"
+
+      - name: Run Test Suites on Windows PowerShell 5.1
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File "config/skills/audit-dev-workflow/scripts/Test-PowerShellCommandSafety.Tests.ps1"
+          powershell -NoProfile -ExecutionPolicy Bypass -File "config/skills/audit-dev-workflow/scripts/AuditCheckpoint.Tests.ps1"
 
       - name: Verify Custom Agent Manifests
         shell: pwsh

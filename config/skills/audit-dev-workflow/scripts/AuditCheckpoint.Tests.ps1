@@ -63,6 +63,23 @@ try {
     $recreatedContent = if (Test-Path -Path $testFile) { (Get-Content -Path $testFile -Raw).Trim() } else { "" }
     Assert-Test -Name "File mode restores deleted file using unresolved path" -Condition ($recreatedContent -eq "initial version 1.0")
 
+    # Test 3b: File mode restore recreates deleted parent directory (GAP-REL-06)
+    $nestedDir = Join-Path $testDir "sub/nested/folder"
+    New-Item -ItemType Directory -Path $nestedDir -Force | Out-Null
+    $nestedFile = Join-Path $nestedDir "nested_config.json"
+    Set-Content -Path $nestedFile -Value '{"status":"ok"}' -Encoding utf8
+    
+    $nestedTask = "nested-$taskName"
+    & $newScript -Task $nestedTask -FilePath $nestedFile | Out-Null
+    
+    # Intentionally delete the entire parent directory tree
+    Remove-Item -Path (Join-Path $testDir "sub") -Recurse -Force
+    Assert-Test -Name "Parent directory successfully deleted before test" -Condition (-not (Test-Path -Path $nestedDir))
+    
+    & $restoreScript -Task $nestedTask -FilePath $nestedFile | Out-Null
+    $nestedRestored = if (Test-Path -Path $nestedFile) { (Get-Content -Path $nestedFile -Raw).Trim() } else { "" }
+    Assert-Test -Name "File mode restore recreates parent directories" -Condition ($nestedRestored -eq '{"status":"ok"}')
+
     # Test 4: File mode fails gracefully on missing backup
     $missingFile = Join-Path $testDir "never_backed_up.txt"
     Set-Content -Path $missingFile -Value "ghost" -Encoding utf8
@@ -111,18 +128,76 @@ try {
         
         $untrackedStillExists = Test-Path -Path $untrackedFile
         Assert-Test -Name "Git mode preserves untracked files when baseline is missing (Fail-Closed)" -Condition $untrackedStillExists
+
+        # Test 6: Outside git without FilePath fails closed (GAP-HIGH-03)
+        $nonGitDir = Join-Path $testDir "isolated_nongit"
+        New-Item -ItemType Directory -Path $nonGitDir -Force | Out-Null
+        $outsideFailedClosed = $false
+        $prevGitDir = $env:GIT_DIR
+        $failScratchPath = Join-Path $userHome ".gemini/antigravity/scratch/fail-nongit-$testId"
+        try {
+            # Prevent git from traversing up to user home repo during test
+            $env:GIT_DIR = (Join-Path $nonGitDir ".nonexistent_git")
+            & $newScript -Task "fail-nongit-$testId" -RepoPath $nonGitDir 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) { $outsideFailedClosed = $true }
+        } catch {
+            $outsideFailedClosed = $true
+        } finally {
+            $env:GIT_DIR = $prevGitDir
+        }
+        $noScratchCreated = -not (Test-Path -Path $failScratchPath)
+        Assert-Test -Name "Checkpoint creation outside git without FilePath fails closed and leaves no scratch folder" -Condition ($outsideFailedClosed -and $noScratchCreated)
+
+        # Test 7: Subdirectory checkpointing anchors to repo root (GAP-CRIT-01)
+        # Create root untracked file
+        $rootUntracked = Join-Path $gitRepoDir "root_precious_untracked.txt"
+        Set-Content -Path $rootUntracked -Value "root untracked data" -Encoding utf8
+        
+        # Create subdirectory in git repo and move into it
+        $subFolder = Join-Path $gitRepoDir "src/nested"
+        New-Item -ItemType Directory -Path $subFolder -Force | Out-Null
+        $subUntracked = Join-Path $subFolder "sub_untracked.txt"
+        Set-Content -Path $subUntracked -Value "sub untracked data" -Encoding utf8
+        
+        $subTask = "sub-anchor-$testId"
+        Set-Location -LiteralPath $subFolder
+        & $newScript -Task $subTask | Out-Null
+        
+        # Add new rogue file created during task
+        $rogueFile = Join-Path $subFolder "rogue_task_output.tmp"
+        Set-Content -Path $rogueFile -Value "temporary build output" -Encoding utf8
+        
+        # Run restore from subdirectory
+        & $restoreScript -Task $subTask | Out-Null
+        
+        $rootSurvived = Test-Path -Path $rootUntracked
+        $subSurvived = Test-Path -Path $subUntracked
+        $rogueRemoved = -not (Test-Path -Path $rogueFile)
+        Assert-Test -Name "Subdirectory checkpoint anchors to root and preserves pre-existing untracked files" -Condition ($rootSurvived -and $subSurvived -and $rogueRemoved) -Details "root=$rootSurvived, sub=$subSurvived, rogueRemoved=$rogueRemoved"
     } finally {
         Set-Location -LiteralPath $origPwd
         $gitScratchDir = Join-Path $userHome ".gemini/antigravity/scratch/git-fail-closed-$testId"
         if (Test-Path -Path $gitScratchDir) {
             Remove-Item -Path $gitScratchDir -Recurse -Force -ErrorAction SilentlyContinue
         }
+        $subScratchDir = Join-Path $userHome ".gemini/antigravity/scratch/sub-anchor-$testId"
+        if (Test-Path -Path $subScratchDir) {
+            Remove-Item -Path $subScratchDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
     }
 
 } finally {
-    # Cleanup temporary directories
+    # Cleanup temporary directories and test-created scratch locations
     if (Test-Path -Path $scratchDir) {
         Remove-Item -Path $scratchDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    $nestedScratchDir = Join-Path $userHome ".gemini/antigravity/scratch/nested-$taskName"
+    if (Test-Path -Path $nestedScratchDir) {
+        Remove-Item -Path $nestedScratchDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    $failScratch = Join-Path $userHome ".gemini/antigravity/scratch/fail-nongit-$testId"
+    if (Test-Path -Path $failScratch) {
+        Remove-Item -Path $failScratch -Recurse -Force -ErrorAction SilentlyContinue
     }
     if (Test-Path -Path $testDir) {
         Remove-Item -Path $testDir -Recurse -Force -ErrorAction SilentlyContinue

@@ -102,6 +102,7 @@ Engage the operator interactively using `ask_question` (one question at a time) 
    - Compiler & Typing (`build-error-resolver`)
    - Infrastructure & CI (`maintenance-bot`)
    - Official Spec & Remediation Verifier (`spec-verifier`)
+   - Software Localization & Humanizer (`l10n-humanizer`)
 2. **Evaluation Depth & Focus**: Select primary dimensions:
    - Antigravity Spec Alignment
    - Developer Ergonomics & Operational Friction

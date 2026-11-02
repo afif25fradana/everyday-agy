@@ -110,7 +110,7 @@ These skills and plugins are maintained in their own upstream repositories with 
 
 ## 5. Custom Subagents
 
-Ten specialized agents available for delegation in Antigravity:
+Specialized agents available for delegation in Antigravity:
 
 | Agent Name | Model Tier | Tools Boundary | Core Responsibility |
 |---|:---:|---|---|
@@ -124,3 +124,4 @@ Ten specialized agents available for delegation in Antigravity:
 | **docs-architect** | `model: flash` | Read, Write, Replace, Run, Ask | Modernizes technical documentation, Nygard ADRs, public repository docs, and synchronizes AI-Context repositories (ADR-0017). |
 | **maintenance-bot** | `model: flash` | Read, Write, Replace, Run, Ask | Dependabot PR triage, CI failure diagnosis, and CVE remediation. |
 | **ui-crafter** | `model: flash` | Read, Write, Replace, Run, Ask | Modern web UI widget creation, WCAG AA accessibility, and Generative UI design. |
+| **l10n-humanizer** | `model: flash` | Read, Write, Replace, Run | Software UI/UX localization, natural humanized translation, and Microsoft Indonesian style guide consistency. |

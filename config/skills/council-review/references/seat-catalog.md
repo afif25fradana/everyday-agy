@@ -63,6 +63,11 @@ This catalog maps evaluation domains to specialized Antigravity custom subagents
   2. **Secondary Fallback**: Targeted web search (`search_web` focusing on official documentation domains) when Context7 lacks library coverage.
 - **Evaluation Mandate**: Validates every action item in the proposed roadmap. Rejects hallucinated APIs, deprecated signatures, obsolete configuration flags, or unverified workarounds before final Chairman certification.
 
+### Seat 11: Software Localization & Humanizer
+- **Mapped Custom Agent**: [`l10n-humanizer`](../../../agents/l10n-humanizer/agent.md)
+- **Domain Focus**: Software localization (L10n), UI translation, Microsoft Indonesian style guide consistency, UX microcopy conciseness, XML/JSON escaping, and anti-calque humanization.
+- **Evaluation Mandate**: Audits localized resource files (`.resw`, `.json`, `.resx`), keyboard mnemonics (`&amp;`), character expansion budgets, and natural translation flow.
+
 ---
 
 ## 3. Recommended Seat Bundles by Task Type
@@ -72,6 +77,7 @@ This catalog maps evaluation domains to specialized Antigravity custom subagents
 | **Architectural / Refactoring Audit** | `system-architect` + `code-auditor` + `docs-architect` + `silent-failure-hunter` + `spec-verifier` |
 | **Security & Vulnerability Audit** | `code-auditor` + `silent-failure-hunter` + `maintenance-bot` |
 | **New Feature / Greenfield PR Review** | `system-architect` + `tdd-guide` + `code-auditor` + `ui-crafter` + `spec-verifier` |
+| **Software Localization / i18n Release** | `l10n-humanizer` + `ui-crafter` + `docs-architect` |
 | **Database & Schema Modification** | `database-reviewer` + `system-architect` + `silent-failure-hunter` |
 | **Library Upgrade / Modernization** | `maintenance-bot` + `build-error-resolver` + `spec-verifier` |
 | **Skill & Workflow Tooling Audit** | `system-architect` + `code-auditor` + `docs-architect` + Community Benchmark |

@@ -1,7 +1,7 @@
 # Gate & Milestone Handoff Specification (`handoff-spec.md`)
 **Local Implementer (Antigravity) <-> Reviewer (Human Operator or External AI Auditor)**
 
-This specification defines the communication contracts, trigger headers, quantitative thresholds, and evidence payloads required across the development lifecycle. Ready-to-paste prompts are maintained in [`prompt-templates.md`](./prompt-templates.md).
+This specification defines the communication contracts, trigger headers, quantitative thresholds, and evidence payloads required across the development lifecycle.
 
 ---
 
@@ -49,7 +49,7 @@ This specification defines the communication contracts, trigger headers, quantit
 
 ## 3. Normative Payload Schemas
 
-Ready-to-paste execution prompts are in [`prompt-templates.md`](./prompt-templates.md). The required structure for each gate payload is:
+The required structure for each gate payload is:
 
 ### 3.1 Tier 0 Schema (`[TRIVIAL REVIEW]`)
 ```markdown

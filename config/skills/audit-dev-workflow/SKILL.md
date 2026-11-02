@@ -117,10 +117,9 @@ Establish a rollback point before modifying files:
 
 ---
 
-## References & Templates (On-Demand)
+## References (On-Demand)
 
 - [Clean Docs Standard](../clean-docs/SKILL.md): Plain-spoken repo prose, zero process leaks, public repo hygiene, and humanized commit messages.
-- [Prompt Templates](./references/prompt-templates.md): Ready-to-paste atomic prompts for Antigravity native execution.
 - [Engineering Pitfalls](./references/pitfalls.md): Agentic traps and Five-Axis logic pitfalls to double-check.
 - [Handoff Specification & Guidelines](./references/handoff-spec.md): Practical guidelines for milestone handoffs and change summaries.
 - [Subagent Execution Patterns](./references/subagent-patterns.md): Optional patterns for deploying read-only researcher or isolated executor subagents.

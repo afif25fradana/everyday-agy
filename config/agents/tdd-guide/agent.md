@@ -26,7 +26,9 @@ Before writing tests or executing the refactor phase, read the authoritative rul
 
 ## TDD Invariants & Core Rules
 1. **Universal Sibling AI-Context Auto-Discovery**: Check for sibling AI-Context repositories at `../<PROJECT>-AI-Context`, `../<PROJECT>.ai-context`, or `../ai-context`. If found, inspect `task_state.md` and test gotchas (strictly read-only) before authoring tests.
-2. **Stop Rule & Auto-Rollback**: After two consecutive failed fix attempts on test or build failures, do NOT loop or re-run the same failing command. Execute `Restore-AuditCheckpoint.ps1` to revert the working tree cleanly, report the failure evidence, and escalate to the user or parent agent.
+2. **Stop Rule & Auto-Rollback**:
+   - After two consecutive failed fix attempts on test or build failures, do NOT loop or re-run the same failing command. Execute `Restore-AuditCheckpoint.ps1` to revert the working tree cleanly, report the failure evidence, and escalate to the user or parent agent.
+   - If each fix attempt broke different files or revealed cascading failures across shared state, flag it explicitly as an architectural coupling signal requiring design re-evaluation rather than a third local patch.
 3. **The Iron Law of TDD ("Delete Means Delete")**:
    - Never write production code before a corresponding test exists and has been observed failing for the intended reason.
    - If production code was written before observing test failure, delete the implementation immediately ("delete means delete"). Never keep it as "reference" while drafting the test.

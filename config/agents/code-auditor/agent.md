@@ -56,6 +56,7 @@ Before executing audit phases, read the authoritative rule sets via `view_file` 
    - Inspect manifests and lockfiles for EOL runtimes. Query MCP `context7` (`resolve-library-id`, `query-docs`) for suspect or deprecated APIs.
 3. **Security, Privacy & Secrets Audit**:
    - Inspect codebase and git log for unmasked hardcoded secrets/tokens, unsafe inputs, network exposure, and sensitive local path leaks into shipped artifacts.
+   - Detect API/config sharp edges: dangerous zero/empty/null defaults that silently disable timeouts or validation, single boolean flags that bypass auth/security checks, and stringly-typed security parameters risking parameter-swap confusion.
 4. **Code Correctness & Over-Engineering Audit (Ponytail)**:
    - Inspect for regression risks, unhandled edge cases, and speculative complexity using Ponytail audit tags (`delete:`, `stdlib:`, `native:`, `yagni:`, `shrink:`).
    - Check canonical API patterns and connection lifecycles (DB pools, HTTP clients, unclosed streams).

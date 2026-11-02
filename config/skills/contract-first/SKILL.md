@@ -206,6 +206,7 @@ than silently repurposing an existing field.
 - **Duplicate Sources of Truth**: Keeping payload schemas in multiple disconnected docs, code, and mocks.
 - **Compile-Time Types as Only Proof**: Using `as unknown as Type` casts hiding incompatible runtime payloads.
 - **Contract After Implementation**: Writing or generating the contract only after both sides finish.
+- **Configuration Cliffs & Sharp Edges**: Zero/empty/null defaults that silently disable validation or timeouts, single boolean flags that toggle authentication/authorization, and adjacent stringly-typed parameters risking swap confusion.
 
 ## Best Practices
 

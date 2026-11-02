@@ -33,6 +33,12 @@ The multi-tiered architecture allows the **Parent Agent** to optionally leverage
    - When modifying tightly coupled components or monolithic state files, avoid concurrent subagents to prevent file locks and race conditions.
 3. **Zero Process Leak in Git Commits**:
    - Any commit prepared for or by a subagent must strictly follow humanized Conventional Commits with zero internal AI tags or phase markers.
+4. **Independent VCS Receipt Check (`verification-before-completion`)**:
+   - When Parent delegates mutations to a subagent (especially `flash`-tier agents like `tdd-guide`), the Parent must never rely on subagent text claims alone.
+   - Parent must independently verify `rtk git status --short` and `rtk git diff --stat`, and execute fresh test runs directly from Parent context before accepting delegated work.
+5. **Two-Stage Spec-First Review & "Skip Style" Directive**:
+   - When delegating diff or code review to a subagent (`code-auditor` or `silent-failure-hunter`), instruct it to evaluate in two stages: (1) line-by-line compliance against the approved plan and requirements, then (2) correctness, security, and edge cases.
+   - Explicitly instruct review subagents to skip purely stylistic formatting preferences, subjective aesthetic nits, or unsolicited rewrites. Focus exclusively on defects, spec gaps, and security risks.
 
 ### 2.4 Standard Prompt Skeletons (Copy-Paste Templates)
 
@@ -80,4 +86,23 @@ Return Contract (report back ONLY):
 - Test file modified & test command
 - Verbatim failure snippet confirming RED state
 - Edge cases and mutation checks verified
+```
+
+#### Template 3: Review Specialist Subagent Prompt Skeleton (Diff Verification)
+- **TypeName**: `code-auditor` (or `silent-failure-hunter`)
+- **Role**: `Spec & Security Reviewer`
+- **Model**: `inherit`
+- **Workspace**: `inherit`
+
+```markdown
+You are the Spec & Security Reviewer evaluating <task_name>.
+Scope: <diff_or_files>
+
+Evaluation Order:
+1. Spec Compliance: Verify line-by-line adherence to the agreed requirements.
+2. Correctness & Security: Check boundary safety, silent failures, and regressions.
+
+Directive:
+- Skip purely stylistic, subjective, or formatting preferences. Focus exclusively on defects, spec gaps, and security risks.
+- Report concise findings with file coordinates and severity.
 ```

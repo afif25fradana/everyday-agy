@@ -1,8 +1,6 @@
 ---
 name: gh-workflow
-description: >
-  GitHub CLI automation for PR creation, non-interactive CI monitoring, and PR review comments using authenticated gh.
-  Use when the user asks to create a PR, check GitHub Actions status, review a pull request, or mentions /gh-workflow.
+description: GitHub CLI automation for PR creation, non-interactive CI monitoring, and PR review comments using authenticated gh.
 ---
 
 # GitHub Workflow (`gh-workflow`)

@@ -83,6 +83,7 @@ $customSkillDirs = if (Test-Path $allSkillsDir) {
 
 $sourceScanTargets = @(
     (Join-Path $configHome "agents"),
+    (Join-Path (Join-Path $geminiHome "docs") "adr"),
     (Join-Path (Join-Path $configHome "docs") "adr")
 ) + $customSkillDirs + $customPluginDirs | Where-Object { $_ -and (Test-Path $_) }
 
@@ -102,8 +103,8 @@ Write-Host ">>> Proceeding to copy configurations into everyday-agy repository..
 
 # 2. Sync Global Prompt & Rules
 if (Test-Path $srcGeminiMd) {
-    Copy-Item $srcGeminiMd (Join-Path $scriptRoot "GEMINI.md") -Force
-    Write-Host "[OK] Synced GEMINI.md" -ForegroundColor Green
+    Copy-Item $srcGeminiMd (Join-Path (Join-Path $scriptRoot "config") "GEMINI.md") -Force
+    Write-Host "[OK] Synced GEMINI.md to config/GEMINI.md" -ForegroundColor Green
 }
 
 # 3. Sync Custom Agents
@@ -176,7 +177,11 @@ if (Test-Path $pluginsDir) {
 }
 
 # 6. Sync Architectural Decision Records (ADRs)
-$srcAdrsDir = Join-Path (Join-Path $configHome "docs") "adr"
+$srcAdrsDir = Join-Path (Join-Path $geminiHome "docs") "adr"
+if (-not (Test-Path $srcAdrsDir)) {
+    # Fallback to legacy path during migration
+    $srcAdrsDir = Join-Path (Join-Path $configHome "docs") "adr"
+}
 if (Test-Path $srcAdrsDir) {
     $srcAdrs = Get-ChildItem -Path $srcAdrsDir -Filter "*.md"
     if ($srcAdrs.Count -gt 0) {

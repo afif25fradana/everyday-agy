@@ -1,11 +1,6 @@
 ---
 name: council-review
-description: >
-  Orchestrate a deliberative Multi-Agent Council Review panel for high-stakes architectural evaluations,
-  deep code audits, or pre-release verification. Synthesizes audit-context-building (fact grounding),
-  ask_question (socratic scoping), and teamwork (adversarial peer-review & Victory Auditor certification)
-  powered by specialized custom subagents. Trigger when the user types /council, /council-review, or says
-  "council review", "dewan pakar", "multi-agent audit", "deliberative review", or asks for a council-based evaluation.
+description: Multi-Agent Council Review panel for high-stakes architecture evaluations, deep code audits, and pre-release gates.
 ---
 
 # Deliberative Council Review Orchestration (Operational Runbook)

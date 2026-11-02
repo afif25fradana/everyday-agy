@@ -19,10 +19,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      - name: Verify essential root files
+      - name: Verify essential root and configuration files
         shell: bash
         run: |
-          for file in GEMINI.md README.md TOOLKIT.md LICENSE sync.ps1 restore.ps1; do
+          for file in config/GEMINI.md README.md TOOLKIT.md LICENSE sync.ps1 restore.ps1; do
             if [ ! -f "$file" ]; then
               echo "Error: Required file $file is missing!" >&2
               exit 1
@@ -127,7 +127,7 @@ jobs:
             '-----BEGIN\s+([A-Z0-9_-]+\s+)?PRIVATE\s+KEY-----',
             '\b(AKIA[0-9A-Z]{16}|ASIA[0-9A-Z]{16}|AIza[0-9A-Za-z\-_]{35}|sk-ant-(?:api|admin)\d{2}-[a-zA-Z0-9_-]{30,}|sk-(?:proj|svcacct|admin)-[a-zA-Z0-9_-]{30,}|sk-[a-zA-Z0-9]{20,})\b'
           )
-          $files = Get-ChildItem -Path "GEMINI.md", "README.md", "TOOLKIT.md", "sync.ps1", "restore.ps1", "config", "docs", ".github" -Recurse -File -Include "*.md", "*.json", "*.ps1", "*.mjs", "*.py", "*.yml", "*.yaml", "LICENSE*"
+          $files = Get-ChildItem -Path "README.md", "TOOLKIT.md", "sync.ps1", "restore.ps1", "config", "docs", ".github" -Recurse -File -Include "*.md", "*.json", "*.ps1", "*.mjs", "*.py", "*.yml", "*.yaml", "LICENSE*"
           foreach ($f in $files) {
             $content = Get-Content $f.FullName
             foreach ($line in $content) {

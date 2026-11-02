@@ -42,7 +42,6 @@ function Assert-NoCredentialsInFile($filePath) {
 
 Write-Host ">>> Running pre-flight credential audit on deployment files..." -ForegroundColor Cyan
 $deployScanTargets = @(
-    (Join-Path $scriptRoot "GEMINI.md"),
     (Join-Path $scriptRoot "README.md"),
     (Join-Path $scriptRoot "TOOLKIT.md"),
     (Join-Path $scriptRoot "config"),
@@ -89,7 +88,7 @@ if ($needsBackup) {
 }
 
 # 1. Restore Global Prompt & Rules
-$srcGeminiMd = Join-Path $scriptRoot "GEMINI.md"
+$srcGeminiMd = Join-Path (Join-Path $scriptRoot "config") "GEMINI.md"
 if (Test-Path $srcGeminiMd) {
     Copy-Item $srcGeminiMd $geminiMdPath -Force
     Write-Host "[OK] Restored GEMINI.md" -ForegroundColor Green
@@ -130,7 +129,8 @@ if (Test-Path $srcSkills) {
         "ponytail-help",
         "ponytail-review"
     )
-    $srcSkillNames = @(Get-ChildItem -Path $srcSkills -Directory | ForEach-Object { $_.Name })
+    $srcSkillDirs = @(Get-ChildItem -Path $srcSkills -Directory)
+    $srcSkillNames = @($srcSkillDirs | ForEach-Object { $_.Name })
     if ($srcSkillNames.Count -gt 0) {
         Get-ChildItem -Path $dstSkills -Directory | ForEach-Object {
             if ($_.Name -notin $srcSkillNames -and $_.Name -notin $externalSkills) {
@@ -139,8 +139,26 @@ if (Test-Path $srcSkills) {
             }
         }
     }
-    Copy-Item -Path (Join-Path $srcSkills "*") -Destination $dstSkills -Recurse -Force
-    $skillCount = (Get-ChildItem -Path $srcSkills -Directory).Count
+    foreach ($sDir in $srcSkillDirs) {
+        $targetDir = Join-Path $dstSkills $sDir.Name
+        if (Test-Path $targetDir) {
+            # Prune orphan files inside tracked skill directory
+            $srcFiles = @(Get-ChildItem -Path $sDir.FullName -Recurse -File | ForEach-Object {
+                $_.FullName.Substring($sDir.FullName.Length)
+            })
+            Get-ChildItem -Path $targetDir -Recurse -File | ForEach-Object {
+                $rel = $_.FullName.Substring($targetDir.Length)
+                if ($rel -notin $srcFiles) {
+                    Remove-Item -Path $_.FullName -Force
+                    Write-Host "[CLEANUP] Pruned orphan skill file: $($sDir.Name)$rel" -ForegroundColor DarkGray
+                }
+            }
+        } else {
+            New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
+        }
+        Copy-Item -Path (Join-Path $sDir.FullName "*") -Destination $targetDir -Recurse -Force
+    }
+    $skillCount = $srcSkillDirs.Count
     Write-Host "[OK] Restored $skillCount Custom Skills" -ForegroundColor Green
 }
 
@@ -160,8 +178,17 @@ if (Test-Path $srcPlugins) {
 # 5. Restore Architectural Decision Records (ADRs)
 $srcAdr = Join-Path (Join-Path $scriptRoot "docs") "adr"
 if (Test-Path $srcAdr) {
-    $dstAdr = Join-Path (Join-Path $configHome "docs") "adr"
+    # Standardize ADR storage on ~/.gemini/docs/adr/ in 1-to-1 parity with git root docs/adr/ (GAP-ARCH-01)
+    $dstAdr = Join-Path (Join-Path $geminiHome "docs") "adr"
     New-Item -ItemType Directory -Force -Path $dstAdr | Out-Null
+
+    # Clean up legacy ~/.gemini/config/docs/adr if present
+    $legacyAdr = Join-Path (Join-Path $configHome "docs") "adr"
+    if (Test-Path $legacyAdr) {
+        Remove-Item -Path $legacyAdr -Recurse -Force
+        Write-Host "[CLEANUP] Pruned legacy ADR path: $legacyAdr" -ForegroundColor DarkGray
+    }
+
     # Prune stale ADR files that no longer exist in repo
     $srcAdrNames = @(Get-ChildItem -Path $srcAdr -Filter "*.md" | ForEach-Object { $_.Name })
     Get-ChildItem -Path $dstAdr -Filter "*.md" | ForEach-Object {

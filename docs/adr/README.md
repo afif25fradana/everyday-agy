@@ -21,3 +21,4 @@ This directory contains the immutable record of significant technical and struct
 | [ADR-0015](./0015-checkpoint-gated-autonomous-execution-and-dynamic-elevation.md) | Checkpoint-Gated Autonomous Execution, AST Safety Fortification, and Dynamic Subagent Elevation | Accepted | 2026-10-31 |
 | [ADR-0016](./0016-third-party-upstream-skills-decoupling.md) | Third-Party Upstream Skills Decoupling and Documentation Linking | Accepted | 2026-10-31 |
 | [ADR-0017](./0017-custom-agent-consolidation-and-mandatory-skill-gates.md) | Custom Agent Fleet Consolidation, AST Security Hardening, and Mandatory Skill Activation Architecture | Accepted | 2026-11-01 |
+| [ADR-0018](./0018-fleet-parity-and-deployment-path-symmetry.md) | 11-Agent Fleet Parity, Deployment Path Symmetry, and Global Rule Token Optimization | Accepted | 2026-11-02 |

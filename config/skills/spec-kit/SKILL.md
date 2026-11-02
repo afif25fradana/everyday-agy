@@ -1,17 +1,13 @@
 ---
 name: spec-kit
-description: >
-  Spec-Driven Development (SDD) framework for greenfield features and system planning.
-  Enforces a three-phase workflow: specify requirements, architect the technical plan,
-  and generate an atomic task checklist before writing code.
-  Trigger on /speckit.specify, /speckit.plan, /speckit.tasks, /spec-kit, or "spec-driven", "buat spek fitur".
+description: Spec-Driven Development (SDD) for greenfield features: requirements specification, tech plan, and task checklist.
 ---
 
 # Spec-Kit (Spec-Driven Development)
 
 A structured specification framework for designing and delivering new features. Complements `audit-dev-workflow` by providing a deliberate, test-first specification phase before any code is generated.
 
-Governed by the minimalist principles of [`GEMINI.md`](../../../GEMINI.md) and Ponytail (anti-slop, YAGNI, shortest working diff).
+Governed by the minimalist principles of [`GEMINI.md`](../../GEMINI.md) and Ponytail (anti-slop, YAGNI, shortest working diff).
 
 ---
 

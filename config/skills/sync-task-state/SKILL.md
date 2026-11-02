@@ -1,10 +1,6 @@
 ---
 name: sync-task-state
-description: >
-  Maintains lightweight active AI context (task_state.md) in Twin-Repo workflows (*-AI-Context).
-  Enforces size limits (<= 8 KB, <= 100 lines), tracks code HEAD, prunes completed milestones,
-  links gotchas to ADRs, and commits atomically. Use when task_state.md exceeds 8 KB or 100 lines,
-  or when prompted with /sync-task-state, "sync task state", or "update task state".
+description: Maintain lightweight active AI context (task_state.md) in Twin-Repo workflows with size limits and atomic commits.
 ---
 
 # Sync Task State (Twin-Repo Context Hygiene)

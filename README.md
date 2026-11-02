@@ -74,18 +74,18 @@ The repository partitions rules, agents, skills, and decision records to prevent
 
 ```text
 everyday-agy/
-├── GEMINI.md            # Active operational rules, workflow guardrails, and security boundaries
 ├── TOOLKIT.md           # Catalog of CLI tools, MCP snippets, and skill upstream links
 ├── config/
-│   ├── agents/          # Specialized subagents configured with hybrid model tiering (ADR-0004, ADR-0017)
+│   ├── GEMINI.md        # Tracked global operational rules deployed to ~/.gemini/GEMINI.md
+│   ├── agents/          # 11 specialized subagents with hybrid model tiering (ADR-0004, ADR-0017, ADR-0018)
 │   └── skills/          # 13 bespoke and engine-adapted workflow skills
 ├── docs/
-│   └── adr/             # Architectural Decision Records (ADR-0001 through ADR-0017)
+│   └── adr/             # Architectural Decision Records (ADR-0001 through ADR-0018)
 ├── sync.ps1             # Pulls live configs from ~/.gemini/ into this repo
 └── restore.ps1          # Deploys this repo into ~/.gemini/ with automatic backup
 ```
 
-### Operational Guardrails (`GEMINI.md`)
+### Operational Guardrails (`config/GEMINI.md` $\rightarrow$ `~/.gemini/GEMINI.md`)
 The global rules file stays compact by defining only active behavioral boundaries:
 - Investigate first: trace callers with `rtk rg` before proposing or editing code.
 - Checkpoint-gated execution: autonomous execution and verification for small fixes (Tier 0/1); explicit approval before multi-file or architectural changes (Tier 2/3, ADR-0015).

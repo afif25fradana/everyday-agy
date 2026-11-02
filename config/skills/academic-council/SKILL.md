@@ -1,13 +1,6 @@
 ---
 name: academic-council
-description: >
-  Orchestrate a deliberative Multi-Agent Academic Council for evaluating thesis proposals,
-  research paper drafts, and academic writing. Specialized for accounting, finance, economics,
-  and social science research using secondary data (BEI/capital market). Seats include
-  Econometrics Methodologist, Theoretical Scholar, BEI Domain Specialist, Real Citation Auditor,
-  and Thesis Defense Simulator. Trigger when the user types /academic-council, /thesis-council,
-  /skripsi-review, or says "review proposal skripsi", "academic council", "dewan akademik",
-  "review riset", or asks for academic/thesis evaluation.
+description: Multi-Agent Academic Council for thesis proposals and empirical finance/economics research evaluation.
 ---
 
 # Academic Council — Deliberative Thesis & Research Evaluation (Operational Runbook)

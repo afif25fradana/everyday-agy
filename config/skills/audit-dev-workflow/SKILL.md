@@ -1,15 +1,11 @@
 ---
 name: audit-dev-workflow
-description: >
-  Defensive audit-first development workflow with caller tracing, checkpoints, explicit approvals, and rigorous verification.
-  Trigger when the user types /audit-dev-workflow, /audit-first, /audit-workflow, or says "audit workflow",
-  "audit first", "investigate first", "audit this change", "cek dulu sebelum ubah", or when
-  preparing a complex refactoring, multi-file edit, or architectural modification.
+description: Defensive audit-first dev workflow with caller tracing, checkpoints, explicit approvals, and verification.
 ---
 
 # Audit-First Development Workflow (Operational Runbook)
 
-A defensive, evidence-backed operational runbook ensuring safe, well-investigated changes. Governed by the minimalist principles of [`GEMINI.md`](../../../GEMINI.md).
+A defensive, evidence-backed operational runbook ensuring safe, well-investigated changes. Governed by the minimalist principles of [`GEMINI.md`](../../GEMINI.md).
 
 ---
 
@@ -112,6 +108,12 @@ Establish a rollback point before modifying files:
      gh run watch $run.databaseId --exit-status --compact
      ```
    - On CI failure: stop, inspect `gh run view <id> --log-failed`, and propose a fix with new approval.
+5. **Post-Commit Checkpoint Branch Cleanup (GAP-MED-05)**:
+   - Once changes are committed, verified, and approved, delete the local checkpoint branch to prevent branch accumulation:
+     ```powershell
+     rtk git branch -d "checkpoint-<task>"
+     ```
+   - Never use `-D` for routine branch deletion.
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: database-migrations
-description: "Safe, reversible database migration patterns: forward-only production changes, expand-contract zero-downtime renames, concurrent indexes, batched backfills, and tooling workflows (PostgreSQL, Prisma, Drizzle, Kysely, Alembic). Use when writing a schema or data migration, adding columns or indexes to large tables, planning rollbacks, or preparing zero-downtime deploys."
+description: Reversible database migrations: expand-contract zero-downtime renames, concurrent indexes, and batched backfills.
 ---
 
 # Database Migration Patterns

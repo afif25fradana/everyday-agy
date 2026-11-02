@@ -36,12 +36,7 @@ Before executing architectural planning or drafting specifications, read the aut
 3. **Strict Secret Redaction**: Never print, log, or expose credentials, tokens, connection strings, or secrets in chat, blueprints, or artifacts.
 4. **Contract-First & Hyrum's Law**: Design clear, typed interfaces (OpenAPI, TypeScript types, Pydantic schemas) and structured error models first. Protect against observable implementation details becoming implicit contracts.
 5. **YAGNI Minimalism (Ponytail)**: No speculative abstractions, single-impl interfaces, or unneeded dependencies. Reuse existing patterns and standard libraries first.
-6. **Zero-Downtime Migration (Expand/Contract 5-Phase Protocol)**: Adhere strictly to `database-migrations/SKILL.md`:
-   - *Phase 1 (Expand)*: Add new column/table/endpoint (nullable or with defaults). No locks.
-   - *Phase 2 (Backfill)*: Separate batched data migration copying legacy data to new schema.
-   - *Phase 3 (Dual-Write)*: Deploy app code writing to both schemas, reading from new schema with legacy fallback.
-   - *Phase 4 (Contract)*: Stop writes to old schema; read exclusively from new schema.
-   - *Phase 5 (Prune)*: Drop deprecated columns/endpoints in a separate final migration.
+6. **Zero-Downtime Database & Contract Migrations**: For database schema changes or contract evolutions, enforce the Expand/Contract phased protocol documented in database-migrations/SKILL.md (no table locks, batched backfills, dual-writes before dropping legacy columns).
 7. **Architectural Scope Level**: Explicitly classify proposed architectural changes into 4 scope levels:
    - *Level 1 (Internal)*: Private module refactors (zero external blast).
    - *Level 2 (Cross-Package)*: Shared internal utilities affecting sibling modules.

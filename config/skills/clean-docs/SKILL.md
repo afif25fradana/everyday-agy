@@ -1,6 +1,6 @@
 ---
 name: clean-docs
-description: Clean documentation, commit hygiene, and anti-slop standard. Enforces plain-spoken repo prose, zero AI process leaks, humanized conventional commits, and public repo hygiene. Trigger when writing or reviewing commit messages, PR descriptions, READMEs, CHANGELOGs, docstrings, code comments, or preparing public repo releases.
+description: Clean documentation, commit hygiene, anti-slop standard, zero process leaks, and humanized conventional commits.
 ---
 
 # Clean Docs & Repository Hygiene Standard

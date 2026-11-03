@@ -66,11 +66,12 @@ npm install -g @ast-grep/cli
 
 ## 3. Custom Skills Catalog
 
-13 bespoke and adapted skills shipped directly within this repository (`config/skills/`), with external third-party suites decoupled into Section 4.
+14 bespoke and adapted skills shipped directly within this repository (`config/skills/`), with external third-party suites decoupled into Section 4.
 
 ### A. Spec-Driven & Development Workflows
 | Skill Name | Trigger / Command | Description | Upstream / Origin |
 |---|---|---|---|
+| **orchestrator** | `/orchestrator` | Meta-orchestrator protocol for Parent Agent: task decomposition, context insulation, and subagent fleet governance. | **Original Work (@afif25fradana)** /<br>Inspired by Anthropic Lead Agent & [obra/superpowers](https://github.com/obra/superpowers) |
 | **council-review** | `/council`<br>`/council-review` | Deliberative multi-agent council review panel: fact grounding, socratic alignment, and adversarial peer review. | **Original Work (@afif25fradana)** /<br>Inspired by Anthropic & Karpathy |
 | **academic-council** | `/academic-council`<br>`/thesis-council` | Multi-agent council for empirical capital market, accounting, and BEI thesis proposal defense. | **Original Work (@afif25fradana)** |
 | **spec-kit** | `/speckit.specify`<br>`/speckit.plan`<br>`/speckit.tasks` | Spec-Driven Development (SDD) framework to specify, architect, and generate task lists before coding. | [github/spec-kit](https://github.com/github/spec-kit) |

@@ -23,7 +23,7 @@
 <!-- ponytail -->
 # Code Standard (YAGNI & Anti-Slop)
 - Shortest working diff wins. Never write speculative abstractions, single-impl interfaces, or unneeded dependencies.
-- Reuse existing helpers and stdlib first. Grep callers and read target files before editing; never edit an unread file. Touch only files strictly required by the task; fix root causes, not symptoms.
+- Reuse existing helpers and stdlib first. Grep callers and read target files before editing (delegated to subagents in Tier 2/3 per `/orchestrator`); never edit an unread file. Touch only files strictly required by the task; fix root causes, not symptoms.
 - Never simplify away security, input validation, data integrity, or accessibility.
 - Anti-Slop: Zero obvious/generic AI commentary in code. Keep UI crafted, clean, and accessible (no purple AI gradients).
 - Zero Process Leaks: Never leak internal AI/audit terms into repo files, commits, or PRs (e.g. "investigation summary", "checkpoint commit", "Phase 2 complete", "subagent execution", "handoff_artifact"). Describe what changed and why in plain human engineering language.
@@ -38,7 +38,7 @@
 
 <!-- workflow-guardrails -->
 # Workflow & Safety Guardrails
-1. Investigate First: Trace callers and state in parallel before proposing edits. For multi-file or complex changes, consult the `audit-dev-workflow` skill.
+1. Investigate First & Zero-Read Triage: Size task blast radius using zero-read metadata (`rtk git status`, `rtk rg -l`, `rtk rg -c`, `task_state.md`) before calling `read_file`. For Tier 0/1, inspect directly. For Tier 2/3, Parent Agent (possessing `invoke_subagent` / `read_file`) must act as Lead Orchestrator per `/orchestrator`: insulate Parent context from application source code and delegate deep inspection to subagents (possessing `view_file`). For multi-file changes, consult `audit-dev-workflow`.
 2. Checkpoint-Gated Autonomous Execution & Approval Gates: Read-only inspection never needs approval. Before modifying files in git repos, establish a verified rollback checkpoint (`New-AuditCheckpoint.ps1`). Approval gating scales by blast radius:
    - Tier 0 (`trivial`: `<= 2` files, `<= 3` exec or `<= 5` doc lines, zero logic/state/schema mutation): Execute autonomously after checkpoint -> verify -> pause at `[TRIVIAL REVIEW]` before commit.
    - Tier 1 (`small`: single-module bugfix or contained enhancement): Execute autonomously after checkpoint -> Failure-First TDD (RED -> GREEN) -> 5-Axis verification -> pause at Gate 2 (`gate2_handoff.md`) before commit.

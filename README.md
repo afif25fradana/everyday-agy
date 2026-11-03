@@ -78,9 +78,9 @@ everyday-agy/
 ├── config/
 │   ├── GEMINI.md        # Tracked global operational rules deployed to ~/.gemini/GEMINI.md
 │   ├── agents/          # 11 specialized subagents with hybrid model tiering (ADR-0004, ADR-0017, ADR-0018)
-│   └── skills/          # 13 bespoke and engine-adapted workflow skills
+│   └── skills/          # 14 bespoke and engine-adapted workflow skills
 ├── docs/
-│   └── adr/             # Architectural Decision Records (ADR-0001 through ADR-0018)
+│   └── adr/             # Architectural Decision Records (ADR-0001 through ADR-0019)
 ├── sync.ps1             # Pulls live configs from ~/.gemini/ into this repo
 └── restore.ps1          # Deploys this repo into ~/.gemini/ with automatic backup
 ```
@@ -109,11 +109,11 @@ Specialized agent configurations handle task delegation. Analytical roles run on
 
 ### Workflow Skills and Provenance (`config/skills/`)
 
-Thirteen modular skills are maintained directly within `config/skills/`. Third-party upstream suites (`ponytail`, `taste-skill`, and `antislop`) are decoupled from git tracking per ADR-0006, ADR-0011, and ADR-0016, and installed directly from their respective project repositories:
+Fourteen modular skills are maintained directly within `config/skills/`. Third-party upstream suites (`ponytail`, `taste-skill`, and `antislop`) are decoupled from git tracking per ADR-0006, ADR-0011, and ADR-0016, and installed directly from their respective project repositories:
 
 | Category | Count | Included Skills | Origin / Licensing |
 |---|:---:|---|---|
-| **Bespoke Architectures** | 5 | `council-review`, `academic-council`, `audit-dev-workflow`, `sync-task-state`, `clean-docs` | Original works authored for Antigravity (MIT) |
+| **Bespoke Architectures** | 6 | `orchestrator`, `council-review`, `academic-council`, `audit-dev-workflow`, `sync-task-state`, `clean-docs` | Original works authored for Antigravity (MIT) |
 | **Engine-Adapted Ports** | 8 | `spec-kit`, `gh-workflow`, `audit-context-building`, `differential-review`, `contract-first`, `database-migrations`, `coding-standards`, `documentation-and-adrs` | Adapted from community tools, ECC, and Trail of Bits (MIT & CC BY-SA 4.0) |
 
 #### Recommended Upstream Skills & Plugins (Decoupled per ADR-0016)
@@ -124,6 +124,7 @@ Refer to the upstream repositories for their official Antigravity installation i
 - [**Chrome DevTools & Modern Web Guidance**](https://antigravity.google): Official Google developer tooling plugins available in the Antigravity Plugin Marketplace.
 
 #### Core Tracked Workflows
+- `orchestrator`: Meta-orchestrator protocol for Parent Agent enforcing task decomposition, context insulation, and subagent fleet governance (ADR-0019).
 - `council-review`: Multi-agent deliberative review panel synthesizing context grounding, socratic scoping, and teamwork peer reviews (high token consumption; spawns 15 to 20+ subagents via `teamwork`).
 - `academic-council`: Deliberative research evaluation panel for empirical finance, accounting, and BEI thesis proposals (featuring citation forensics and defense simulation).
 - `audit-dev-workflow`: Defensive development runbook with caller tracing, checkpoints, testless fallbacks, and automated rollback scripts.
@@ -157,6 +158,8 @@ Technical decisions, constraints, and trade-offs are recorded as permanent Nygar
 - [ADR-0015](./docs/adr/0015-checkpoint-gated-autonomous-execution-and-dynamic-elevation.md): Checkpoint-Gated Autonomous Execution, AST Safety Fortification, and Dynamic Subagent Elevation.
 - [ADR-0016](./docs/adr/0016-third-party-upstream-skills-decoupling.md): Third-Party Upstream Skills Decoupling and Documentation Linking.
 - [ADR-0017](./docs/adr/0017-custom-agent-consolidation-and-mandatory-skill-gates.md): Custom Agent Fleet Consolidation, AST Security Hardening, and Mandatory Skill Activation Architecture.
+- [ADR-0018](./docs/adr/0018-fleet-parity-and-deployment-path-symmetry.md): 11-Agent Fleet Parity, Deployment Path Symmetry, and Global Rule Token Optimization.
+- [ADR-0019](./docs/adr/0019-universal-lead-orchestrator-and-context-insulation.md): Universal Lead Orchestrator Protocol, Parent Context Insulation, and Adaptive Subagent Fleet Governance.
 
 ## Contributing
 
@@ -168,6 +171,6 @@ Technical decisions, constraints, and trade-offs are recorded as permanent Nygar
 ## License
 
 Dual-licensed under MIT and CC BY-SA 4.0:
-- Repository scripts, custom subagents, and bespoke skills (`council-review`, `academic-council`, `audit-dev-workflow`, `sync-task-state`, `clean-docs`) are licensed under the [MIT License](./LICENSE).
+- Repository scripts, custom subagents, and bespoke skills (`orchestrator`, `council-review`, `academic-council`, `audit-dev-workflow`, `sync-task-state`, `clean-docs`) are licensed under the [MIT License](./LICENSE).
 - Adapted Trail of Bits security skills (`audit-context-building`, `differential-review`) are licensed under [Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](./config/skills/audit-context-building/LICENSE).
 - Decoupled upstream community skills (`ponytail`, `taste-skill`, `anti-slop`) are referenced under their respective upstream MIT licenses.

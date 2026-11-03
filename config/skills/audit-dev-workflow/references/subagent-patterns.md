@@ -8,7 +8,7 @@ The multi-tiered architecture allows the **Parent Agent** to optionally leverage
 
 | Role | Agent / Type | Model | Workspace | Key Responsibilities |
 | :--- | :--- | :--- | :--- | :--- |
-| **Lead Auditor & Implementer** | Parent Agent | Primary / Inherit | Host CWD | Directs investigation, creates atomic Git checkpoints, implements fixes directly (shortest path wins), runs verification tests, and requests user approval. Subagent delegation is optional on-demand. |
+| **Lead Auditor & Implementer** | Parent Agent | Primary / Inherit | Host CWD | Directs investigation, creates atomic Git checkpoints, implements fixes directly on Tier 0/1; on Tier 2/3 acts strictly as Lead Orchestrator under [`orchestrator`](../../orchestrator/SKILL.md) (ADR-0019) with Context Insulation, runs verification tests, and requests user approval. |
 | **Specialist Explorer** | Subagent (`system-architect` / `code-auditor`) | `inherit` (or `flash` per agent manifest) | `inherit` | Rapid read-only discovery, tracing callers with `rtk rg`, dependency tree analysis, and mapping invariant hazards without polluting parent context. Reserve `teamwork` strictly for Tier 3 deliberative Council. |
 | **TDD Specialist** | Subagent (`tdd-guide`) | `flash` | `inherit` | Focused test authoring, Red-Green-Refactor cycles, boundary test coverage, and mutation checks before code implementation. |
 
@@ -26,11 +26,11 @@ The multi-tiered architecture allows the **Parent Agent** to optionally leverage
 - **Explicit User Override**: For all other agents, override model tiers at invocation time ONLY if the user explicitly requests it in chat.
 
 ### 2.3 Core Execution & Verification Invariants
-1. **Focused Scope & Concise Contracts**:
-   - Parent invokes Subagent via `invoke_subagent` with clear, actionable scope.
-   - Subagent reports back only structured receipts and findings—never raw terminal dumps in chat.
-2. **Sequential Execution for State & Core Modules**:
-   - When modifying tightly coupled components or monolithic state files, avoid concurrent subagents to prevent file locks and race conditions.
+1. **4-Slot Delegation Contract & Compact Receipts (ADR-0019)**:
+   - Parent invokes Subagent via `invoke_subagent` following the 4-slot structure in [`orchestrator`](../../orchestrator/SKILL.md) (`<ROLE_AND_OBJECTIVE>`, `<SCOPE_AND_BOUNDARIES>`, `<TOOLS_AND_ABSOLUTE_SKILL_PATHS>`, `<RETURN_CONTRACT>`).
+   - Subagent writes detailed forensic reports to session scratch, returning ONLY a compact receipt (<= 15 lines) to chat to preserve parent context insulation.
+2. **Sequential Execution & Single-Writer Mutual Exclusion**:
+   - Mutating subagents MUST execute strictly serialized (at most 1 active mutating agent at any time). Read-only explorers may execute in parallel.
 3. **Zero Process Leak in Git Commits**:
    - Any commit prepared for or by a subagent must strictly follow humanized Conventional Commits with zero internal AI tags or phase markers.
 4. **Independent VCS Receipt Check (`verification-before-completion`)**:

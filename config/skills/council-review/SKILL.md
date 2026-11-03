@@ -77,7 +77,7 @@ A high-rigor, evidence-backed evaluation framework combining Anthropic's **Evalu
 Before convening the Council, establish an objective factual baseline to prevent speculative debate:
 1. Identify target modules, boundaries, and dependencies.
 2. Map function guarantees (what must always hold), unenforced assumptions (marked `nothing found` if unvalidated), and upstream/downstream callers.
-3. For large codebases, deploy a read-only specialist subagent (`code-auditor` or `system-architect`) to compile the context dossier under `$HOME/.gemini/antigravity/scratch/<task>/audit-context/`.
+3. For large codebases, Parent conducts baseline scoping via zero-read metadata (`rtk rg`), while deep read-only inspection is executed concurrently by Explorer agents inside `teamwork` Phase 0 (dossier compiled under `<appDataDir>\brain\<conversation-id>\scratch\<task>\audit-context/`).
 4. Proceed to Pillar 2 once factual boundaries are verified.
 
 ---

@@ -70,8 +70,29 @@ Before writing UI code or styling, read relevant authoritative rule sets via `vi
 5. **Visual & DevTools Verification**:
    - Inspect layout shift (CLS), responsiveness, and DOM hierarchy using Chrome DevTools MCP tools (`take_snapshot`, `a11y-debugging`).
 
+## Dual Execution Mode & 4-Slot Delegation Acceptance
+
+Depending on invocation context, operate under one of two execution modes:
+
+### 1. Subagent Mode (`ROLE_TYPE: SUBAGENT`)
+When invoked by Parent Orchestrator with `ROLE_TYPE: SUBAGENT`:
+- Accept and strictly adhere to the 4-slot delegation contract: `<ROLE_AND_OBJECTIVE>`, `<SCOPE_AND_BOUNDARIES>`, `<TOOLS_AND_ABSOLUTE_SKILL_PATHS>`, and `<RETURN_CONTRACT>`.
+- Redirect all unified diffs, component code, DevTools inspection traces, and accessibility checklists to `<appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md` (never use raw unexpanded `~` paths).
+- In the final chat message to Parent, return strictly the compact <= 15-line receipt schema:
+  ```
+  - Status: [PASS | FAIL | BLOCKED]
+  - Target Coordinates: <file.ext#Lxx-Lyy>
+  - Caller Blast Radius: <N callers across M files>
+  - CLI Test Command: <command executed>
+  - Exit Code: <0 or non-zero>
+  - Assertions: <N passed, 0 failed>
+  - Deliverable Path: <scratch path>
+  ```
+
+### 2. Primary Interactive Mode (Default / `ROLE_TYPE` Absent)
+When invoked directly as a primary interactive agent without `ROLE_TYPE: SUBAGENT`, retain standard human-facing conversational and artifact workflows as described below.
+
 ## Deliverable & Stop Condition
-1. **Summary of Execution**: Direct report in chat (1–3 lines) or standalone artifact if major component system.
-2. **Unified Diff & Diffstat**: Verifiable diff of modified component files.
-3. **Accessibility & DevTools Verification**: Contrast ratios verified, tap target checklist, and keyboard navigation confirmation.
-4. **Proposed Next Steps**: Immediate next actions awaiting user review.
+1. **Summary of Execution**: Direct report in chat (1–3 lines) or standalone artifact if major component system. Full unified diffs, component source code, and DevTools inspection checklists must be recorded in session scratch files or artifacts (`<appDataDir>\brain\<conversation-id>\...`) rather than dumped into chat.
+2. **Accessibility & Quality Verdict**: Brief verification confirmation (contrast ratios, tap targets, reduced motion).
+3. **Proposed Next Steps**: Immediate next actions awaiting user review.

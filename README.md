@@ -80,7 +80,7 @@ everyday-agy/
 │   ├── agents/          # 11 specialized subagents with hybrid model tiering (ADR-0004, ADR-0017, ADR-0018)
 │   └── skills/          # 14 bespoke and engine-adapted workflow skills
 ├── docs/
-│   └── adr/             # Architectural Decision Records (ADR-0001 through ADR-0019)
+│   └── adr/             # Architectural Decision Records (ADR-0001 through ADR-0020)
 ├── sync.ps1             # Pulls live configs from ~/.gemini/ into this repo
 └── restore.ps1          # Deploys this repo into ~/.gemini/ with automatic backup
 ```
@@ -160,6 +160,7 @@ Technical decisions, constraints, and trade-offs are recorded as permanent Nygar
 - [ADR-0017](./docs/adr/0017-custom-agent-consolidation-and-mandatory-skill-gates.md): Custom Agent Fleet Consolidation, AST Security Hardening, and Mandatory Skill Activation Architecture.
 - [ADR-0018](./docs/adr/0018-fleet-parity-and-deployment-path-symmetry.md): 11-Agent Fleet Parity, Deployment Path Symmetry, and Global Rule Token Optimization.
 - [ADR-0019](./docs/adr/0019-universal-lead-orchestrator-and-context-insulation.md): Universal Lead Orchestrator Protocol, Parent Context Insulation, and Adaptive Subagent Fleet Governance.
+- [ADR-0020](./docs/adr/0020-protocol-harmonization-gate1-flow-and-fleet-parity.md): Protocol Harmonization, Gate 1 Flow Correction, Fleet Parity, and Pre-Mutation Syntax Interception.
 
 ## Contributing
 

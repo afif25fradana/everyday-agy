@@ -69,6 +69,12 @@ Before writing tests or executing the refactor phase, read the authoritative rul
    - Run the test suite via `run_command` with `rtk` and verify it **FAILS** with the expected error message.
 2. **Phase 2: Green (Minimal Implementation)**
    - Write the shortest working diff in the implementation file.
+   - **Pre-Execution Syntax Interception Gate (SWE-agent Fast Syntax Check)**:
+     Before invoking full test runners, run an immediate syntax gate to catch typos, invalid tokens, or unclosed delimiters in-turn without burning execution attempts:
+     - *Node / JavaScript*: `node --check <file.js>` or `rtk npx tsc --noEmit`
+     - *Python*: `python -m py_compile <file.py>`
+     - *PowerShell*: `pwsh -Command "[System.Management.Automation.Language.Parser]::ParseFile('<file.ps1>', [ref]$null, [ref]$null)"`
+     If syntax errors are detected, fix them immediately in-turn before running test suites.
    - Re-run the test suite and verify it **PASSES** cleanly.
 3. **Phase 3: Refactor & De-Sloppify (Clean & Minimal)**
    - Improve readability, variable names, and remove duplicated logic.
@@ -79,6 +85,29 @@ Before writing tests or executing the refactor phase, read the authoritative rul
      - Comment hygiene per `antislop-code`: remove narrative comments in test files (`// Call the function`); let test names (`it('should reject invalid auth token')`) be self-documenting.
      - **Mutation Check**: Mentally or temporarily mutate production code (flip a condition, alter a constant, return default); verify at least one test fails per mutation.
    - Re-run tests to confirm all tests remain green.
+
+## Dual Execution Mode & 4-Slot Delegation Acceptance
+
+Depending on invocation context, operate under one of two execution modes:
+
+### 1. Subagent Mode (`ROLE_TYPE: SUBAGENT`)
+When invoked by Parent Orchestrator with `ROLE_TYPE: SUBAGENT`:
+- Accept and strictly adhere to the 4-slot delegation contract: `<ROLE_AND_OBJECTIVE>`, `<SCOPE_AND_BOUNDARIES>`, `<TOOLS_AND_ABSOLUTE_SKILL_PATHS>`, and `<RETURN_CONTRACT>`.
+- Redirect all intermediate test plans, failure traces, de-sloppify matrices, and raw diffs to `<appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md` (never use raw unexpanded `~` paths).
+- Execute the Pre-Execution Syntax Interception Gate before running test suites to ensure zero burned attempts from syntax errors.
+- In the final chat message to Parent, return strictly the compact <= 15-line receipt schema:
+  ```
+  - Status: [PASS | FAIL | BLOCKED]
+  - Target Coordinates: <file.ext#Lxx-Lyy>
+  - Caller Blast Radius: <N callers across M files>
+  - CLI Test Command: <command executed>
+  - Exit Code: <0 or non-zero>
+  - Assertions: <N passed, 0 failed>
+  - Deliverable Path: <scratch path>
+  ```
+
+### 2. Primary Interactive Mode (Default / `ROLE_TYPE` Absent)
+When invoked directly as a primary interactive agent without `ROLE_TYPE: SUBAGENT`, retain standard human-facing conversational and artifact workflows as described below.
 
 ## Deliverable & Stop Condition
 Deliver a concise 1–3 line chat update with:

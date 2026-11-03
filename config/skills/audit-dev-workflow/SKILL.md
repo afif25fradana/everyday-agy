@@ -5,7 +5,7 @@ description: Defensive audit-first dev workflow with caller tracing, checkpoints
 
 # Audit-First Development Workflow (Operational Runbook)
 
-A defensive, evidence-backed operational runbook ensuring safe, well-investigated changes. Governed by the minimalist principles of [`GEMINI.md`](../../GEMINI.md).
+A defensive, evidence-backed operational runbook ensuring safe, well-investigated changes. Governed by the minimalist principles of `config/GEMINI.md` (`~/.gemini/GEMINI.md`).
 
 ---
 
@@ -34,17 +34,17 @@ Before initiating Phase 1 investigation, classify the incoming task into one of 
 Establish a rollback point before modifying files:
 - **Git Repositories**: Ensure working directory is clean (`rtk git status --short`) or create a checkpoint via helper script:
   ```powershell
-  powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\.gemini\config\skills\audit-dev-workflow\scripts\New-AuditCheckpoint.ps1" -Task "<task_name>"
+  powershell -ExecutionPolicy Bypass -File "$HOME\.gemini\config\skills\audit-dev-workflow\scripts\New-AuditCheckpoint.ps1" -Task "<task_name>"
   ```
 - **Files Outside Git**: Create a backup in session scratch or global scratch:
   ```powershell
   # Preferred: Session scratch (<appDataDir>\brain\<conversation-id>\scratch\<task>\)
   # Fallback helper:
-  powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\.gemini\config\skills\audit-dev-workflow\scripts\New-AuditCheckpoint.ps1" -Task "<task_name>" -FilePath "<target_file>"
+  powershell -ExecutionPolicy Bypass -File "$HOME\.gemini\config\skills\audit-dev-workflow\scripts\New-AuditCheckpoint.ps1" -Task "<task_name>" -FilePath "<target_file>"
   ```
 - **Automated Rollback**: If unexpected failures occur during Phase 4, restore cleanly with:
   ```powershell
-  powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\.gemini\config\skills\audit-dev-workflow\scripts\Restore-AuditCheckpoint.ps1" -Task "<task_name>" [-FilePath "<target_file>"]
+  powershell -ExecutionPolicy Bypass -File "$HOME\.gemini\config\skills\audit-dev-workflow\scripts\Restore-AuditCheckpoint.ps1" -Task "<task_name>" [-FilePath "<target_file>"]
   ```
 - **Explicit Approval & Gate 1 Return Loop**:
   - For Tier 2 (`standard`), Tier 3 (`large`), and any package installation, obtain explicit Gate 1 confirmation before touching files. Qualifying Tier 0 (`trivial`) and Tier 1 (`small`) changes execute autonomously after establishing a verified checkpoint (`New-AuditCheckpoint.ps1`) and pause at Gate 2 (`[TRIVIAL REVIEW]` or `gate2_handoff.md`) prior to commit.
@@ -61,6 +61,7 @@ Establish a rollback point before modifying files:
 1. **Direct Execution (Tier 0 & Tier 1)**: For Tier 0 and Tier 1 tasks, Parent applies approved changes directly (`edit_file` / `write_file` in Parent Agent; `replace_file_content` / `write_to_file` when delegated to Subagents per ADR-0007, ADR-0015). Shortest working diff wins.
 2. **Mandatory Orchestration & Single-Writer Specialist Delegation (Tier 2 & Tier 3)**: For Tier 2 and Tier 3 tasks, Parent MUST NOT write application code directly. Delegate test authoring to `tdd-guide` and code implementation to execution specialists (`build-error-resolver`, `tdd-guide`, or `ui-crafter`) via the 4-Slot Delegation Contract in [`orchestrator`](../orchestrator/SKILL.md). Mutating subagents MUST execute strictly serialized (Single-Writer Mutual Exclusion per ADR-0019). Ensure an atomic Git checkpoint exists (`New-AuditCheckpoint.ps1` -> `checkpoint-<task>`) before mutating files. **Parent VCS Receipt Invariant**: Never trust subagent completion claims alone; Parent must independently inspect `rtk git status --short`, `rtk git diff --stat`, and execute fresh test runs before accepting delegated work.
 3. **Clean Code Discipline**: Zero unneeded abstractions, zero generic AI comments, strict preservation of existing defensive logic (timeouts, retries, null checks, calibrated thresholds), and bracketed `<...>` placeholders for secret scanner hygiene.
+4. **Pre-Mutation Syntax Interception (SWE-Agent Fast Syntax Gate)**: Before triggering test runner verification, execute rapid syntax checks on modified files (`node --check <file>` for Node/JS, `python -m py_compile <file>` for Python, `[System.Management.Automation.Language.Parser]::ParseFile("<file>", [ref]$null, [ref]$err)` for PowerShell). Syntax typos caught at this gate are corrected immediately in-turn without burning attempts against the 2-attempt stop-rule counter (`global_attempt_counter`).
 
 ### Phase 4: Local Verification & Review
 1. **Test Suite Verification**:

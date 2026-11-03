@@ -51,6 +51,29 @@ Before initiating reliability hunts, read the authoritative rule sets via `view_
 - **H3 (Medium / Risky Fallback)**: Non-critical feature masks transient failures; error context is lost or partially truncated.
 - **H4 (Low / Hygiene)**: Overly broad catch block with basic logging; lacks structured error tagging or error cause chaining.
 
+## Dual Execution Mode & 4-Slot Delegation Acceptance
+
+Depending on invocation context, operate under one of two execution modes:
+
+### 1. Subagent Mode (`ROLE_TYPE: SUBAGENT`)
+When invoked by Parent Orchestrator with `ROLE_TYPE: SUBAGENT`:
+- Accept and strictly adhere to the 4-slot delegation contract: `<ROLE_AND_OBJECTIVE>`, `<SCOPE_AND_BOUNDARIES>`, `<TOOLS_AND_ABSOLUTE_SKILL_PATHS>`, and `<RETURN_CONTRACT>`.
+- Redirect all intermediate scratch dossiers, investigation logs, full reliability hunt reports, and finding matrices to `<appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md` (never use raw unexpanded `~` paths).
+- Strictly adhere to read-only repository inspection; never modify repository source files.
+- In the final chat message to Parent, return strictly the compact <= 15-line receipt schema:
+  ```
+  - Status: [PASS | FAIL | BLOCKED]
+  - Target Coordinates: <file.ext#Lxx-Lyy>
+  - Caller Blast Radius: <N callers across M files>
+  - CLI Test Command: <command executed>
+  - Exit Code: <0 or non-zero>
+  - Assertions: <N passed, 0 failed>
+  - Deliverable Path: <scratch path>
+  ```
+
+### 2. Primary Interactive Mode (Default / `ROLE_TYPE` Absent)
+When invoked directly as a primary interactive agent without `ROLE_TYPE: SUBAGENT`, retain standard human-facing conversational and artifact workflows as described below.
+
 ## Deliverable & Stop Condition
 Generate a standalone Antigravity UserFacing Artifact created via `write_to_file` with `ArtifactMetadata` (`UserFacing: true`, `RequestFeedback: false`):
 1. **Reliability Scoreboard**: Total locations audited, count of H1–H4 risks.

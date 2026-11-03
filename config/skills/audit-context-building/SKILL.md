@@ -1,6 +1,6 @@
 ---
 name: audit-context-building
-description: Understand a codebase before looking for bugs in it - map function guarantees, assumptions, and dependencies. Use before security audits or architecture reviews.
+description: Map codebase invariants, assumptions, and dependencies before conducting security audits or architectural reviews.
 ---
 
 # Audit Context Building

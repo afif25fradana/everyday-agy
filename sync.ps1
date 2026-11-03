@@ -144,7 +144,21 @@ if (Test-Path $srcSkills) {
     }
     foreach ($cs in $customSkills) {
         $targetDir = Join-Path $dstSkills $cs.Name
-        New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
+        if (Test-Path $targetDir) {
+            # Prune orphan files inside tracked skill directory
+            $srcFiles = @(Get-ChildItem -Path $cs.FullName -Recurse -File | ForEach-Object {
+                $_.FullName.Substring($cs.FullName.Length)
+            })
+            Get-ChildItem -Path $targetDir -Recurse -File | ForEach-Object {
+                $rel = $_.FullName.Substring($targetDir.Length)
+                if ($rel -notin $srcFiles) {
+                    Remove-Item -Path $_.FullName -Force
+                    Write-Host "[CLEANUP] Pruned orphan skill file from repo: $($cs.Name)$rel" -ForegroundColor DarkGray
+                }
+            }
+        } else {
+            New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
+        }
         Copy-Item -Path (Join-Path $cs.FullName "*") -Destination $targetDir -Recurse -Force
     }
     $skillCount = (Get-ChildItem -Path $dstSkills -Directory).Count

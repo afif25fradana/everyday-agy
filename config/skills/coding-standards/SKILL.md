@@ -1,6 +1,6 @@
 ---
 name: coding-standards
-description: Baseline cross-project coding conventions for naming, readability, immutability, error handling, and type safety. Use when setting up project conventions, reviewing code quality, or refactoring without framework-specific guidance.
+description: Baseline cross-project coding conventions for naming, readability, immutability, error handling, and type safety.
 ---
 
 # Coding Standards & Best Practices

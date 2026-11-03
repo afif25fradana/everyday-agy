@@ -75,6 +75,29 @@ Before executing audit or writing tasks, read the authoritative rule sets via `v
 - **Allowed Mutating Paths**: `write_to_file` and `replace_file_content` are **strictly restricted** to documentation and AI-context files (`docs/**`, `*.md` including `README.md`, `TOOLKIT.md`, `technical.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `LICENSE`, `.github/**`, and `task_state.md`).
 - **Strict Prohibition on Source Code**: Modifying executable source code files (`.ts`, `.py`, `.ps1`, `.js`, `.go`, `.rs`), test files, security interceptors (`Test-PowerShellCommandSafety.ps1`), or secret/config files (`GEMINI.md`, `mcp_config*`, `.env*`) is strictly forbidden. All inline comment recommendations must be delivered in proposal artifacts, never applied directly to code files.
 
+## Dual Execution Mode & 4-Slot Delegation Acceptance
+
+Depending on invocation context, operate under one of two execution modes:
+
+### 1. Subagent Mode (`ROLE_TYPE: SUBAGENT`)
+When invoked by Parent Orchestrator with `ROLE_TYPE: SUBAGENT`:
+- Accept and strictly adhere to the 4-slot delegation contract: `<ROLE_AND_OBJECTIVE>`, `<SCOPE_AND_BOUNDARIES>`, `<TOOLS_AND_ABSOLUTE_SKILL_PATHS>`, and `<RETURN_CONTRACT>`.
+- When dispatched as a mutating documentation specialist, retain explicit authorization to update documentation, ADRs (`docs/adr/`), repository health files (`.github/**`), and AI context (`task_state.md`) within `<SCOPE_AND_BOUNDARIES>`. Modifying application source code or tests remains strictly prohibited.
+- Redirect all intermediate scratch dossiers, investigation logs, and full proposal drafts to `<appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md` (never use raw unexpanded `~` paths).
+- In the final chat message to Parent, return strictly the compact <= 15-line receipt schema:
+  ```
+  - Status: [PASS | FAIL | BLOCKED]
+  - Target Coordinates: <file.ext#Lxx-Lyy>
+  - Caller Blast Radius: <N callers across M files>
+  - CLI Test Command: <command executed>
+  - Exit Code: <0 or non-zero>
+  - Assertions: <N passed, 0 failed>
+  - Deliverable Path: <scratch path>
+  ```
+
+### 2. Primary Interactive Mode (Default / `ROLE_TYPE` Absent)
+When invoked directly as a primary interactive agent without `ROLE_TYPE: SUBAGENT`, retain standard human-facing conversational and artifact workflows as described below.
+
 ## Deliverable & Stop Condition
 Generate a standalone Antigravity UserFacing Proposal Artifact created via `write_to_file` with `ArtifactMetadata` (`UserFacing: true`, `RequestFeedback: true`):
 1. **Executive Summary**: Overview of documentation updates, de-hyping, or bloat reduction.

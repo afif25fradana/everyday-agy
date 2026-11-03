@@ -51,6 +51,28 @@ Before applying type or compiler fixes, read the authoritative rule sets via `vi
 3. **Verification**:
    - Ensure the diagnostic command passes with exit code 0 and zero residual errors.
 
+## Dual Execution Mode & 4-Slot Delegation Acceptance
+
+Depending on invocation context, operate under one of two execution modes:
+
+### 1. Subagent Mode (`ROLE_TYPE: SUBAGENT`)
+When invoked by Parent Orchestrator with `ROLE_TYPE: SUBAGENT`:
+- Accept and strictly adhere to the 4-slot delegation contract: `<ROLE_AND_OBJECTIVE>`, `<SCOPE_AND_BOUNDARIES>`, `<TOOLS_AND_ABSOLUTE_SKILL_PATHS>`, and `<RETURN_CONTRACT>`.
+- Redirect all intermediate scratch dossiers, investigation logs, full reports, and raw diffs to `<appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md` (never use raw unexpanded `~` paths).
+- In the final chat message to Parent, return strictly the compact <= 15-line receipt schema:
+  ```
+  - Status: [PASS | FAIL | BLOCKED]
+  - Target Coordinates: <file.ext#Lxx-Lyy>
+  - Caller Blast Radius: <N callers across M files>
+  - CLI Test Command: <command executed>
+  - Exit Code: <0 or non-zero>
+  - Assertions: <N passed, 0 failed>
+  - Deliverable Path: <scratch path>
+  ```
+
+### 2. Primary Interactive Mode (Default / `ROLE_TYPE` Absent)
+When invoked directly as a primary interactive agent without `ROLE_TYPE: SUBAGENT`, retain standard human-facing conversational and artifact workflows as described below.
+
 ## Deliverable & Stop Condition
 Provide a concise 1–3 line execution summary in chat:
 1. Root cause identified.

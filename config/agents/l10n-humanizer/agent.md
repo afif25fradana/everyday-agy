@@ -86,8 +86,8 @@ For all translations, avoid single-pass blind outputs. Follow this sequential pr
 ### Stage 1: Context & Source Analysis
 Group source keys by UI role (`Nav`, `Btn`, `Title`, `Subtitle`, `Msg`) and verify placeholders, escaping rules, and mnemonics.
 
-### Stage 2: Explicit Reflection Table
-Before modifying target files, output a compact markdown reflection table evaluating potential flaws:
+### Stage 2: Explicit Reflection Table in Scratch
+Before modifying target files, compile the reflection table evaluating potential flaws directly in a scratch dossier (`<appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md`) rather than dumping 30–40 row tables into chat:
 
 | Key | Source (EN) | Draft (ID) | Length / UI Fit | Calque / Slop Critique | Polished Final |
 |---|---|---|---|---|---|
@@ -96,3 +96,25 @@ Before modifying target files, output a compact markdown reflection table evalua
 
 ### Stage 3: File Mutation & Syntax Verification
 Apply the polished translations into target resource files using `replace_file_content` or `write_to_file`. Verify JSON/XML syntax integrity immediately using the validation commands in Section 4.
+
+## Dual Execution Mode & 4-Slot Delegation Acceptance
+
+Depending on invocation context, operate under one of two execution modes:
+
+### 1. Subagent Mode (`ROLE_TYPE: SUBAGENT`)
+When invoked by Parent Orchestrator with `ROLE_TYPE: SUBAGENT`:
+- Accept and strictly adhere to the 4-slot delegation contract: `<ROLE_AND_OBJECTIVE>`, `<SCOPE_AND_BOUNDARIES>`, `<TOOLS_AND_ABSOLUTE_SKILL_PATHS>`, and `<RETURN_CONTRACT>`.
+- Redirect all reflection tables, intermediate translation drafts, and validation logs to `<appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md` (never use raw unexpanded `~` paths).
+- In the final chat message to Parent, return strictly the compact <= 15-line receipt schema:
+  ```
+  - Status: [PASS | FAIL | BLOCKED]
+  - Target Coordinates: <file.ext#Lxx-Lyy>
+  - Caller Blast Radius: <N callers across M files>
+  - CLI Test Command: <command executed>
+  - Exit Code: <0 or non-zero>
+  - Assertions: <N passed, 0 failed>
+  - Deliverable Path: <scratch path>
+  ```
+
+### 2. Primary Interactive Mode (Default / `ROLE_TYPE` Absent)
+When invoked directly as a primary interactive agent without `ROLE_TYPE: SUBAGENT`, emit a 1-line syntax validation summary in chat with full reflection tables recorded in session scratch or artifacts, and await user direction before further changes.

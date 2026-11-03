@@ -11,6 +11,7 @@ This specification defines the communication contracts, trigger headers, quantit
 - **Missing Evidence Rule**: Omitting test/verification logs, exit codes, function signatures, caller context, or diffstats immediately halts review with `QUESTIONS FOR IMPLEMENTER`. For testless codebases, substitute automated tests with static syntax/build verification.
 - **Zero Diff Starvation**: Never cite a branch or patch on disk instead of including the actual unified diff (`+`/`-`).
 - **Evidence Citation**: All claims must be anchored to exact code coordinates (`file.ext#Lxx-Lyy`), unified diff lines, or verbatim CLI command output.
+- **Mandatory UserFacing Artifact Packaging**: All formal review payloads (Gate 1 proposals, Gate 2 handoffs, and deep audit reports) are packaged into Antigravity UserFacing Artifacts (`<appDataDir>\brain\<conversation-id>/<name>.md`). Chat responses must remain 1–3 lines linking to the artifact for clean reviewer copy-pasting.
 
 ---
 
@@ -25,6 +26,8 @@ This specification defines the communication contracts, trigger headers, quantit
 
 ### 2.2 Gate 1 (Pre-Execution Proposal Review)
 - **Trigger Header**: `# Review Request: Gate 1 (Pre-Execution Proposal)`
+- **Packaging Protocol**: Gate 1 proposals MUST be written exclusively as an Antigravity UserFacing Artifact (`<appDataDir>\brain\<conversation-id>/gate1_proposal.md`) with `ArtifactMetadata` (`UserFacing: true`, `RequestFeedback: true` to provide the native one-click "Proceed" approval button).
+- **Chat Response Standard**: Chat responses must strictly be 1–3 lines linking directly to `gate1_proposal.md`, never dumping the raw proposal or diffs directly into chat.
 - **Lifecycle Timing**: Generated AFTER Phase 1 (Diagnostic Audit) and Phase 2 (Checkpoint), strictly BEFORE modifying files (mandatory for Tier 2/3 and package installations; skipped for Tier 0 and Tier 1 per ADR-0015).
 - **Required Payload**:
   1. Task & Context summary.
@@ -36,6 +39,8 @@ This specification defines the communication contracts, trigger headers, quantit
 
 ### 2.3 Gate 2 (Post-Execution Handoff & Diff Review)
 - **Trigger Header**: `# Review Request: Gate 2 (Post-Execution Handoff & Diff)`
+- **Packaging Protocol**: Gate 2 handoff payloads MUST be written exclusively as an Antigravity UserFacing Artifact (`<appDataDir>\brain\<conversation-id>/gate2_handoff.md`) with `ArtifactMetadata` (`UserFacing: true`, `RequestFeedback: false`).
+- **Chat Response Standard**: Chat responses must strictly be 1–3 lines linking directly to `gate2_handoff.md`, never dumping full diffs directly into chat.
 - **Lifecycle Timing**: Generated AFTER Phase 3 (Patch Execution) and Phase 4 (Local Verification), strictly BEFORE `git commit` or `git push`.
 - **Required Payload**:
   1. High-level summary of outcome and root cause resolution.

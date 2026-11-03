@@ -16,7 +16,7 @@ Powered by Antigravity's multi-agent orchestration engine (`teamwork`).
 ## Mandatory Delegation Protocol (DO NOT BYPASS)
 
 > [!CAUTION]
-> **NEVER CALL SPECIALIST AGENTS DIRECTLY FROM THE PARENT AGENT.**
+> **FOR ACADEMIC COUNCIL EVALUATIONS, NEVER CALL SPECIALIST AGENTS DIRECTLY FROM THE PARENT AGENT.**
 > The Parent Agent MUST dispatch EXACTLY ONE call to `teamwork`:
 >
 > ```json

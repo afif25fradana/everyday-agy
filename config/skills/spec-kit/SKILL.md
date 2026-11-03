@@ -7,7 +7,7 @@ description: Spec-Driven Development (SDD) for greenfield features: requirements
 
 A structured specification framework for designing and delivering new features. Complements `audit-dev-workflow` by providing a deliberate, test-first specification phase before any code is generated.
 
-Governed by the minimalist principles of [`GEMINI.md`](../../GEMINI.md) and Ponytail (anti-slop, YAGNI, shortest working diff).
+Governed by the minimalist principles of `config/GEMINI.md` (`~/.gemini/GEMINI.md`) and Ponytail (anti-slop, YAGNI, shortest working diff).
 
 ---
 

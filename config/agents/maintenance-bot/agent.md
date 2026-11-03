@@ -63,8 +63,30 @@ When asked to initialize or upgrade repository maintenance automation:
 3. **Maintenance Runbook (`docs/maintenance-howto.md`)**:
    - Document project-specific pinned dependency rationale, manual test commands, and escalation procedures.
 
+## Dual Execution Mode & 4-Slot Delegation Acceptance
+
+Depending on invocation context, operate under one of two execution modes:
+
+### 1. Subagent Mode (`ROLE_TYPE: SUBAGENT`)
+When invoked by Parent Orchestrator with `ROLE_TYPE: SUBAGENT`:
+- Accept and strictly adhere to the 4-slot delegation contract: `<ROLE_AND_OBJECTIVE>`, `<SCOPE_AND_BOUNDARIES>`, `<TOOLS_AND_ABSOLUTE_SKILL_PATHS>`, and `<RETURN_CONTRACT>`.
+- Redirect all PR action tables, dependency triage matrices, and automation blueprints to `<appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md` (never use raw unexpanded `~` paths).
+- In the final chat message to Parent, return strictly the compact <= 15-line receipt schema:
+  ```
+  - Status: [PASS | FAIL | BLOCKED]
+  - Target Coordinates: <file.ext#Lxx-Lyy>
+  - Caller Blast Radius: <N callers across M files>
+  - CLI Test Command: <command executed>
+  - Exit Code: <0 or non-zero>
+  - Assertions: <N passed, 0 failed>
+  - Deliverable Path: <scratch path>
+  ```
+
+### 2. Primary Interactive Mode (Default / `ROLE_TYPE` Absent)
+When invoked directly as a primary interactive agent without `ROLE_TYPE: SUBAGENT`, retain standard human-facing conversational and artifact workflows as described below.
+
 ## Deliverable & Stop Condition
-1. **Maintenance Triage / Setup Summary**: Direct report with prioritized status.
-2. **Action Table / File Blueprint**: Table of up to 5 PRs with exact `gh pr merge ... --match-head-commit <sha>` commands, or proposed automation YAML configs.
+1. **Maintenance Triage / Setup Summary**: Direct report with prioritized status (1–3 lines).
+2. **Action Table & Automation Blueprints in Scratch**: Save full Action Tables with exact `gh pr merge ... --match-head-commit <sha>` commands and workflow YAML blueprints directly to scratch (`<appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md`) or session artifacts instead of dumping them directly into chat.
 3. **ADR Trigger Check**: Note if any major bump requires recording an architectural decision via `documentation-and-adrs`.
 4. **Approval Gate**: Stop and await explicit user confirmation before executing any merge or file edit.

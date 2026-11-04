@@ -57,21 +57,22 @@ Before opening any source file, the Parent Agent classifies task blast radius us
 
 ```mermaid
 flowchart TD
-    Task[Task Input] --> Triage{Zero-Read Triage}
-    Triage -->|Tier 0 / 1| ParentDirect[Parent Autonomous Post-Checkpoint]
-    Triage -->|Tier 2| DirectSpecialists[Pathway B: Direct Specialist Subagents]
-    Triage -->|Tier 3| TeamworkCouncil[Pathway A: Teamwork Council Review]
+    Task["Task Input"] --> Triage{"Zero-Read Triage"}
+    Triage -->|"Tier 0 / 1"| ParentDirect["Parent Autonomous Post-Checkpoint"]
+    Triage -->|"Tier 2"| DirectSpecialists["Pathway B: Direct Specialist Subagents"]
+    Triage -->|"Tier 3"| TeamworkCouncil["Pathway A: Teamwork Council Review"]
     
-    DirectSpecialists --> S1[1-2 Parallel Read-Only Explorers<br/>system-architect / code-auditor]
-    S1 --> Gate1[Parent Gate 1 Proposal Artifact & Approval]
-    Gate1 --> S2[Sequential Mutator 1: tdd-guide<br/>Repro-First RED Test]
-    S2 --> S3[Sequential Mutator 2: build-error-resolver<br/>Green Implementation]
-    S3 --> S4[Diff Audit: code-auditor<br/>Anti-Mock & Five-Axis Check]
-    S4 --> Gate2[Parent Gate 2 Handoff]
+    DirectSpecialists --> S1["1-2 Parallel Read-Only Explorers<br/>system-architect / code-auditor"]
+    S1 --> Gate1["Parent Gate 1 Proposal Artifact & Approval"]
+    Gate1 --> Ckpt["Parent Verified Checkpoint<br/>New-AuditCheckpoint.ps1"]
+    Ckpt --> S2["Sequential Mutator 1: tdd-guide<br/>Repro-First RED Test"]
+    S2 --> S3["Sequential Mutator 2: Implementer<br/>tdd-guide / ui-crafter / build-error-resolver<br/>Green Implementation"]
+    S3 --> S4["Diff Audit: code-auditor<br/>Anti-Mock & Five-Axis Check"]
+    S4 --> Gate2["Parent Gate 2 Handoff"]
     
-    TeamworkCouncil --> TCReport[teamwork_victory_auditor Report in scratch]
-    TCReport --> Gate1TC[Parent Gate 1 Proposal Artifact & Approval]
-    Gate1TC --> T3Exec[Decompose into Sequential Tier 2 Work Packages]
+    TeamworkCouncil --> TCReport["teamwork_victory_auditor Report in scratch"]
+    TCReport --> Gate1TC["Parent Gate 1 Proposal Artifact & Approval"]
+    Gate1TC --> T3Exec["Decompose into Sequential Tier 2 Work Packages"]
 ```
 
 ### Pathway A: Deliberative Multi-Seat Council (Tier 3)
@@ -132,6 +133,6 @@ In your final chat message, return ONLY this compact receipt (<= 15 lines):
 | :--- | :--- | :--- |
 | *"I'll just read one target file to understand the bug."* | Reading 1 file invariably escalates to reading 5 files, burning 30k tokens and degrading reasoning. | Use `rtk rg -l` and `rtk rg -c` for Zero-Read Triage. Dispatch `system-architect` or `code-auditor`. |
 | *"Direct reading is faster than spawning a subagent."* | Inline reading pollutes Parent context, triggering middle-loss, dropped safety checks, and hallucinated test passes. | Subagent dispatch takes 1 turn and guarantees context insulation. |
-| *"The task is small enough that I don't need a subagent."* | If it touches $>2$ files or logic/state, it is Tier 2 by definition (ADR-0009, ADR-0015). | Follow the Zero-Read Triage Gate strictly; do not rationalize away Tier 2 boundaries. |
+| *"The task is small enough that I don't need a subagent."* | If it crosses module boundaries (>1 module or >2 non-test files) or requires architectural redesign, it is Tier 2 by definition (ADR-0009, ADR-0015, ADR-0019). | Follow the Zero-Read Triage Gate strictly; do not rationalize away Tier 2 boundaries. |
 | *"The subagent reported green, so I can commit directly."* | Subagents may mock-cheat, delete tests, or suffer from Exit Code 0 fallacies. | Parent independently runs CLI tests (`run_command`) and validates $>0$ passed assertions. |
 | *"Two subagents failed, let me read the code to fix it myself."* | Violates the 2-Attempt Stop Rule and ADR-0019 clean-fail invariant. | Execute `$HOME\.gemini\config\skills\audit-dev-workflow\scripts\Restore-AuditCheckpoint.ps1`, record failure evidence, and escalate to human operator. |

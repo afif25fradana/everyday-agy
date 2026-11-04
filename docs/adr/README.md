@@ -24,3 +24,4 @@ This directory contains the immutable record of significant technical and struct
 | [ADR-0018](./0018-fleet-parity-and-deployment-path-symmetry.md) | 11-Agent Fleet Parity, Deployment Path Symmetry, and Global Rule Token Optimization | Accepted | 2026-11-02 |
 | [ADR-0019](./0019-universal-lead-orchestrator-and-context-insulation.md) | Universal Lead Orchestrator Protocol, Parent Context Insulation, and Adaptive Subagent Fleet Governance | Accepted | 2026-11-03 |
 | [ADR-0020](./0020-protocol-harmonization-gate1-flow-and-fleet-parity.md) | Protocol Harmonization, Gate 1 Flow Correction, Fleet Parity, and Pre-Mutation Syntax Interception | Accepted | 2026-11-04 |
+| [ADR-0021](./0021-orchestrator-implementer-parity-and-checkpoint-sequencing.md) | Orchestrator Implementer Parity, Checkpoint Sequencing, and Agent Skill Pruning | Accepted | 2026-11-04 |

@@ -28,7 +28,7 @@ This specification defines the communication contracts, trigger headers, quantit
 - **Trigger Header**: `# Review Request: Gate 1 (Pre-Execution Proposal)`
 - **Packaging Protocol**: Gate 1 proposals MUST be written exclusively as an Antigravity UserFacing Artifact (`<appDataDir>\brain\<conversation-id>/gate1_proposal.md`) with `ArtifactMetadata` (`UserFacing: true`, `RequestFeedback: true` to provide the native one-click "Proceed" approval button).
 - **Chat Response Standard**: Chat responses must strictly be 1–3 lines linking directly to `gate1_proposal.md`, never dumping the raw proposal or diffs directly into chat.
-- **Lifecycle Timing**: Generated AFTER Phase 1 (Diagnostic Audit) and Phase 2 (Checkpoint), strictly BEFORE modifying files (mandatory for Tier 2/3 and package installations; skipped for Tier 0 and Tier 1 per ADR-0015).
+- **Lifecycle Timing**: Generated AFTER Phase 1 (Diagnostic Audit & Blast Radius Analysis), strictly BEFORE Phase 2 Checkpoint creation and modifying files (mandatory for Tier 2/3 and package installations; skipped for Tier 0 and Tier 1 per ADR-0015).
 - **Required Payload**:
   1. Task & Context summary.
   2. Root cause validation with exact target coordinates (`file.ext#Lxx-Lyy`).

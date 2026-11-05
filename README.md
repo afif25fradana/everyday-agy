@@ -78,7 +78,7 @@ everyday-agy/
 ├── config/
 │   ├── GEMINI.md        # Tracked global operational rules deployed to ~/.gemini/GEMINI.md
 │   ├── agents/          # 11 specialized subagents with hybrid model tiering (ADR-0004, ADR-0017, ADR-0018)
-│   └── skills/          # 14 bespoke and engine-adapted workflow skills
+│   └── skills/          # 15 bespoke and engine-adapted workflow skills
 ├── docs/
 │   └── adr/             # Architectural Decision Records (ADR-0001 through ADR-0020)
 ├── sync.ps1             # Pulls live configs from ~/.gemini/ into this repo
@@ -109,11 +109,11 @@ Specialized agent configurations handle task delegation. Analytical roles run on
 
 ### Workflow Skills and Provenance (`config/skills/`)
 
-Fourteen modular skills are maintained directly within `config/skills/`. Third-party upstream suites (`ponytail`, `taste-skill`, and `antislop`) are decoupled from git tracking per ADR-0006, ADR-0011, and ADR-0016, and installed directly from their respective project repositories:
+Fifteen modular skills are maintained directly within `config/skills/`. Third-party upstream suites (`ponytail`, `taste-skill`, and `antislop`) are decoupled from git tracking per ADR-0006, ADR-0011, and ADR-0016, and installed directly from their respective project repositories:
 
 | Category | Count | Included Skills | Origin / Licensing |
 |---|:---:|---|---|
-| **Bespoke Architectures** | 6 | `orchestrator`, `council-review`, `academic-council`, `audit-dev-workflow`, `sync-task-state`, `clean-docs` | Original works authored for Antigravity (MIT) |
+| **Bespoke Architectures** | 7 | `orchestrator`, `council-review`, `academic-council`, `audit-dev-workflow`, `sync-task-state`, `clean-docs`, `deep-web-research` | Original works authored for Antigravity (MIT) |
 | **Engine-Adapted Ports** | 8 | `spec-kit`, `gh-workflow`, `audit-context-building`, `differential-review`, `contract-first`, `database-migrations`, `coding-standards`, `documentation-and-adrs` | Adapted from community tools, ECC, and Trail of Bits (MIT & CC BY-SA 4.0) |
 
 #### Recommended Upstream Skills & Plugins (Decoupled per ADR-0016)
@@ -138,6 +138,7 @@ Refer to the upstream repositories for their official Antigravity installation i
 - `documentation-and-adrs`: Standardized Nygard ADR authoring.
 - `sync-task-state`: Lightweight context synchronization (`task_state.md`) for Twin-Repo workflows with bounded gotchas linked to ADRs.
 - `clean-docs`: Plain-spoken documentation, zero AI process leaks, and commit hygiene.
+- `deep-web-research`: Verifiable primary-source research protocol enforcing version-locked queries and official domain constraints.
 
 ### Architectural Decision Records (`docs/adr/`)
 Technical decisions, constraints, and trade-offs are recorded as permanent Nygard ADRs:
@@ -172,6 +173,6 @@ Technical decisions, constraints, and trade-offs are recorded as permanent Nygar
 ## License
 
 Dual-licensed under MIT and CC BY-SA 4.0:
-- Repository scripts, custom subagents, and bespoke skills (`orchestrator`, `council-review`, `academic-council`, `audit-dev-workflow`, `sync-task-state`, `clean-docs`) are licensed under the [MIT License](./LICENSE).
+- Repository scripts, custom subagents, and bespoke skills (`orchestrator`, `council-review`, `academic-council`, `audit-dev-workflow`, `sync-task-state`, `clean-docs`, `deep-web-research`) are licensed under the [MIT License](./LICENSE).
 - Adapted Trail of Bits security skills (`audit-context-building`, `differential-review`) are licensed under [Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](./config/skills/audit-context-building/LICENSE).
 - Decoupled upstream community skills (`ponytail`, `taste-skill`, `anti-slop`) are referenced under their respective upstream MIT licenses.

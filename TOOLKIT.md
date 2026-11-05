@@ -66,7 +66,7 @@ npm install -g @ast-grep/cli
 
 ## 3. Custom Skills Catalog
 
-14 bespoke and adapted skills shipped directly within this repository (`config/skills/`), with external third-party suites decoupled into Section 4.
+15 bespoke and adapted skills shipped directly within this repository (`config/skills/`), with external third-party suites decoupled into Section 4.
 
 ### A. Spec-Driven & Development Workflows
 | Skill Name | Trigger / Command | Description | Upstream / Origin |
@@ -89,6 +89,7 @@ npm install -g @ast-grep/cli
 | **coding-standards** | `/coding-standards` | Baseline naming, immutability, type safety, and defensive error-handling conventions. | Universal Engineering Standards |
 | **clean-docs** | `/clean-docs` | Enforces plain-spoken repo prose, humanized conventional commits, and zero AI process leaks. | **Original Work (@afif25fradana)** |
 | **documentation-and-adrs** | `/documentation-and-adrs` | Documents architectural decisions, trade-offs, and context using Michael Nygard's ADR format. | Michael Nygard Standard /<br>[joelparkerhenderson/architecture-decision-record](https://github.com/joelparkerhenderson/architecture-decision-record) |
+| **deep-web-research** | *Auto-triggers on external API/doc verification* | Verifiable primary-source research protocol enforcing version-locked queries, domain constraints, and anti-hallucination grounding. | **Original Work (@afif25fradana)** |
 
 > **Antigravity Built-in Runtime Skill**: `generative_ui` (invoked by `ui-crafter`) is provisioned directly by the Antigravity engine (`~/.gemini/antigravity/builtin/skills/generative_ui`) and is not tracked as a repository-level custom skill.
 

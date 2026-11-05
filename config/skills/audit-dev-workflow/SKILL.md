@@ -7,6 +7,9 @@ description: Defensive audit-first dev workflow (/audit-dev-workflow): caller tr
 
 A defensive, evidence-backed operational runbook ensuring safe, well-investigated changes. Governed by `config/GEMINI.md` (`~/.gemini/GEMINI.md`) and [`orchestrator`](../orchestrator/SKILL.md).
 
+> [!TIP]
+> **Workflow Routing**: `audit-dev-workflow` is the operational runbook for all changes (Tier 0–3). For Tier 2/3 multi-file changes, Parent Agent activates `orchestrator` for context insulation and subagent fleet governance.
+
 ---
 
 ## Step-by-Step Procedure
@@ -17,6 +20,7 @@ Classify the incoming task using the **Zero-Read Triage Gate** in [`orchestrator
 - **`small` (Tier 1)**: Contained single-module bugfix/enhancement. Investigation $\rightarrow$ Checkpoint (`New-AuditCheckpoint.ps1`) $\rightarrow$ Failure-First TDD (RED $\rightarrow$ GREEN) $\rightarrow$ 5-Axis verification $\rightarrow$ pause at Gate 2 (`gate2_handoff.md`) before commit.
 - **`standard` (Tier 2)**: Multi-file refactor or multi-component change (2–5 files). Enforce [`orchestrator`](../orchestrator/SKILL.md) Parent Context Insulation: read-only explorer (`system-architect` / `code-auditor`) $\rightarrow$ Gate 1 approval (`gate1_proposal.md`) $\rightarrow$ Checkpoint (`New-AuditCheckpoint.ps1`) $\rightarrow$ `tdd-guide` RED test $\rightarrow$ implementer GREEN fix $\rightarrow$ `code-auditor` diff review $\rightarrow$ Gate 2 (`gate2_handoff.md`).
 - **`large` (Tier 3)**: Cross-cutting architecture/schema overhaul ($>5$ files). Convene [`council-review`](../council-review/SKILL.md) via single `teamwork` dispatch $\rightarrow$ Gate 1 approval $\rightarrow$ sequential Tier 2 work packages.
+- **Mid-Execution Escalation**: If scope exceeds initial tier boundaries, immediately halt mutations, retain active checkpoint, author `gate1_proposal.md`, and obtain explicit approval before resuming edits per [`orchestrator`](../orchestrator/SKILL.md#12-zero-read-triage-gate-step-0-blast-radius-sizing--ssot).
 
 ### Phase 1: Investigation & Blast Radius Analysis (Strictly Read-Only on Tier 2/3)
 1. **Trace Callers & Invariants (Parallel Fan-Out)**: Batch read-only caller searches (`rtk rg`) in parallel within a single turn before proposing edits. For Tier 0/1, inspect target files directly (`read_file`). For Tier 2/3, delegate target file reading to read-only specialist subagents (`system-architect` or `code-auditor` via `view_file`) per [`orchestrator`](../orchestrator/SKILL.md).

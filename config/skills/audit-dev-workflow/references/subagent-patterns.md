@@ -1,6 +1,6 @@
 # Subagent Execution Patterns for Audit-First Workflow
 
-The multi-tiered architecture allows the **Parent Agent** to orchestrate specialized **Subagents** across the 11-agent fleet. This keeps parent context clean, eliminates token bloat during deep audits, and enables safe, disciplined execution. Governed by [`orchestrator`](../../orchestrator/SKILL.md) and [`ADR-0018`](../../../../docs/adr/0018-fleet-parity-and-deployment-path-symmetry.md).
+The multi-tiered architecture allows the **Parent Agent** to orchestrate specialized **Subagents** across the 11-agent fleet. This keeps parent context clean, eliminates token bloat during deep audits, and enables safe, disciplined execution. Governed by [`orchestrator`](../../orchestrator/SKILL.md) and [`ADR-0018`](docs/adr/0018-fleet-parity-and-deployment-path-symmetry.md).
 
 ---
 

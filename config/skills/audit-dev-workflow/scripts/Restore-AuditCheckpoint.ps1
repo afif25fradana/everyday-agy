@@ -1,9 +1,10 @@
+[CmdletBinding(PositionalBinding = $false)]
 param(
     [Parameter(Mandatory = $true)]
     [string]$Task,
 
     [Parameter(Mandatory = $false)]
-    [string]$FilePath,
+    [string[]]$FilePath,
 
     [Parameter(Mandatory = $false)]
     [string]$RepoPath
@@ -35,35 +36,47 @@ try {
         }
     }
 
-    if ($FilePath) {
-        $resolvedPath = if (Test-Path -Path $FilePath) {
-            (Resolve-Path -LiteralPath $FilePath).Path
-        } else {
-            $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($FilePath)
+    if ($FilePath -and $FilePath.Count -gt 0) {
+        $allTargets = @()
+        foreach ($fp in $FilePath) {
+            if ($fp -and $fp.Contains(',')) {
+                $allTargets += ($fp -split ',')
+            } else {
+                $allTargets += $fp
+            }
         }
-        $pathBytes = [System.Text.Encoding]::UTF8.GetBytes($resolvedPath.ToLowerInvariant())
-        $sha1 = [System.Security.Cryptography.SHA1]::Create()
-        try {
-            $pathHash = ([BitConverter]::ToString($sha1.ComputeHash($pathBytes))).Replace('-', '').ToLower().Substring(0, 8)
-        } finally {
-            $sha1.Dispose()
-        }
-        $leafName = Split-Path -Leaf $resolvedPath
-        $hashedBackup = Join-Path $scratchDir "${pathHash}_${leafName}.bak"
-        $legacyBackup = Join-Path $scratchDir "$leafName.bak"
+        foreach ($rawTarget in $allTargets) {
+            $target = "$rawTarget".Trim().Trim('"').Trim("'")
+            if ([string]::IsNullOrWhiteSpace($target)) { continue }
+            $resolvedPath = if (Test-Path -Path $target) {
+                (Resolve-Path -LiteralPath $target).Path
+            } else {
+                $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($target)
+            }
+            $pathBytes = [System.Text.Encoding]::UTF8.GetBytes($resolvedPath.ToLowerInvariant())
+            $sha1 = [System.Security.Cryptography.SHA1]::Create()
+            try {
+                $pathHash = ([BitConverter]::ToString($sha1.ComputeHash($pathBytes))).Replace('-', '').ToLower().Substring(0, 8)
+            } finally {
+                $sha1.Dispose()
+            }
+            $leafName = Split-Path -Leaf $resolvedPath
+            $hashedBackup = Join-Path $scratchDir "${pathHash}_${leafName}.bak"
+            $legacyBackup = Join-Path $scratchDir "$leafName.bak"
 
-        $backupPath = if (Test-Path -Path $hashedBackup) { $hashedBackup } elseif (Test-Path -Path $legacyBackup) { $legacyBackup } else { $null }
+            $backupPath = if (Test-Path -Path $hashedBackup) { $hashedBackup } elseif (Test-Path -Path $legacyBackup) { $legacyBackup } else { $null }
 
-        if (-not $backupPath) {
-            Write-Error "Backup file not found in scratch: checked '$hashedBackup' and '$legacyBackup'"
-            exit 1
+            if (-not $backupPath) {
+                Write-Error "Backup file not found in scratch: checked '$hashedBackup' and '$legacyBackup'"
+                exit 1
+            }
+            $parentDir = Split-Path -Parent $resolvedPath
+            if ($parentDir -and -not (Test-Path -LiteralPath $parentDir)) {
+                New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
+            }
+            Copy-Item -Path $backupPath -Destination $resolvedPath -Force
+            Write-Output "Checkpoint restored: $backupPath -> $resolvedPath"
         }
-        $parentDir = Split-Path -Parent $resolvedPath
-        if ($parentDir -and -not (Test-Path -LiteralPath $parentDir)) {
-            New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
-        }
-        Copy-Item -Path $backupPath -Destination $resolvedPath -Force
-        Write-Output "Checkpoint restored: $backupPath -> $resolvedPath"
     } else {
         $gitCheck = Invoke-GitCmd @("rev-parse", "--is-inside-work-tree") 2>$null
         if ($gitCheck -eq "true") {

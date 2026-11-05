@@ -5,7 +5,10 @@ description: Meta-orchestrator protocol (/orchestrator) for Parent Agent: task t
 
 # Universal Lead Orchestrator Protocol (Operational Runbook)
 
-A high-rigor governance runbook enforcing Anthropic Lead-Agent context insulation, `obra/superpowers` subagent-driven development, and Antigravity multi-agent fleet coordination. Governed by `config/GEMINI.md` (`~/.gemini/GEMINI.md`) and [`ADR-0019`](../../../docs/adr/0019-universal-lead-orchestrator-and-context-insulation.md).
+A high-rigor governance runbook enforcing Anthropic Lead-Agent context insulation, `obra/superpowers` subagent-driven development, and Antigravity multi-agent fleet coordination. Governed by `config/GEMINI.md` (`~/.gemini/GEMINI.md`) and [`ADR-0019`](docs/adr/0019-universal-lead-orchestrator-and-context-insulation.md).
+
+> [!TIP]
+> **Workflow Routing**: `audit-dev-workflow` is the operational runbook for all changes (Tier 0–3). For Tier 2/3 multi-file changes, Parent Agent activates `orchestrator` for context insulation and subagent fleet governance.
 
 ---
 
@@ -25,10 +28,14 @@ Before opening any source file, the Parent Agent classifies task blast radius us
 
 *Sizing Thresholds (Canonical Definition)*:
 - **Tier 0 (`trivial`: $\le 2$ files, $\le 3$ exec / $\le 5$ doc lines, zero logic/state/schema mutation)**: Single-turn Parent fast-path post-checkpoint. Subagents and Gate 1 bypassed; pauses at `[TRIVIAL REVIEW]` before commit.
-- **Tier 1 (`small`: 1 module bugfix/enhancement)**: Autonomous Parent TDD post-checkpoint (`New-AuditCheckpoint.ps1` $\rightarrow$ RED test $\rightarrow$ GREEN fix $\rightarrow$ 5-Axis check $\rightarrow$ Gate 2 `gate2_handoff.md`). Subagents optional on-demand.
+- **Tier 1 (`small`: 1 module bugfix/enhancement)**: Autonomous Parent TDD post-checkpoint (`New-AuditCheckpoint.ps1` $\rightarrow$ RED test $\rightarrow$ GREEN fix $\rightarrow$ 5-Axis check per [audit-dev-workflow Phase 4.2](../audit-dev-workflow/SKILL.md#phase-4-local-verification--review) $\rightarrow$ Gate 2 `gate2_handoff.md`). Subagents optional on-demand.
 - **Tier 2 (`standard`: 2–5 files, internal boundaries)**: Lead Parent Orchestrator + Direct Specialist Subagents. Parent inline code reading strictly banned. Read-only exploration precedes Gate 1 approval and Phase 2 checkpoint.
 - **Tier 3 (`large`: >5 files, architectural overhaul, schema rewrite)**: Lead Parent Orchestrator + Single `teamwork` Council Review dispatch.
 - **Package Installations**: Any addition, removal, or upgrade of dependencies (regardless of file count) strictly requires Gate 1 human approval before modifying files.
+- **Mid-Execution Scope Escalation**: If execution reveals a task exceeds its initial tier boundaries (e.g. Tier 1 expanding to >2 files or crossing module boundaries):
+  1. Halt active mutations immediately.
+  2. Retain existing `checkpoint-<task>` branch—do NOT delete, overwrite, or re-run checkpoint creation.
+  3. Pause autonomous execution, author `gate1_proposal.md`, and obtain explicit human approval before resuming file modifications.
 
 ### 1.3 Single-Writer Mutual Exclusion Invariant
 - **Rule**: Parallel subagent dispatch is restricted strictly to read-only discovery.
@@ -37,11 +44,12 @@ Before opening any source file, the Parent Agent classifies task blast radius us
 ### 1.4 Global Monotonic Stop-Rule Counter ($\le 2$) & Rollback Guarantee
 - **Rule**: The Parent Orchestrator tracks a centralized `global_attempt_counter` ($\le 2$).
 - **Enforcement**: Any failed repair attempt by any subagent or Parent increments the counter. At 2, all automation halts, Parent executes `Restore-AuditCheckpoint.ps1 -Task "<task>"`, reports verbatim failure receipts, and pauses for human direction. Zero escape-hatch code reads are permitted.
+- **Re-Entry Post-Rollback**: When human operator provides explicit redirection or an alternative approach following a 2-attempt rollback halt, `global_attempt_counter` resets to 0 for the newly approved strategy.
 - **Abnormal Termination**: If a mutating subagent crashes, times out, or leaves a dirty tree, Parent immediately executes `Restore-AuditCheckpoint.ps1` before secondary actions.
 
 ### 1.5 Anti-Mock Cheating & Repro-First RED Verification
 - **Rule**: For bug fixes in Tier 2/3, after Gate 1 approval and verified `New-AuditCheckpoint.ps1`, Parent dispatches `tdd-guide` to author a failing test on unmodified production code (RED state) and witnesses the failing CLI test receipt (`run_command`) before delegating the fix.
-- **Diff Audit**: Before presenting Gate 2, Parent delegates line-by-line diff review to `code-auditor` or `silent-failure-hunter` to audit for mock-cheating, weakened assertions, or test deletion.
+- **Diff Audit**: Before presenting Gate 2, Parent delegates line-by-line diff review to `code-auditor` or `silent-failure-hunter` to audit for mock-cheating, weakened assertions, or test deletion against the [Five-Axis rubric](../audit-dev-workflow/SKILL.md#phase-4-local-verification--review).
 
 ### 1.6 Subagent Commit/Push Ban, Shell Safety & Direct Parent CLI Test Runner
 - **Subagent Commit & PR Ban**: Subagents are strictly barred from running `git commit`, `git tag`, `git push`, `gh pr create`, `gh pr merge`, or `gh release create`. Commit and PR authority belongs exclusively to the Parent Agent post-Gate 2 approval.

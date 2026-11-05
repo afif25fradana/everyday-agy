@@ -83,13 +83,13 @@ npm install -g @ast-grep/cli
 | Skill Name | Trigger / Command | Description | Upstream / Origin |
 |---|---|---|---|
 | **audit-context-building** | `/audit-context-building` | Builds codebase comprehension before security audits: maps invariants, assumptions (`nothing found`), and contracts. | **Trail of Bits**<br>[trailofbits/skills](https://github.com/trailofbits/skills)<br>*(Adapted for Google Antigravity)* |
-| **differential-review** | *Auto-triggers on security review of diffs/PRs* | Security-focused differential review evaluating blast radius, test gaps, regressions, and attacker models. | **Trail of Bits**<br>[trailofbits/skills](https://github.com/trailofbits/skills)<br>*(Adapted for Google Antigravity)* |
+| **differential-review** | `/differential-review` | Security-focused differential review evaluating blast radius, test gaps, regressions, and attacker models. | **Trail of Bits**<br>[trailofbits/skills](https://github.com/trailofbits/skills)<br>*(Adapted for Google Antigravity)* |
 | **contract-first** | `/contract-first` | Schema-first API collaboration (OpenAPI, Protobuf, JSON Schema) preventing consumer/provider field drift. | Domain Best Practices / ECC Port |
 | **database-migrations** | `/database-migrations` | Zero-downtime expand-contract schema changes, reversible migrations, and concurrent indexes. | Database Reliability Engineering |
 | **coding-standards** | `/coding-standards` | Baseline naming, immutability, type safety, and defensive error-handling conventions. | Universal Engineering Standards |
 | **clean-docs** | `/clean-docs` | Enforces plain-spoken repo prose, humanized conventional commits, and zero AI process leaks. | **Original Work (@afif25fradana)** |
 | **documentation-and-adrs** | `/documentation-and-adrs` | Documents architectural decisions, trade-offs, and context using Michael Nygard's ADR format. | Michael Nygard Standard /<br>[joelparkerhenderson/architecture-decision-record](https://github.com/joelparkerhenderson/architecture-decision-record) |
-| **deep-web-research** | *Auto-triggers on external API/doc verification* | Verifiable primary-source research protocol enforcing version-locked queries, domain constraints, and anti-hallucination grounding. | **Original Work (@afif25fradana)** |
+| **deep-web-research** | `/deep-web-research` | Verifiable primary-source research protocol enforcing version-locked queries, domain constraints, and anti-hallucination grounding. | **Original Work (@afif25fradana)** |
 
 > **Antigravity Built-in Runtime Skill**: `generative_ui` (invoked by `ui-crafter`) is provisioned directly by the Antigravity engine (`~/.gemini/antigravity/builtin/skills/generative_ui`) and is not tracked as a repository-level custom skill.
 
@@ -116,14 +116,14 @@ Specialized agents available for delegation in Antigravity:
 
 | Agent Name | Model Tier | Tools Boundary | Core Responsibility |
 |---|:---:|---|---|
-| **system-architect** | `model: inherit` | Read, Write, Run, Ask | Contract-first API design, Socratic planning, and Nygard ADR documentation. |
+| **system-architect** | `model: inherit` | Read, Spec/ADR/Artifact Write, Run, Ask | Contract-first API design, Socratic planning, and Nygard ADR documentation. |
 | **code-auditor** | `model: inherit` | Read, Artifact Write, Run *(Read-Only)* | Repository health audits, security vulnerability analysis, and test integrity. |
-| **database-reviewer** | `model: inherit` | Read, Migration/ADR/Artifact Write, Run | SQL schema design, zero-downtime migrations, and N+1 query optimization. |
+| **database-reviewer** | `model: inherit` | Read, Artifact Write, Run *(Read-Only)* | SQL schema design, zero-downtime migrations, and N+1 query optimization. |
 | **silent-failure-hunter** | `model: inherit` | Read, Artifact Write, Run *(Read-Only)* | Hunts silent failures, swallowed exceptions, and empty error handling blocks. |
-| **spec-verifier** | `model: inherit` | Read, Artifact Write, Search, Run *(Read-Only)* | Cross-checks proposed fixes and API contracts against Context7 MCP and official vendor docs. |
+| **spec-verifier** | `model: inherit` | Read, Artifact Write, Search, Read URL, Run *(Read-Only)* | Cross-checks proposed fixes and API contracts against Context7 MCP and official vendor docs. |
 | **build-error-resolver** | `model: flash` | Read, Replace, Run *(No write)* | Resolves compiler, typecheck, and build errors with shortest working diffs. |
 | **tdd-guide** | `model: flash` | Read, Write, Replace, Run | Guides Test-Driven Development workflows (Red-Green-Refactor cycles; Iron Law adapted from [obra/superpowers](https://github.com/obra/superpowers)). |
 | **docs-architect** | `model: flash` | Read, Write, Replace, Run, Ask | Modernizes technical documentation, Nygard ADRs, public repository docs, and synchronizes AI-Context repositories (ADR-0017). |
 | **maintenance-bot** | `model: flash` | Read, Write, Replace, Run, Ask | Dependabot PR triage, CI failure diagnosis, and CVE remediation. |
 | **ui-crafter** | `model: flash` | Read, Write, Replace, Run, Ask | Modern web UI widget creation, WCAG AA accessibility, and Generative UI design. |
-| **l10n-humanizer** | `model: flash` | Read, Write, Replace, Run | Software UI/UX localization, natural humanized translation, and Microsoft Indonesian style guide consistency. |
+| **l10n-humanizer** | `model: flash` | Read, Write, Replace, Run, Ask | Software UI/UX localization, natural humanized translation, and Microsoft Indonesian style guide consistency. |

@@ -4,17 +4,17 @@ Detailed phase-by-phase workflow for security-focused code review.
 
 ## Pre-Analysis: Baseline Context Building
 
-**FIRST ACTION - Build complete baseline understanding:**
+**FIRST ACTION - Build complete baseline understanding without mutating working tree:**
 
 If `audit-context-building` skill is available:
 
 ```pwsh
-# Checkout baseline commit
-rtk git checkout <baseline_commit>
+# Inspect baseline files read-only without switching branches or mutating working tree
+rtk git show <baseline_commit>:<path/to/file>
 ```
 
-Deploy a read-only specialist subagent (`invoke_subagent` with `TypeName: "code-auditor"`, `Role: "Codebase Context Auditor"`) following `audit-context-building` using `rtk rg` and `view_file`, saving baseline context in `$HOME/.gemini/antigravity/scratch/<task>/baseline-context/`.
-- **Scope**: entire relevant project (e.g., `packages/contracts/contracts/` for Solidity, `src/` for Rust, or repository root).
+Deploy a read-only specialist subagent (`invoke_subagent` with `TypeName: "code-auditor"`, `Role: "Codebase Context Auditor"`) following `audit-context-building` using `rtk rg`, `rtk git show <baseline_commit>:<file>`, and `view_file`, saving baseline context in `<appDataDir>\brain\<conversation-id>\scratch\<task>\baseline-context\` (or `$HOME/.gemini/antigravity/scratch/<task>/baseline-context/` via CLI fallback).
+- **Scope**: entire relevant project (`src/`, `core/`, `lib/`, `config/`, or repository root).
 - **Focus**: invariants, trust-boundaries, validation-patterns, call-graphs, state-flows.
 
 **Capture from baseline analysis:**
@@ -32,9 +32,7 @@ Deploy a read-only specialist subagent (`invoke_subagent` with `TypeName: "code-
 - Know which patterns are system-wide vs local
 - Catch when changes break defense-in-depth
 
-**Store baseline context for reference during differential analysis.**
-
-After baseline analysis, checkout back to head commit to analyze changes.
+**Store baseline context in scratch for reference during differential analysis (never run `git checkout` during a read-only audit).**
 
 ---
 
@@ -55,7 +53,7 @@ rtk git diff <base>..<head> --name-only
 
 **Assess codebase size:**
 ```pwsh
-rtk rg --files -g "*.sol" -g "*.rs" -g "*.go" -g "*.ts" . | Measure-Object -Line
+rtk rg --files . | Measure-Object -Line
 ```
 
 **Classify complexity:**
@@ -64,7 +62,7 @@ rtk rg --files -g "*.sol" -g "*.rs" -g "*.go" -g "*.ts" . | Measure-Object -Line
 - **LARGE**: 200+ files → Surgical (critical paths only)
 
 **Risk score each file:**
-- **HIGH**: Auth, crypto, external calls, value transfer, validation removal
+- **HIGH**: Auth, crypto, external calls, command execution, validation removal
 - **MEDIUM**: Business logic, state changes, new public APIs
 - **LOW**: Comments, tests, UI, logging
 
@@ -74,7 +72,7 @@ rtk rg --files -g "*.sol" -g "*.rs" -g "*.go" -g "*.ts" . | Measure-Object -Line
 
 For each changed file:
 
-1. **Read both versions** (baseline and changed)
+1. **Read both versions** (baseline via `rtk git show <base>:<file>` and current via `view_file`)
 
 2. **Analyze each diff region:**
    ```
@@ -88,7 +86,7 @@ For each changed file:
    ```pwsh
    # When was it added? Why?
    rtk git log -S "removed_code" --all --oneline
-   rtk git blame <baseline> -- file.sol | rtk rg "pattern"
+   rtk git blame <baseline> -- <file> | rtk rg "pattern"
    ```
 
    **Red flags:**
@@ -127,13 +125,13 @@ For each changed file:
 **Identify coverage gaps:**
 ```pwsh
 # Production code changes (exclude tests)
-rtk git diff <range> --name-only | rtk rg -v "test"
+rtk git diff <range> --name-only | rtk rg -v "test|spec"
 
 # Test changes
-rtk git diff <range> --name-only | rtk rg "test"
+rtk git diff <range> --name-only | rtk rg "test|spec"
 
 # For each changed function, search for tests
-rtk rg "test.*functionName" test -g "*.sol" -g "*.js"
+rtk rg "functionName" tests/
 ```
 
 **Risk elevation rules:**
@@ -148,7 +146,7 @@ rtk rg "test.*functionName" test -g "*.sol" -g "*.js"
 **Calculate impact:**
 ```pwsh
 # Count callers for each modified function
-rtk rg "functionName\(" -g "*.sol" . | Measure-Object -Line
+rtk rg "functionName\(" . | Measure-Object -Line
 ```
 
 **Classify blast radius:**
@@ -170,15 +168,13 @@ rtk rg "functionName\(" -g "*.sol" . | Measure-Object -Line
 
 ## Phase 4: Deep Context Analysis
 
-**If `audit-context-building` skill is available**, deploy a read-only specialist subagent (`invoke_subagent` with `TypeName: "code-auditor"`, `Role: "Codebase Context Auditor"`) following `audit-context-building` using `rtk rg` and `view_file`, saving context in `$HOME/.gemini/antigravity/scratch/<task>/audit-context/`, to help answer all the questions below for each HIGH RISK changed function:
-
-**The audit-context-building skill will help you answer:**
+**If `audit-context-building` skill is available**, deploy a read-only specialist subagent (`invoke_subagent` with `TypeName: "code-auditor"`, `Role: "Codebase Context Auditor"`) following `audit-context-building` using `rtk rg` and `view_file`, saving context in `<appDataDir>\brain\<conversation-id>\scratch\<task>\audit-context\`, to answer the questions below for each HIGH RISK changed function:
 
 1. **Map complete function flow:**
-   - Entry conditions (preconditions, requires, modifiers)
-   - State reads (which variables accessed)
-   - State writes (which variables modified)
-   - External calls (to contracts, APIs, system)
+   - Entry conditions (preconditions, guards, schema validators)
+   - State reads (which variables/tables accessed)
+   - State writes (which variables/tables modified)
+   - External calls (to subprocesses, APIs, DBs, filesystems)
    - Return values and side effects
 
 2. **Trace internal calls:**
@@ -189,7 +185,7 @@ rtk rg "functionName\(" -g "*.sol" . | Measure-Object -Line
 3. **Trace external calls:**
    - Identify trust boundaries crossed
    - List assumptions about external behavior
-   - Check for reentrancy risks
+   - Check for injection, race, or TOCTOU risks
 
 4. **Identify invariants:**
    - What must ALWAYS be true?
@@ -203,16 +199,12 @@ rtk rg "functionName\(" -g "*.sol" . | Measure-Object -Line
    - WHY is this approach chosen?
    - WHY could this fail in production?
 
-**If `audit-context-building` skill is NOT available**, manually perform the line-by-line analysis above using read_file (Parent) / view_file (Subagent), rtk rg, and code tracing.
+**If `audit-context-building` skill is NOT available**, manually perform the line-by-line analysis above using `read_file` (Parent) / `view_file` (Subagent), `rtk rg`, and code tracing.
 
 **Cross-cutting pattern detection:**
 ```pwsh
-# Find repeated validation patterns
-rtk rg "require.*amount > 0" -g "*.sol" .
-rtk rg "onlyOwner" -g "*.sol" .
-
-# Check if any removed in diff
-rtk git diff <range> | rtk rg "^-.*require.*amount > 0"
+# Check if any validation or security guard was removed in diff
+rtk git diff <range> | rtk rg "^-.*(validate|sanitize|assert|Verify|Check)"
 ```
 
 **Flag if removal breaks defense-in-depth.**

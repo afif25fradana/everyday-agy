@@ -1,8 +1,7 @@
 # ADR-0020: Protocol Harmonization, Gate 1 Flow Correction, Fleet Parity, and Pre-Mutation Syntax Interception
 
 ## Status
-Accepted
-
+Accepted (Partially Superseded by ADR-0021 and ADR-0022)
 ## Date
 2026-11-04
 

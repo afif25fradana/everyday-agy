@@ -1,8 +1,7 @@
 # ADR-0021: Orchestrator Implementer Parity, Checkpoint Sequencing, and Agent Skill Pruning
 
 ## Status
-Accepted
-
+Accepted (Partially Superseded by ADR-0022)
 ## Date
 2026-11-04
 

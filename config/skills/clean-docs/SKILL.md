@@ -1,6 +1,6 @@
 ---
 name: clean-docs
-description: Clean documentation, commit hygiene, anti-slop standard, zero process leaks, and humanized conventional commits.
+description: Plain-spoken documentation (/clean-docs), commit hygiene, anti-slop standard, zero process leaks, and conventional commits.
 ---
 
 # Clean Docs & Repository Hygiene Standard
@@ -16,7 +16,7 @@ Never let internal AI orchestration or audit machinery leak into repository file
 - **Banned in repo files, commits & PR titles/bodies**:
   - `"investigation summary"`, `"checkpoint commit"`, `"audit finding #..."`, `"Gate 1"`, `"Gate 2"`, `"batch/stage tags"`, `"handoff_artifact"`, `"subagent execution"`, `"Parent verification"`, `"Phase 2 complete"`, `"prompt instructions"`, `"per prompt directives"`.
 - **Where Process Belongs**:
-  - Internal AI commentary, audit gates, and execution stages belong **exclusively** in chat dialog, session scratch files (`$HOME/.gemini/antigravity/scratch/<task>/` or `<appDataDir>/brain/<conversation-id>/scratch/`), or Antigravity session artifacts.
+  - Internal AI commentary, audit gates, and execution stages belong **exclusively** in chat dialog, session scratch files (`<appDataDir>\brain\<conversation-id>\scratch\<task>\` or `$HOME/.gemini/antigravity/scratch/<task>/`), or Antigravity session artifacts.
 - **Humanized Conventional Commits**:
   - Commit messages must use clean standard prefixes (`fix(scope): ...`, `refactor(scope): ...`, `feat(scope): ...`, `test(scope): ...`, `docs(scope): ...`).
   - Describe **what** changed in the software and **why**, exactly as a pragmatist human software engineer would write it.

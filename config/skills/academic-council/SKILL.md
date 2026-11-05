@@ -1,6 +1,6 @@
 ---
 name: academic-council
-description: Multi-Agent Academic Council for thesis proposals and empirical finance/economics research evaluation.
+description: Multi-Agent Academic Council (/academic-council) for BEI/IDX thesis proposals, citation forensics, and defense simulation.
 ---
 
 # Academic Council — Deliberative Thesis & Research Evaluation (Operational Runbook)
@@ -36,7 +36,7 @@ Powered by Antigravity's multi-agent orchestration engine (`teamwork`).
 ## Core Operational Guarantees
 
 1. **Read-Only Invariant**: Council panels are diagnostic only. Zero modifying edits to project files outside the scratch workspace.
-2. **Real-World Evidence Grounding**: No council member may offer opinions without first verifying against real journal databases, regulatory documents, or financial data sources via `search_web`.
+2. **Real-World Evidence Grounding**: No council member may offer opinions without first verifying against real journal databases, regulatory documents, or financial data sources via `search_web` governed by [`deep-web-research`](../deep-web-research/SKILL.md).
 3. **Anti-Hallucination Citation Gate**: Every referenced journal, author name, publication year, and DOI MUST be verified through web search. Fabricated references are treated as critical failures.
 4. **Socratic Operator Alignment**: Council composition, evaluation depth, and acceptance criteria are locked via structured dialog (`ask_question`) before dispatching agent teams.
 5. **Anti-Sycophancy Gate**: Scores >= 4.50 require concrete proof. Every seat must surface real weaknesses. No empty praise.
@@ -142,7 +142,7 @@ Conduct a comprehensive, read-only multi-perspective Academic Council evaluation
 thesis proposal(s) at <target_path> to assess research feasibility, methodological rigor,
 theoretical coherence, citation integrity, and defense readiness.
 
-Working directory: <appDataDir>\scratch\<project>
+Working directory: <appDataDir>\brain\<conversation-id>\scratch\<task>
 Integrity mode: development
 
 ## Context & Domain
@@ -229,7 +229,7 @@ installations, or system changes are permitted outside the scratch workspace.
 
 ### R8. Structured Deliverable
 Generate a comprehensive evaluation report saved to
-`<appDataDir>\scratch\<project>\academic_council_report.md`. The report must include:
+`<appDataDir>\brain\<conversation-id>\scratch\<task>\academic_council_report.md`. The report must include:
 1. Executive Summary & Chairman Verdict with final ranking.
 2. Numerical Scorecards (scale 1.0 to 5.0) per proposal across all evaluation dimensions.
 3. Verified citation list (real journals with author, year, title, journal name, DOI/URL).
@@ -238,7 +238,7 @@ Generate a comprehensive evaluation report saved to
 6. Recommended proposal with action plan.
 
 ## Acceptance Criteria & Verification
-- [ ] Report exists at `<appDataDir>\scratch\<project>\academic_council_report.md`
+- [ ] Report exists at `<appDataDir>\brain\<conversation-id>\scratch\<task>\academic_council_report.md`
 - [ ] Report contains numerical scorecards (1.0-5.0) for each proposal across all dimensions
 - [ ] Every cited journal reference has been verified via web search (author, year, journal, DOI/URL confirmed)
 - [ ] Zero fabricated/hallucinated journal references in the final report
@@ -253,7 +253,7 @@ Generate a comprehensive evaluation report saved to
 
 ### Pillar 4: Certified Deliverable Packaging
 
-Once `teamwork` returns, the Parent Agent reads `academic_council_report.md` and presents:
+Once `teamwork` returns, the Parent Agent reads `<appDataDir>\brain\<conversation-id>\scratch\<task>\academic_council_report.md` and presents:
 
 1. **Executive Summary & Chairman Verdict**: Ranking (#1 to #5) with composite scores.
 2. **Scorecard Matrix**: Per-proposal scores across Feasibility, Novelty, Methodology, Theory, Defense Readiness.

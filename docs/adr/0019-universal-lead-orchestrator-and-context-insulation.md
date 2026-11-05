@@ -1,8 +1,7 @@
 # ADR-0019: Universal Lead Orchestrator Protocol, Parent Context Insulation, and Adaptive Subagent Fleet Governance
 
 ## Status
-Accepted
-
+Accepted (Partially Superseded by ADR-0020 and ADR-0021)
 ## Date
 2026-11-03
 

@@ -1,6 +1,6 @@
 ---
 name: audit-context-building
-description: Map codebase invariants, assumptions, and dependencies before conducting security audits or architectural reviews.
+description: Map codebase invariants, unvalidated assumptions, and caller graphs (/audit-context-building) before security or arch reviews.
 ---
 
 # Audit Context Building
@@ -25,7 +25,7 @@ Not worth the tokens on code you already understand.
 
 The analysis is long, and this context needs to survive to use it. Dispatch it:
 
-- **A codebase, or more than one function** - invoke a read-only specialist subagent (`invoke_subagent` with `TypeName: "code-auditor"`, `Role: "Codebase Context Auditor"`). The subagent inspects functions using `view_file` and `rtk rg`, records findings under `$HOME/.gemini/antigravity/scratch/<task>/audit-context/`, and returns compact records.
+- **A codebase, or more than one function** - invoke a read-only specialist subagent (`invoke_subagent` with `TypeName: "code-auditor"`, `Role: "Codebase Context Auditor"`). The subagent inspects functions using `view_file` and `rtk rg`, records findings under `<appDataDir>\brain\<conversation-id>\scratch\<task>\audit-context\` (or `$HOME/.gemini/antigravity/scratch/<task>/audit-context/` via CLI fallback), and returns compact records.
 - **A single function** - delegate to a read-only specialist subagent, or inspect inline using `read_file` (Parent) or `view_file` (Subagent) if context is lean.
 
 Then work from what comes back: the index, the unenforced assumptions, the open questions. Read a function's

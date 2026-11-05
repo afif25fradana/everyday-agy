@@ -20,8 +20,9 @@ This directory contains the immutable record of significant technical and struct
 | [ADR-0014](./0014-superpowers-heuristics-distillation-and-platform-adaptation.md) | Superpowers Heuristics Distillation and Platform Adaptation | Accepted | 2026-10-30 |
 | [ADR-0015](./0015-checkpoint-gated-autonomous-execution-and-dynamic-elevation.md) | Checkpoint-Gated Autonomous Execution, AST Safety Fortification, and Dynamic Subagent Elevation | Accepted | 2026-10-31 |
 | [ADR-0016](./0016-third-party-upstream-skills-decoupling.md) | Third-Party Upstream Skills Decoupling and Documentation Linking | Accepted | 2026-10-31 |
-| [ADR-0017](./0017-custom-agent-consolidation-and-mandatory-skill-gates.md) | Custom Agent Fleet Consolidation, AST Security Hardening, and Mandatory Skill Activation Architecture | Accepted | 2026-11-01 |
-| [ADR-0018](./0018-fleet-parity-and-deployment-path-symmetry.md) | 11-Agent Fleet Parity, Deployment Path Symmetry, and Global Rule Token Optimization | Accepted | 2026-11-02 |
-| [ADR-0019](./0019-universal-lead-orchestrator-and-context-insulation.md) | Universal Lead Orchestrator Protocol, Parent Context Insulation, and Adaptive Subagent Fleet Governance | Accepted | 2026-11-03 |
-| [ADR-0020](./0020-protocol-harmonization-gate1-flow-and-fleet-parity.md) | Protocol Harmonization, Gate 1 Flow Correction, Fleet Parity, and Pre-Mutation Syntax Interception | Accepted | 2026-11-04 |
-| [ADR-0021](./0021-orchestrator-implementer-parity-and-checkpoint-sequencing.md) | Orchestrator Implementer Parity, Checkpoint Sequencing, and Agent Skill Pruning | Accepted | 2026-11-04 |
+| [ADR-0017](./0017-custom-agent-consolidation-and-mandatory-skill-gates.md) | Custom Agent Fleet Consolidation, AST Security Hardening, and Mandatory Skill Activation Architecture | Partially Superseded (ADR-0018) | 2026-11-01 |
+| [ADR-0018](./0018-fleet-parity-and-deployment-path-symmetry.md) | 11-Agent Fleet Parity, Deployment Path Symmetry, and Global Rule Token Optimization | Partially Superseded (ADR-0021) | 2026-11-02 |
+| [ADR-0019](./0019-universal-lead-orchestrator-and-context-insulation.md) | Universal Lead Orchestrator Protocol, Parent Context Insulation, and Adaptive Subagent Fleet Governance | Partially Superseded (ADR-0020, 0021) | 2026-11-03 |
+| [ADR-0020](./0020-protocol-harmonization-gate1-flow-and-fleet-parity.md) | Protocol Harmonization, Gate 1 Flow Correction, Fleet Parity, and Pre-Mutation Syntax Interception | Partially Superseded (ADR-0021, 0022) | 2026-11-04 |
+| [ADR-0021](./0021-orchestrator-implementer-parity-and-checkpoint-sequencing.md) | Orchestrator Implementer Parity, Checkpoint Sequencing, and Agent Skill Pruning | Partially Superseded (ADR-0022) | 2026-11-04 |
+| [ADR-0022](./0022-deep-web-research-and-5-axis-audit-hardening.md) | Deep Web Research Skill Registration, 5-Axis Ecosystem Audit Hardening, and Token De-duplication | Accepted | 2026-11-05 |

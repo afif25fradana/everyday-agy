@@ -48,25 +48,11 @@ The setup evolves continuously as I test new patterns, encounter edge cases, and
    ```
    *The script runs a pattern-based pre-flight audit for known credential and token formats before copying.*
 
-## Verified Tools and Commands
+## Tooling & Command Execution
 
-The environment registers verified command-line tools in `GEMINI.md`. External commands (`git`, `npm`, `ripgrep`) execute through `rtk` when available to reduce token consumption:
+External CLI commands (`git`, `npm`, `ripgrep`, `ast-grep`) execute through [`rtk`](https://github.com/rtk-ai/rtk) when available to compress command output and eliminate token waste before reaching the model.
 
-| Command / Tool | Category | Role in Environment |
-|---|---|---|
-| `rtk` | Token Proxy | Compresses CLI outputs and filters token waste before sending to the model |
-| `git` | Version Control | Primary version control system for tracking, branching, and checkpoints |
-| `gh` | GitHub CLI | Automates PR creation, non-interactive CI monitoring, and PR review comments |
-| `ast-grep` (`sg`) | Structural Search | Performs multiline, syntax-tree-accurate code search and refactoring |
-| `ripgrep` (`rg`) | Text Search | Traces upstream callers, symbols, and references across files |
-| `pwsh` | Shell | Preferred execution shell (PowerShell 7+) on Windows hosts |
-| `node` / `npm` | JS/TS Runtime | JavaScript runtime and package manager |
-| `python` / `pip` | Python Runtime | Python runtime and package installer |
-| `java` (JBR 25) | Java Runtime | JetBrains Runtime Java environment for IDE tools |
-| `code` / `opencode` | Editor / CLI | Visual Studio Code launcher and OpenCode assistant CLI |
-| `fzf` | Interactive Filter | Fuzzy directory and file navigation helper |
-| `ffmpeg` | Media Utility | Media inspection and asset optimization |
-| `adb` | Device Bridge | Android debugging bridge for mobile testing workflows |
+For the complete catalog of verified CLI tools, official repositories, and an automated Windows administrator installer script, see **[TOOLKIT.md#1-verified-cli-tools](./TOOLKIT.md#1-verified-cli-tools)**.
 
 ## Architecture
 
@@ -80,7 +66,7 @@ everyday-agy/
 │   ├── agents/          # 11 specialized subagents with hybrid model tiering (ADR-0004, ADR-0017, ADR-0018)
 │   └── skills/          # 15 bespoke and engine-adapted workflow skills
 ├── docs/
-│   └── adr/             # Architectural Decision Records (ADR-0001 through ADR-0020)
+│   └── adr/             # Architectural Decision Records (ADR-0001 through ADR-0022)
 ├── sync.ps1             # Pulls live configs from ~/.gemini/ into this repo
 └── restore.ps1          # Deploys this repo into ~/.gemini/ with automatic backup
 ```
@@ -94,18 +80,12 @@ The global rules file stays compact by defining only active behavioral boundarie
 - Security boundaries: deny paths (`.env`, `~/.ssh`, token MCP configs), AST command interception (`Test-PowerShellCommandSafety.ps1` regression test suite), and quarantine for external inputs.
 
 ### Specialized Agent Roles (`config/agents/`)
-Specialized agent configurations handle task delegation. Analytical roles run on `model: inherit` (ADR-0004) to retain the full reasoning capacity of the primary model:
-- `system-architect`: Contract-first API design, dependency topology, and ADR drafting.
-- `code-auditor`: Read-only security attack surface reviews and repository hygiene audits.
-- `database-reviewer`: PostgreSQL schemas, indexing strategies, and zero-downtime expand/contract migrations.
-- `silent-failure-hunter`: Catches swallowed exceptions, empty catch blocks, and resource leaks.
-- `tdd-guide`: Red-Green-Refactor test cycles, mock-cheating detection, and de-sloppify test hygiene.
-- `build-error-resolver`: Scoped TypeScript compiler and build fixes with shortest working diffs.
-- `ui-crafter`: Modern web primitives, WCAG 2.2 AA accessibility, and Generative UI widgets.
-- `docs-architect`: Technical documentation maintenance, Nygard ADR authoring, public repository docs, and AI context synchronization (ADR-0017).
-- `maintenance-bot`: Dependabot PR triage, CI failure diagnosis, and CVE remediation.
-- `spec-verifier`: Cross-checks proposed fixes and API signatures against Context7 MCP and official vendor docs (anti-hallucination, read-only).
-- `l10n-humanizer`: Software UI/UX localization, natural humanized translation, and Microsoft Indonesian style guide consistency.
+
+Eleven custom subagents handle delegated tasks under a two-tier cognitive model architecture:
+- **Analytical & Architecture Roles** (`model: inherit`): Run with full primary model reasoning capacity and read-only/spec boundaries (`system-architect`, `code-auditor`, `database-reviewer`, `silent-failure-hunter`, `spec-verifier`).
+- **Focused Execution Roles** (`model: flash`): Optimized for fast, cost-effective diffs and tight scoping (`tdd-guide`, `build-error-resolver`, `ui-crafter`, `docs-architect`, `maintenance-bot`, `l10n-humanizer`).
+
+For the full agent directory, tool boundaries, and delegation parameters, see **[TOOLKIT.md#5-custom-subagents](./TOOLKIT.md#5-custom-subagents)**.
 
 ### Workflow Skills and Provenance (`config/skills/`)
 
@@ -116,52 +96,16 @@ Fifteen modular skills are maintained directly within `config/skills/`. Third-pa
 | **Bespoke Architectures** | 7 | `orchestrator`, `council-review`, `academic-council`, `audit-dev-workflow`, `sync-task-state`, `clean-docs`, `deep-web-research` | Original works authored for Antigravity (MIT) |
 | **Engine-Adapted Ports** | 8 | `spec-kit`, `gh-workflow`, `audit-context-building`, `differential-review`, `contract-first`, `database-migrations`, `coding-standards`, `documentation-and-adrs` | Adapted from community tools, ECC, and Trail of Bits (MIT & CC BY-SA 4.0) |
 
-#### Recommended Upstream Skills & Plugins (Decoupled per ADR-0016)
-Refer to the upstream repositories for their official Antigravity installation instructions:
-- [**Taste-Skill (`design-taste-frontend`)**](https://github.com/Leonxlnx/taste-skill): Anti-slop frontend art direction distilled from 247 curated design galleries (Leonxlnx, MIT).
-- [**Ponytail Suite**](https://github.com/DietrichGebert/ponytail): Minimal diff enforcement, repo quality audits, technical debt ledgers, and PR reviews (DietrichGebert, MIT).
-- [**Anti-Slop Suite**](https://github.com/miqdadbadjuber/anti-slop): Content and code comment hygiene for AI coding agents (MIT).
-- [**Chrome DevTools & Modern Web Guidance**](https://antigravity.google): Official Google developer tooling plugins available in the Antigravity Plugin Marketplace.
+Third-party upstream suites (`ponytail`, `taste-skill`, `anti-slop`, and Chrome DevTools) are decoupled from Git tracking per ADR-0016 to prevent vendor bloat.
 
-#### Core Tracked Workflows
-- `orchestrator`: Meta-orchestrator protocol for Parent Agent enforcing task decomposition, context insulation, and subagent fleet governance (ADR-0019).
-- `council-review`: Multi-agent deliberative review panel synthesizing context grounding, socratic scoping, and teamwork peer reviews (high token consumption; spawns 15 to 20+ subagents via `teamwork`).
-- `academic-council`: Deliberative research evaluation panel for empirical finance, accounting, and BEI thesis proposals (featuring citation forensics and defense simulation).
-- `audit-dev-workflow`: Defensive development runbook with caller tracing, checkpoints, testless fallbacks, and automated rollback scripts.
-- `spec-kit`: Spec-Driven Development framework (`/speckit.specify`, `/speckit.plan`, `/speckit.tasks`).
-- `gh-workflow`: Non-interactive CI monitoring and PR lifecycle automation via authenticated `gh`.
-- `contract-first`: Schema-first API design collaboration without drift.
-- `database-migrations`: Safe, reversible, zero-downtime database schema changes.
-- `coding-standards`: Baseline naming, immutability, and error handling conventions.
-- `audit-context-building`: Invariant mapping and assumption tracing before code audits (Trail of Bits, CC BY-SA 4.0).
-- `differential-review`: Security differential analysis for commits and pull requests (Trail of Bits, CC BY-SA 4.0).
-- `documentation-and-adrs`: Standardized Nygard ADR authoring.
-- `sync-task-state`: Lightweight context synchronization (`task_state.md`) for Twin-Repo workflows with bounded gotchas linked to ADRs.
-- `clean-docs`: Plain-spoken documentation, zero AI process leaks, and commit hygiene.
-- `deep-web-research`: Verifiable primary-source research protocol enforcing version-locked queries and official domain constraints.
+For trigger commands, detailed skill descriptions, and upstream installation links, see:
+- **[Tracked Skills Catalog (`TOOLKIT.md#3-custom-skills-catalog`)](./TOOLKIT.md#3-custom-skills-catalog)**
+- **[Decoupled Upstream Skills & Plugins (`TOOLKIT.md#4-recommended-upstream-skills--plugins-decoupled-per-adr-0016`)](./TOOLKIT.md#4-recommended-upstream-skills--plugins-decoupled-per-adr-0016)**
 
 ### Architectural Decision Records (`docs/adr/`)
-Technical decisions, constraints, and trade-offs are recorded as permanent Nygard ADRs:
-- [ADR-0001](./docs/adr/0001-context7-streamable-http-token-headers.md): Context7 Streamable HTTP Header Authentication.
-- [ADR-0002](./docs/adr/0002-domain-partitioned-skills-vs-greedy-references.md): Domain-Partitioned Skills vs Greedy References *(Superseded by ADR-0016)*.
-- [ADR-0003](./docs/adr/0003-ponytail-5-suite-architecture.md): Preservation of Ponytail 5 Discrete Modal Architecture *(Superseded by ADR-0016)*.
-- [ADR-0004](./docs/adr/0004-subagent-model-tiering-inherit.md): Subagent Cognitive Model Tiering (`model: inherit`).
-- [ADR-0005](./docs/adr/0005-spec-kit-and-ast-grep-tooling.md): Spec-Kit, GitHub Workflow and AST-Grep Integration.
-- [ADR-0006](./docs/adr/0006-marketplace-plugin-decoupling-and-security-adaptation.md): Marketplace Plugin Decoupling and Security Skill Adaptation *(Superseded by ADR-0011, 0016)*.
-- [ADR-0007](./docs/adr/0007-audit-dev-workflow-harmonization-and-anti-cheating.md): Audit-Dev-Workflow Harmonization and Anti-Cheating Architecture *(Superseded by ADR-0013, 0014, 0015)*.
-- [ADR-0008](./docs/adr/0008-tri-pillar-council-review-architecture.md): Tri-Pillar Deliberative Multi-Agent Council Architecture.
-- [ADR-0009](./docs/adr/0009-ecc-harness-adaptation-and-security.md): ECC Selective Adaptation, Pre-Execution AST Security, and Bounded Gotchas *(Partially Superseded by ADR-0015)*.
-- [ADR-0010](./docs/adr/0010-domain-specific-academic-council.md): Academic Council for Capital Market & Secondary Data Thesis Evaluation.
-- [ADR-0011](./docs/adr/0011-ast-security-hardening-and-deployment-parity.md): Pre-Execution AST Security Hardening, Deployment Parity, and Anti-Slop Upstream Filtration.
-- [ADR-0012](./docs/adr/0012-flash-high-optimization-ast-hardening-and-model-tiering-invariants.md): Flash High Optimization, AST Hardening, and Cognitive Tiering Invariants *(Partially Superseded by ADR-0015)*.
-- [ADR-0013](./docs/adr/0013-teamwork-engine-graduation-and-council-parity.md): Teamwork Multi-Agent Engine Graduation and Council Parity.
-- [ADR-0014](./docs/adr/0014-superpowers-heuristics-distillation-and-platform-adaptation.md): Superpowers Heuristics Distillation and Platform Adaptation.
-- [ADR-0015](./docs/adr/0015-checkpoint-gated-autonomous-execution-and-dynamic-elevation.md): Checkpoint-Gated Autonomous Execution, AST Safety Fortification, and Dynamic Subagent Elevation.
-- [ADR-0016](./docs/adr/0016-third-party-upstream-skills-decoupling.md): Third-Party Upstream Skills Decoupling and Documentation Linking.
-- [ADR-0017](./docs/adr/0017-custom-agent-consolidation-and-mandatory-skill-gates.md): Custom Agent Fleet Consolidation, AST Security Hardening, and Mandatory Skill Activation Architecture.
-- [ADR-0018](./docs/adr/0018-fleet-parity-and-deployment-path-symmetry.md): 11-Agent Fleet Parity, Deployment Path Symmetry, and Global Rule Token Optimization.
-- [ADR-0019](./docs/adr/0019-universal-lead-orchestrator-and-context-insulation.md): Universal Lead Orchestrator Protocol, Parent Context Insulation, and Adaptive Subagent Fleet Governance.
-- [ADR-0020](./docs/adr/0020-protocol-harmonization-gate1-flow-and-fleet-parity.md): Protocol Harmonization, Gate 1 Flow Correction, Fleet Parity, and Pre-Mutation Syntax Interception.
+Significant technical decisions, architectural constraints, and operational trade-offs are permanently recorded following the Michael Nygard format.
+
+All 22 active and historical decision records—covering cognitive model tiering, checkpoint gating, lead orchestrator context insulation, and AST safety hardening—are indexed with their status and context in the **[ADR Catalog (`docs/adr/README.md`)](./docs/adr/README.md)**.
 
 ## Contributing
 

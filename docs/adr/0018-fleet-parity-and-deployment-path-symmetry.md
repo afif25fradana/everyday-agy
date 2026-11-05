@@ -1,8 +1,7 @@
 # ADR-0018: 11-Agent Fleet Parity, Deployment Path Symmetry, and Global Rule Token Optimization
 
 ## Status
-Accepted
-
+Accepted (Partially Superseded by ADR-0021)
 ## Date
 2026-11-02
 

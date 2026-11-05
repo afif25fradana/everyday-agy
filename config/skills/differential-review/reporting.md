@@ -11,8 +11,8 @@ Generate markdown report with these mandatory sections:
 ### 1. Executive Summary
 
 - Severity distribution table
-- Risk assessment (CRITICAL/HIGH/MEDIUM/LOW)
-- Final recommendation (APPROVE/REJECT/CONDITIONAL)
+- Risk assessment (`CRITICAL` / `HIGH` / `MEDIUM` / `LOW`)
+- Final recommendation (`APPROVE` / `REJECT` / `CONDITIONAL`)
 - Key metrics (test gaps, blast radius, red flags)
 
 **Template:**
@@ -21,10 +21,10 @@ Generate markdown report with these mandatory sections:
 
 | Severity | Count |
 |----------|-------|
-| 🔴 CRITICAL | X |
-| 🟠 HIGH | Y |
-| 🟡 MEDIUM | Z |
-| 🟢 LOW | W |
+| CRITICAL | X |
+| HIGH | Y |
+| MEDIUM | Z |
+| LOW | W |
 
 **Overall Risk:** CRITICAL/HIGH/MEDIUM/LOW
 **Recommendation:** APPROVE/REJECT/CONDITIONAL
@@ -40,7 +40,7 @@ Generate markdown report with these mandatory sections:
 
 ### 2. What Changed
 
-- Commit timeline with visual
+- Commit timeline
 - File summary table
 - Lines changed stats
 
@@ -54,8 +54,8 @@ Generate markdown report with these mandatory sections:
 
 | File | +Lines | -Lines | Risk | Blast Radius |
 |------|--------|--------|------|--------------|
-| file1.sol | +50 | -20 | HIGH | CRITICAL |
-| file2.sol | +10 | -5 | MEDIUM | LOW |
+| src/auth.ts | +50 | -20 | HIGH | CRITICAL |
+| src/utils.ts | +10 | -5 | MEDIUM | LOW |
 
 **Total:** +N, -M lines across K files
 ```
@@ -69,7 +69,7 @@ For each HIGH/CRITICAL issue:
 ```markdown
 ### [SEVERITY] Title
 
-**File**: path/to/file.ext:lineNumber
+**File**: path/to/file.ext#Lxx-Lyy
 **Commit**: hash
 **Blast Radius**: N callers (HIGH/MEDIUM/LOW)
 **Test Coverage**: YES/NO/PARTIAL
@@ -91,54 +91,10 @@ For each HIGH/CRITICAL issue:
 [Specific fix with code]
 ```
 
-**Example:**
-```markdown
-### 🔴 CRITICAL: Authorization Bypass in Withdraw
-
-**File**: TokenVault.sol:156
-**Commit**: abc123def
-**Blast Radius**: 23 callers (HIGH)
-**Test Coverage**: NO
-
-**Description**:
-Removed `require(msg.sender == owner)` check allows any user to withdraw funds.
-
-**Historical Context**:
-- Git blame: Added 2024-06-15 (commit def456)
-- Message: "Add owner check per audit finding #45"
-- Code existed to prevent unauthorized withdrawals
-
-**Attack Scenario**:
-1. Attacker calls `withdraw(1000 ether)`
-2. No authorization check (removed)
-3. 1000 ETH transferred to attacker
-4. Protocol funds drained
-
-**Proof of Concept**:
-```solidity
-// As any address
-vault.withdraw(vault.balance());
-// Success - funds stolen
-```
-
-**Recommendation**:
-```solidity
-function withdraw(uint256 amount) external {
-+   require(msg.sender == owner, "Unauthorized");
-    // ... rest of function
-}
-```
-```
-
 ---
 
 ### 4. Test Coverage Analysis
 
-- Coverage statistics
-- Untested changes list
-- Risk assessment
-
-**Template:**
 ```markdown
 ## Test Coverage Analysis
 
@@ -158,36 +114,26 @@ N HIGH-risk functions without tests → Recommend blocking merge
 
 ### 5. Blast Radius Analysis
 
-- High-impact functions table
-- Dependency graph
-- Impact quantification
-
-**Template:**
 ```markdown
 ## Blast Radius Analysis
 
 **High-Impact Changes:**
 | Function | Callers | Risk | Priority |
 |----------|---------|------|----------|
-| transfer() | 89 | HIGH | P0 |
-| validate() | 45 | MEDIUM | P1 |
+| verifyToken() | 89 | HIGH | P0 |
+| validateInput() | 45 | MEDIUM | P1 |
 ```
 
 ---
 
 ### 6. Historical Context
 
-- Security-related removals
-- Regression risks
-- Commit message red flags
-
-**Template:**
 ```markdown
 ## Historical Context
 
 **Security-Related Removals:**
-- Line 45: `require` removed (added 2024-03 for CVE-2024-1234)
-- Line 78: Validation removed (added 2023-12 "security hardening")
+- Line 45: Validation guard removed (added 2026-03 for CVE-2026-1234)
+- Line 78: Path sanitization removed (added 2025-12 "security hardening")
 
 **Regression Risks:**
 - Code pattern removed in commit X, re-added in commit Y
@@ -197,21 +143,16 @@ N HIGH-risk functions without tests → Recommend blocking merge
 
 ### 7. Recommendations
 
-- Immediate actions (blocking)
-- Before production (tracking)
-- Technical debt (future)
-
-**Template:**
 ```markdown
 ## Recommendations
 
 ### Immediate (Blocking)
-- [ ] Fix CRITICAL issue in TokenVault.sol:156
-- [ ] Add tests for withdraw() function
+- [ ] Fix CRITICAL issue in src/auth.ts#L156
+- [ ] Add tests for verifyToken() function
 
 ### Before Production
 - [ ] Security audit of auth changes
-- [ ] Load test blast radius functions
+- [ ] Verify blast radius callers
 
 ### Technical Debt
 - [ ] Refactor validation pattern consistency
@@ -221,14 +162,6 @@ N HIGH-risk functions without tests → Recommend blocking merge
 
 ### 8. Analysis Methodology
 
-- Strategy used (DEEP/FOCUSED/SURGICAL)
-- Files analyzed
-- Coverage estimate
-- Techniques applied
-- Limitations
-- Confidence level
-
-**Template:**
 ```markdown
 ## Analysis Methodology
 
@@ -255,101 +188,14 @@ N HIGH-risk functions without tests → Recommend blocking merge
 
 ---
 
-### 9. Appendices
-
-- Commit reference table
-- Key definitions
-- Contact info
-
----
-
-## Formatting Guidelines
-
-**Tables:** Use markdown tables for structured data
-
-**Code blocks:** Always include syntax highlighting
-```solidity
-// Solidity code
-```
-```rust
-// Rust code
-```
-
-**Status indicators:**
-- ✅ Complete
-- ⚠️ Warning
-- ❌ Failed/Blocked
-
-**Severity:**
-- 🔴 CRITICAL
-- 🟠 HIGH
-- 🟡 MEDIUM
-- 🟢 LOW
-
-**Before/After comparisons:**
-```markdown
-**BEFORE:**
-```code
-old code
-```
-
-**AFTER:**
-```code
-new code
-```
-```
-
-**Line number references:** Always include
-- Format: `file.sol:L123`
-- Link to commit: `file.sol:L123 (commit abc123)`
-
----
-
 ## File Naming and Location
 
 **Priority order for output:**
-1. Standalone Antigravity UserFacing Artifact (`handoff-spec.md`)
-2. Raw execution logs, diffs, and evidence files saved in `$HOME/.gemini/antigravity/scratch/<task>/` (or `<appDataDir>/brain/<conversation-id>/scratch/`)
-
-**Filename format:**
-```
-<PROJECT>_DIFFERENTIAL_REVIEW_<DATE>.md
-
-Example: VeChain_Stargate_DIFFERENTIAL_REVIEW_2025-12-26.md
-```
+1. Standalone Antigravity UserFacing Artifact (`<appDataDir>\brain\<conversation-id>\<PROJECT>_DIFFERENTIAL_REVIEW_<DATE>.md`)
+2. Raw execution logs, diffs, and evidence files saved in `<appDataDir>\brain\<conversation-id>\scratch\<task>\` (or `$HOME/.gemini/antigravity/scratch/<task>/` via CLI fallback)
 
 ---
 
-## User Notification Template
+## User Notification Standard
 
-After generating report:
-
-```markdown
-Report generated successfully!
-
-📄 File: [filename]
-📁 Location: [path]
-📏 Size: XX KB
-⏱️ Review Time: ~X hours
-
-Summary:
-- X findings (Y critical, Z high)
-- Final recommendation: APPROVE/REJECT/CONDITIONAL
-- Confidence: HIGH/MEDIUM/LOW
-
-Next steps:
-- Review findings in detail
-- Address CRITICAL/HIGH issues before merge
-```
-
----
-
-## Error Handling
-
-If artifact generation or scratch write fails:
-1. Try `$HOME/.gemini/antigravity/scratch/<task>/` location
-2. Try temp directory
-3. As last resort, output concise summary to chat
-4. Notify user to save manually
-
-**Always prioritize persistent artifact generation over ephemeral chat output.**
+After generating the report artifact, emit a concise 1–3 line summary in chat linking to the artifact with finding counts (`CRITICAL`/`HIGH`) and final recommendation (`APPROVE`/`REJECT`/`CONDITIONAL`), adhering to `config/GEMINI.md#L35-L36`.

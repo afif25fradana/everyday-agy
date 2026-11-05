@@ -11,7 +11,7 @@ This specification defines the communication contracts, trigger headers, quantit
 - **Missing Evidence Rule**: Omitting test/verification logs, exit codes, function signatures, caller context, or diffstats immediately halts review with `QUESTIONS FOR IMPLEMENTER`. For testless codebases, substitute automated tests with static syntax/build verification.
 - **Zero Diff Starvation**: Never cite a branch or patch on disk instead of including the actual unified diff (`+`/`-`).
 - **Evidence Citation**: All claims must be anchored to exact code coordinates (`file.ext#Lxx-Lyy`), unified diff lines, or verbatim CLI command output.
-- **Mandatory UserFacing Artifact Packaging**: All formal review payloads (Gate 1 proposals, Gate 2 handoffs, and deep audit reports) are packaged into Antigravity UserFacing Artifacts (`<appDataDir>\brain\<conversation-id>/<name>.md`). Chat responses must remain 1–3 lines linking to the artifact for clean reviewer copy-pasting.
+- **Mandatory UserFacing Artifact Packaging**: Formal review payloads (Gate 1 proposals, Gate 2 handoffs, unified diffs exceeding 5 lines, and deep audit reports) are packaged into Antigravity UserFacing Artifacts (`<appDataDir>\brain\<conversation-id>/<name>.md`). Chat responses must remain 1–3 lines linking to the artifact for clean reviewer copy-pasting (compact $\le 5$-line Tier 0 `[TRIVIAL REVIEW]` diffs may be presented inline in chat per `config/GEMINI.md#L36`).
 
 ---
 
@@ -21,31 +21,31 @@ This specification defines the communication contracts, trigger headers, quantit
 - **Trigger Header**: `[TRIVIAL REVIEW]`
 - **Quantitative Limits**: Modifies `<= 2` files AND `<= 3` lines of executable code (or `<= 5` lines of non-executable docs/comments).
 - **Qualitative Limits**: ZERO changes to business logic, conditionals, loops, state transitions, error handlers, public API signatures, schemas, or security boundaries.
-- **Required Payload**: Diffstat and full inline unified diff (`+`/`-`).
+- **Required Payload**: Diffstat and full inline unified diff (`+`/`-`) in chat (if $\le 5$ diff lines) or UserFacing Artifact.
 - **Bypass Rule**: Qualifying Tier 0 changes bypass formal Gate 1 ceremony, executing autonomously immediately following verified checkpoint creation (`New-AuditCheckpoint.ps1`), and submitting `[TRIVIAL REVIEW]` before commit per ADR-0015.
 
 ### 2.2 Gate 1 (Pre-Execution Proposal Review)
 - **Trigger Header**: `# Review Request: Gate 1 (Pre-Execution Proposal)`
 - **Packaging Protocol**: Gate 1 proposals MUST be written exclusively as an Antigravity UserFacing Artifact (`<appDataDir>\brain\<conversation-id>/gate1_proposal.md`) with `ArtifactMetadata` (`UserFacing: true`, `RequestFeedback: true` to provide the native one-click "Proceed" approval button).
 - **Chat Response Standard**: Chat responses must strictly be 1–3 lines linking directly to `gate1_proposal.md`, never dumping the raw proposal or diffs directly into chat.
-- **Lifecycle Timing**: Generated AFTER Phase 1 (Diagnostic Audit & Blast Radius Analysis), strictly BEFORE Phase 2 Checkpoint creation and modifying files (mandatory for Tier 2/3 and package installations; skipped for Tier 0 and Tier 1 per ADR-0015).
+- **Lifecycle Timing**: Generated AFTER Phase 1 (Read-Only Diagnostic Audit & Blast Radius Analysis), strictly BEFORE Phase 2 Checkpoint creation (`New-AuditCheckpoint.ps1`), RED test file creation, and production file modifications (mandatory for Tier 2/3 and package installations; skipped for Tier 0 and Tier 1 per ADR-0015).
 - **Required Payload**:
   1. Task & Context summary.
   2. Root cause validation with exact target coordinates (`file.ext#Lxx-Lyy`).
   3. Target function signatures.
   4. Upstream caller context & consumer blast radius (verified via `rtk rg`).
   5. Minimal implementation plan adhering to `ponytail` (shortest working diff).
-  6. Repro test confirmation (for bug fixes).
+  6. Repro test plan (for bug fixes; executed immediately after Gate 1 approval and Phase 2 checkpoint).
 
 ### 2.3 Gate 2 (Post-Execution Handoff & Diff Review)
 - **Trigger Header**: `# Review Request: Gate 2 (Post-Execution Handoff & Diff)`
 - **Packaging Protocol**: Gate 2 handoff payloads MUST be written exclusively as an Antigravity UserFacing Artifact (`<appDataDir>\brain\<conversation-id>/gate2_handoff.md`) with `ArtifactMetadata` (`UserFacing: true`, `RequestFeedback: false`).
 - **Chat Response Standard**: Chat responses must strictly be 1–3 lines linking directly to `gate2_handoff.md`, never dumping full diffs directly into chat.
-- **Lifecycle Timing**: Generated AFTER Phase 3 (Patch Execution) and Phase 4 (Local Verification), strictly BEFORE `git commit` or `git push`.
+- **Lifecycle Timing**: Generated AFTER Phase 3 (RED Test & GREEN Patch Execution) and Phase 4 (Local Verification), strictly BEFORE `git commit` or `git push`.
 - **Required Payload**:
   1. High-level summary of outcome and root cause resolution.
   2. High-level diffstat (untruncated paths via `git diff --stat=140,80 HEAD`) and full unified diff (`+`/`-`).
-  3. Five-Axis Pre-Flight self-audit confirmation per [`SKILL.md`](../SKILL.md#3-five-axis-pre-flight-rubric).
+  3. Five-Axis Pre-Flight self-audit confirmation per [`SKILL.md`](../SKILL.md#phase-4-local-verification--review).
   4. Mandatory Real Test Evidence (or Static Verification):
      - Repos with test harnesses: (a) Exact CLI command, (b) Terminal exit code `0`, (c) Verbatim snippet of `stdout`/`stderr` showing passed assertions.
      - Testless repos: Annotated as `[TEST HARNESS: NONE]` with static/build/linter evidence.
@@ -83,9 +83,10 @@ The required structure for each gate payload is:
 - Callers identified: `<list of caller coordinates>`
 - Affected modules / boundaries: `<list>`
 
-## Minimal Implementation Proposal (Ponytail)
+## Minimal Implementation & Repro Test Proposal (Ponytail)
 - Target Files: `<files>`
-- Proposed Diff Strategy: <Shortest working diff plan>
+- Repro Test Plan (RED): `<test file and assertion to verify failure post-checkpoint>`
+- Proposed Diff Strategy (GREEN): <Shortest working diff plan>
 ```
 
 ### 3.3 Gate 2 Schema (`# Review Request: Gate 2`)
@@ -133,7 +134,7 @@ If a change exceeds 800 lines of unified diff, it must NOT be truncated blindly:
 
 - **Placeholder Tokens**: All tokens, credentials, or keys in code, diffs, and examples must strictly use bracketed `<...>` placeholders (e.g., `Bearer <AUTH_TOKEN>`, `api_key = "<STRIPE_KEY>"`).
 - **Entropy Limit**: Never use raw mock strings exceeding 12-16 characters that resemble production keys (e.g., avoid `abc123456789xyz000`).
-- **Test Output Token Scrubbing**: If real test output displays generated session IDs, JWTs, or test hashes, scrub them to `<TEST_HASH_SANITIZED>` or `<MOCK_TOKEN>` before copying into the Gate 2 payload to avoid triggering false-positive secret scanner rejections.
+- **Test Output Token Scrubbing**: If real test output displays generated session IDs, JWTs, or test hashes, scrub them to `<TEST_HASH_SANITIZED>` or `<MOCK_TOKEN>` before copying into the Gate 2 payload or scratch files to avoid triggering false-positive secret scanner rejections.
 
 ---
 
@@ -150,7 +151,7 @@ The local implementer supports two feedback ingestion modes:
 
 | Reviewer Verdict | Local Action |
 | :--- | :--- |
-| `APPROVE` | Proceed to implementation (Gate 1) or repository commit discipline (Gate 2). |
+| `APPROVE` | Proceed to Phase 2 checkpoint & implementation (Gate 1) or repository commit discipline (Gate 2). |
 | `APPROVE (Trivial: <rationale>)` | Proceed to repository commit discipline for Tier 0 fast-path. |
 | `REJECT` | Stop immediately. Review feedback findings. Return to Phase 1 investigation or Phase 3 implementation. Do not commit or push. |
 | `QUESTIONS FOR IMPLEMENTER` | Run `rtk rg "<symbol>"` locally to verify the symbol, caller, or invariant. Return the response using the Dispute Resolution Format below. |
@@ -177,4 +178,4 @@ The local implementer supports two feedback ingestion modes:
 
 ## 7. Zero Synthetic Bloat
 
-Never commit mock bug reports, flawed sample diffs, or toy test fixtures to the repository working tree. All review artifacts belong in session memory, chat, or session scratch.
+Never commit mock bug reports, flawed sample diffs, or toy test fixtures to the repository working tree. All review artifacts belong in session memory, chat, or session scratch (`<appDataDir>\brain\<conversation-id>\scratch\<task>\`).

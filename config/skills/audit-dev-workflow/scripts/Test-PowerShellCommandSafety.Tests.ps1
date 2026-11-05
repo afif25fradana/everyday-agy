@@ -122,6 +122,18 @@ $testCases = @(
     @{ Expected = "BLOCK"; Cmd = 'Remove-Item ~/.ssh/id_rsa -Force'; Reason = "Remove-Item sensitive ~/.ssh target" },
     @{ Expected = "BLOCK"; Cmd = 'Remove-Item $HOME/.aws/credentials -Force'; Reason = "Remove-Item sensitive ~/.aws target" },
 
+    # Blocked: Wrapper flags, backtick escapes, two-statement scriptblock variables, git switch/stash, robocopy /MIR (ADR-0022)
+    @{ Expected = "BLOCK"; Cmd = 'rtk -v git push --force'; Reason = "rtk flag before git force push" },
+    @{ Expected = "BLOCK"; Cmd = 'sudo -E rm -rf ./dir'; Reason = "sudo -E flag before recursive rm" },
+    @{ Expected = "BLOCK"; Cmd = 'sudo -u root Remove-Item -Recurse C:\test'; Reason = "sudo -u user option before Remove-Item" },
+    @{ Expected = "BLOCK"; Cmd = 'git push origin main --`force'; Reason = "backtick-escaped git push force flag" },
+    @{ Expected = "BLOCK"; Cmd = 'i`ex "Remove-Item C:\test"'; Reason = "backtick-escaped iex command" },
+    @{ Expected = "BLOCK"; Cmd = '$s = [scriptblock]::Create(''git push --force''); $s.Invoke()'; Reason = "two-statement scriptblock variable Invoke" },
+    @{ Expected = "BLOCK"; Cmd = 'git switch -f main'; Reason = "git switch -f worktree discard" },
+    @{ Expected = "BLOCK"; Cmd = 'git switch --discard-changes main'; Reason = "git switch --discard-changes worktree discard" },
+    @{ Expected = "BLOCK"; Cmd = 'git stash clear'; Reason = "git stash clear destructive drop" },
+    @{ Expected = "BLOCK"; Cmd = 'robocopy C:\empty C:\target /MIR'; Reason = "robocopy /MIR destructive mirror wipe" },
+
     # Allowed: Standard developer commands
     @{ Expected = "ALLOW"; Cmd = 'git status'; Reason = "git status" },
     @{ Expected = "ALLOW"; Cmd = 'git push git@github.com:user/repo.git main'; Reason = "git push to SSH remote URL containing colon" },
@@ -136,6 +148,7 @@ $testCases = @(
     @{ Expected = "ALLOW"; Cmd = 'git restore -S .'; Reason = "git restore -S uppercase staged un-stage" },
     @{ Expected = "ALLOW"; Cmd = 'Remove-Item -Path "temp.txt" -for -ErrorAction SilentlyContinue -Filter "*.log"'; Reason = "Benign parameter abbreviation -for and -Filter" },
     @{ Expected = "ALLOW"; Cmd = 'git checkout -b feat/branch .'; Reason = "git checkout -b create branch" },
+    @{ Expected = "ALLOW"; Cmd = 'git switch -c feat/branch'; Reason = "git switch -c create branch" },
     @{ Expected = "ALLOW"; Cmd = 'git -c core.autocrlf=input status'; Reason = "benign git -c status" },
 
     # Allowed: Checkpoint rollback & commit messages containing flag text

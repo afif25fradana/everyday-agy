@@ -1,6 +1,6 @@
 ---
 name: coding-standards
-description: Baseline cross-project coding conventions for naming, readability, immutability, error handling, and type safety.
+description: Baseline cross-project coding conventions (/coding-standards) for naming, immutability, fail-loud errors, and boundary types.
 ---
 
 # Coding Standards & Best Practices
@@ -21,7 +21,7 @@ Baseline coding conventions applicable across projects. Governed by the principl
 2. **KISS & Ponytail**: The simplest solution that completely solves the problem. No premature generalizations or single-impl interfaces.
 3. **Immutability by Default**: Prefer pure functions, immutable updates, and readonly structures over in-place mutation.
 4. **Fail Loudly**: Never swallow errors silently or return masking defaults (`catch { return [] }`) on critical paths.
-5. **Self-Documenting Code**: Choose descriptive variable and function names; reserve comments for non-obvious *why* rationale (per `antislop-code`).
+5. **Self-Documenting Code**: Choose descriptive variable and function names; reserve comments for non-obvious *why* rationale (per `antislop-code` and [`clean-docs`](../clean-docs/SKILL.md)).
 
 ---
 

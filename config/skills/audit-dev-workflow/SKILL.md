@@ -1,122 +1,99 @@
 ---
 name: audit-dev-workflow
-description: Defensive audit-first dev workflow with caller tracing, checkpoints, explicit approvals, and verification.
+description: Defensive audit-first dev workflow (/audit-dev-workflow): caller tracing, checkpoints, approval gates, and verification.
 ---
 
 # Audit-First Development Workflow (Operational Runbook)
 
-A defensive, evidence-backed operational runbook ensuring safe, well-investigated changes. Governed by the minimalist principles of `config/GEMINI.md` (`~/.gemini/GEMINI.md`).
+A defensive, evidence-backed operational runbook ensuring safe, well-investigated changes. Governed by `config/GEMINI.md` (`~/.gemini/GEMINI.md`) and [`orchestrator`](../orchestrator/SKILL.md).
 
 ---
 
 ## Step-by-Step Procedure
 
-### Step 0: Blast-Radius Size-Tiered Pipeline Routing (ADR-0009)
-Before initiating Phase 1 investigation, classify the incoming task into one of four discrete blast-radius tiers to calibrate ceremonial overhead:
-- **`trivial` (Tier 0)**: Localized change ($\le 2$ files, $\le 3$ executable lines or $\le 5$ docs/comment lines; zero logic/conditional/state/schema mutations). Autonomous post-checkpoint execution: checkpoint $\rightarrow$ apply patch $\rightarrow$ verify $\rightarrow$ pause at `[TRIVIAL REVIEW]` before commit. Pre-mutation Gate 1 and subagent spawning skipped.
-- **`small` (Tier 1)**: Contained feature, bugfix, or single-module enhancement (1 module, clear scope). Autonomous post-checkpoint execution: Investigation $\rightarrow$ Checkpoint (`New-AuditCheckpoint.ps1`) $\rightarrow$ Failure-First TDD (RED $\rightarrow$ GREEN) $\rightarrow$ 5-Axis verification (invoke `spec-verifier` only if external library APIs are touched) $\rightarrow$ pause at Gate 2 (`gate2_handoff.md`) before commit. Pre-mutation Gate 1 skipped.
-- **`standard` (Tier 2)**: Multi-file refactor or multi-component enhancement (2–5 files, internal architectural boundaries). Lead Parent Orchestrator protocol ([`orchestrator`](../orchestrator/SKILL.md), ADR-0019): Parent Context Insulation enforced (zero inline code reading); dispatch direct specialist subagents (`system-architect` $\rightarrow$ Gate 1 approval $\rightarrow$ `tdd-guide` RED test $\rightarrow$ execution $\rightarrow$ `code-auditor` verification) $\rightarrow$ Gate 2 commit.
-- **`large` (Tier 3)**: High-stakes architectural overhaul, cross-cutting schema changes, public API redesign, or foreign harness porting. Trigger full deliberative Tri-Pillar Council Review ([`council-review`](../council-review/SKILL.md) via single `teamwork` dispatch per ADR-0008, ADR-0013, ADR-0019).
+### Step 0: Blast-Radius Size-Tiered Pipeline Routing (ADR-0009, ADR-0015, ADR-0019)
+Classify the incoming task using the **Zero-Read Triage Gate** in [`orchestrator/SKILL.md#12-zero-read-triage-gate-step-0-blast-radius-sizing--ssot`](../orchestrator/SKILL.md):
+- **`trivial` (Tier 0)**: $\le 2$ files, $\le 3$ exec or $\le 5$ doc/comment lines, zero logic/state/schema mutation. Checkpoint $\rightarrow$ patch $\rightarrow$ verify $\rightarrow$ pause at `[TRIVIAL REVIEW]` before commit.
+- **`small` (Tier 1)**: Contained single-module bugfix/enhancement. Investigation $\rightarrow$ Checkpoint (`New-AuditCheckpoint.ps1`) $\rightarrow$ Failure-First TDD (RED $\rightarrow$ GREEN) $\rightarrow$ 5-Axis verification $\rightarrow$ pause at Gate 2 (`gate2_handoff.md`) before commit.
+- **`standard` (Tier 2)**: Multi-file refactor or multi-component change (2–5 files). Enforce [`orchestrator`](../orchestrator/SKILL.md) Parent Context Insulation: read-only explorer (`system-architect` / `code-auditor`) $\rightarrow$ Gate 1 approval (`gate1_proposal.md`) $\rightarrow$ Checkpoint (`New-AuditCheckpoint.ps1`) $\rightarrow$ `tdd-guide` RED test $\rightarrow$ implementer GREEN fix $\rightarrow$ `code-auditor` diff review $\rightarrow$ Gate 2 (`gate2_handoff.md`).
+- **`large` (Tier 3)**: Cross-cutting architecture/schema overhaul ($>5$ files). Convene [`council-review`](../council-review/SKILL.md) via single `teamwork` dispatch $\rightarrow$ Gate 1 approval $\rightarrow$ sequential Tier 2 work packages.
 
-### Phase 1: Investigation & Blast Radius Analysis
-1. **Trace Callers & Invariants (Parallel Fan-Out)**: Batch read-only caller searches (`rtk rg`) in parallel within a single turn before proposing edits. For Tier 0/1, inspect target files directly. For Tier 2/3, delegate deep target file reading to read-only specialist subagents (`system-architect` or `code-auditor`) per [`orchestrator`](../orchestrator/SKILL.md) to preserve Parent Context Insulation. For complex bugs, use multi-layer boundary logging (inserting temporary diagnostic logs showing data crossing boundaries) and trace call stacks backward from the failure point to root causes.
-2. **External API & Library Verification (Context7 MCP)**: When inspecting or altering third-party libraries, APIs, or framework contracts, use Context7 MCP (`resolve-library-id` -> `query-docs`) to verify official APIs and versions instead of relying on pre-training memory.
-3. **Mandatory Orchestration for Tier 2/3 (ADR-0019)**: On Tier 2 and Tier 3 tasks, Parent Agent MUST NOT read application source code directly (`read_file` ban). Parent dispatches read-only specialist subagents (`system-architect` or `code-auditor`, `Model: inherit`) via the 4-Slot Delegation Contract in [`orchestrator`](../orchestrator/SKILL.md) to keep parent context clean. For Tier 0/1 tasks, Parent inspects files directly (`read_file` in Parent; `view_file` in Subagents per ADR-0007, ADR-0015).
-4. **Repro-First Failing Test (Failure-First Verification / RED)**: For bug fixes or logic defects, create a minimal reproducible test script or failing test case first (RED) before writing any solution code. In Tier 2/3, Parent delegates test authoring to `tdd-guide` and verifies the failing CLI test receipt directly (`run_command`, confirming exit code $\ne 0$ with expected assertion failure) without reading application code. Confirm the test fails specifically for the missing behavior or broken assertion—not for syntax errors, missing imports, or broken test setup.
-5. **Hazard Assessment**:
+### Phase 1: Investigation & Blast Radius Analysis (Strictly Read-Only on Tier 2/3)
+1. **Trace Callers & Invariants (Parallel Fan-Out)**: Batch read-only caller searches (`rtk rg`) in parallel within a single turn before proposing edits. For Tier 0/1, inspect target files directly (`read_file`). For Tier 2/3, delegate target file reading to read-only specialist subagents (`system-architect` or `code-auditor` via `view_file`) per [`orchestrator`](../orchestrator/SKILL.md).
+2. **External API & Library Verification (Context7 MCP)**: Verify third-party libraries, APIs, or framework contracts via Context7 MCP (`resolve-library-id` $\rightarrow$ `query-docs`) or [`deep-web-research`](../deep-web-research/SKILL.md) instead of training memory.
+3. **Hazard Assessment**:
    - Test harness mocks (`unittest.mock.patch`, Jest spies, dynamic method patching).
    - Concurrency & threading locks, event loops, and daemon states.
    - Import directions (ensure DAG remains acyclic).
-6. **Proposal & Gate 1 Packaging**: Present findings, root cause, exact target coordinates (`file.ext#Lxx-Lyy`), target function signatures, upstream caller context / consumer blast radius (via `rtk rg`), and the minimal implementation plan. For non-trivial changes, package the proposal under `# Review Request: Gate 1 (Pre-Execution Proposal)` **exclusively inside an Antigravity UserFacing Artifact** (`write_file` to `<appDataDir>\brain\<conversation-id>/gate1_proposal.md` with `ArtifactMetadata.RequestFeedback: true` to provide the native one-click "Proceed" approval button). Chat response must be 1–3 lines linking to the artifact. Qualifying Tier 0 changes (typos, docs, metadata; <= 2 files, <= 3 lines executable or <= 5 lines non-executable, zero logic mutation) and Tier 1 changes bypass Gate 1 ceremony and execute autonomously post-checkpoint per ADR-0015, pausing at `[TRIVIAL REVIEW]` or Gate 2 before commit.
-7. **Architectural Decision Gate (ADR)**: If the proposed change introduces a new dependency, alters system protocols/topology, modifies data schemas, or establishes security boundaries, explicitly propose an ADR (`<Project>-AI-Context/docs/adr/000x-...md` in Twin-Repo mode, or `docs/adr/000x-...md` in Single-Repo mode per `documentation-and-adrs`).
+4. **Proposal & Gate 1 Packaging (Tier 2/3 & Package Installations)**:
+   - Present findings, root cause, exact target coordinates (`file.ext#Lxx-Lyy`), target function signatures, upstream caller blast radius (`rtk rg`), repro test plan, and minimal implementation plan under `# Review Request: Gate 1 (Pre-Execution Proposal)` **exclusively inside an Antigravity UserFacing Artifact** (`write_file` to `<appDataDir>\brain\<conversation-id>/gate1_proposal.md` with `ArtifactMetadata.RequestFeedback: true`).
+   - Keep the working tree 100% clean prior to Gate 1 approval so Phase 2 `New-AuditCheckpoint.ps1` succeeds cleanly. Chat response must remain 1–3 lines linking to `gate1_proposal.md`.
+   - Qualifying Tier 0 and Tier 1 tasks bypass Gate 1 ceremony and proceed directly to Phase 2 Checkpoint.
+5. **Architectural Decision Gate (ADR)**: If the proposed change introduces a new dependency, alters system protocols/topology, modifies data schemas, or establishes security boundaries, propose an ADR (`<Project>-AI-Context/docs/adr/000x-...md` in Twin-Repo mode, or `docs/adr/000x-...md` in Single-Repo mode per [`documentation-and-adrs`](../documentation-and-adrs/SKILL.md)).
 
-### Phase 2: Checkpoint & Safety Gate
-Establish a rollback point before modifying files:
-- **Git Repositories**: Ensure working directory is clean (`rtk git status --short`) or create a checkpoint via helper script:
-  ```powershell
-  powershell -ExecutionPolicy Bypass -File "$HOME\.gemini\config\skills\audit-dev-workflow\scripts\New-AuditCheckpoint.ps1" -Task "<task_name>"
-  ```
-- **Files Outside Git**: Create a backup in session scratch or global scratch:
-  ```powershell
-  # Preferred: Session scratch (<appDataDir>\brain\<conversation-id>\scratch\<task>\)
-  # Fallback helper:
-  powershell -ExecutionPolicy Bypass -File "$HOME\.gemini\config\skills\audit-dev-workflow\scripts\New-AuditCheckpoint.ps1" -Task "<task_name>" -FilePath "<target_file>"
-  ```
-- **Automated Rollback**: If unexpected failures occur during Phase 4, restore cleanly with:
-  ```powershell
-  powershell -ExecutionPolicy Bypass -File "$HOME\.gemini\config\skills\audit-dev-workflow\scripts\Restore-AuditCheckpoint.ps1" -Task "<task_name>" [-FilePath "<target_file>"]
-  ```
-- **Explicit Approval & Gate 1 Return Loop**:
-  - For Tier 2 (`standard`), Tier 3 (`large`), and any package installation, obtain explicit Gate 1 confirmation before touching files. Qualifying Tier 0 (`trivial`) and Tier 1 (`small`) changes execute autonomously after establishing a verified checkpoint (`New-AuditCheckpoint.ps1`) and pause at Gate 2 (`[TRIVIAL REVIEW]` or `gate2_handoff.md`) prior to commit.
-  - Supports two review input modes:
-    - **Mode A (Direct Human Operator Chat)**: Explicit conversational confirmation from the user in chat (e.g., `"approve"`, `"acc"`, `"lanjut"`, `"gas"`, `"LGTM"`) or clicking the UI "Proceed" button immediately satisfies Gate 1 (`APPROVE`). Conversational questions or critiques are addressed directly without ceremonial overhead.
-    - **Mode B (Structured or Pasted External AI Review)**: Ingest structured review blocks matching `# Review Feedback...` or `# Technical Review...` (from Claude, Gemini Web, or pasted external auditors):
-      - On `APPROVE`: Proceed directly to Phase 3 implementation.
-      - On `QUESTIONS FOR IMPLEMENTER`: Run `rtk rg "<symbol>"` and return exact file coordinates (`file.ext#Lxx-Lyy`) and verbatim definitions; await reviewer resolution.
-      - On `REJECT`: Stop immediately, evaluate reviewer feedback, and return to Phase 1 investigation or revise proposal.
-    - **Review Anti-Sycophancy & Technical Verification**: Strictly ban performative praise (`"You're absolutely right!"`, `"Great point!"`). Verify all review suggestions technically against caller grep results and Ponytail YAGNI before implementing.
-  - Qualifying Tier 0 and Tier 1 changes execute autonomously post-checkpoint per ADR-0015, pausing at `[TRIVIAL REVIEW]` or Gate 2 prior to commit.
+### Phase 2: Gate 1 Approval (Tier 2/3) & Verified Rollback Checkpoint
+1. **Explicit Approval & Gate 1 Return Loop (Tier 2/3 & Package Installs)**:
+   - Obtain Gate 1 confirmation before modifying any files:
+     - **Mode A (Direct Human Operator Chat)**: Explicit confirmation (`"approve"`, `"acc"`, `"lanjut"`, `"gas"`, `"LGTM"`, or clicking the UI "Proceed" button) satisfies Gate 1 (`APPROVE`).
+     - **Mode B (Structured External Review)**: Ingest `# Review Feedback...` or `# Technical Review...` per [`handoff-spec.md`](./references/handoff-spec.md). Strictly ban performative praise (`"You're absolutely right!"`); verify review suggestions against caller grep results and Ponytail YAGNI.
+2. **Establish Verified Rollback Point (All Tiers — Strictly Before Modifying Files)**:
+   - **Git Repositories**: Ensure tracked working tree is clean (`rtk git status --short`) and create a checkpoint:
+     ```powershell
+     powershell -ExecutionPolicy Bypass -File "$HOME\.gemini\config\skills\audit-dev-workflow\scripts\New-AuditCheckpoint.ps1" -Task "<task_name>"
+     ```
+   - **Files Outside Git**: Back up the target file to scratch via `-FilePath "<target_file>"`:
+     ```powershell
+     powershell -ExecutionPolicy Bypass -File "$HOME\.gemini\config\skills\audit-dev-workflow\scripts\New-AuditCheckpoint.ps1" -Task "<task_name>" -FilePath "<target_file>"
+     ```
+   - **Automated Rollback**: On unexpected Phase 3/4 failures (after 2 failed fix attempts), restore cleanly via:
+     ```powershell
+     powershell -ExecutionPolicy Bypass -File "$HOME\.gemini\config\skills\audit-dev-workflow\scripts\Restore-AuditCheckpoint.ps1" -Task "<task_name>" [-FilePath "<target_file>"]
+     ```
 
-### Phase 3: Pragmatic Implementation
-1. **Direct Execution (Tier 0 & Tier 1)**: For Tier 0 and Tier 1 tasks, Parent applies approved changes directly (`edit_file` / `write_file` in Parent Agent; `replace_file_content` / `write_to_file` when delegated to Subagents per ADR-0007, ADR-0015). Shortest working diff wins.
-2. **Mandatory Orchestration & Single-Writer Specialist Delegation (Tier 2 & Tier 3)**: For Tier 2 and Tier 3 tasks, Parent MUST NOT write application code directly. Delegate test authoring to `tdd-guide` and code implementation to execution specialists (`build-error-resolver`, `tdd-guide`, or `ui-crafter`) via the 4-Slot Delegation Contract in [`orchestrator`](../orchestrator/SKILL.md). Mutating subagents MUST execute strictly serialized (Single-Writer Mutual Exclusion per ADR-0019). Ensure an atomic Git checkpoint exists (`New-AuditCheckpoint.ps1` -> `checkpoint-<task>`) before mutating files. **Parent VCS Receipt Invariant**: Never trust subagent completion claims alone; Parent must independently inspect `rtk git status --short`, `rtk git diff --stat`, and execute fresh test runs before accepting delegated work.
-3. **Clean Code Discipline**: Zero unneeded abstractions, zero generic AI comments, strict preservation of existing defensive logic (timeouts, retries, null checks, calibrated thresholds), and bracketed `<...>` placeholders for secret scanner hygiene.
-4. **Pre-Mutation Syntax Interception (SWE-Agent Fast Syntax Gate)**: Before triggering test runner verification, execute rapid syntax checks on modified files (`node --check <file>` for Node/JS, `python -m py_compile <file>` for Python, `[System.Management.Automation.Language.Parser]::ParseFile("<file>", [ref]$null, [ref]$err)` for PowerShell). Syntax typos caught at this gate are corrected immediately in-turn without burning attempts against the 2-attempt stop-rule counter (`global_attempt_counter`).
+### Phase 3: Repro-First RED Test & Pragmatic Implementation (Post-Checkpoint)
+1. **Repro-First Failing Test (Failure-First Verification / RED)**:
+   - Immediately after establishing `checkpoint-<task>`, author or update a minimal reproducible failing test (RED) before writing production fix code.
+   - On Tier 1, Parent authors and verifies the failing test directly. On Tier 2/3, Parent delegates RED test authoring to `tdd-guide` (Sequential Mutator 1) and verifies the failing CLI test receipt (`run_command`, exit code $\ne 0$ for the expected assertion failure, not a syntax/import error).
+2. **Minimal Implementation (GREEN)**:
+   - **Tier 0 & Tier 1**: Parent applies changes directly (`edit_file` / `write_file`). Shortest working diff wins.
+   - **Tier 2 & Tier 3**: Parent delegates implementation to serialized specialists (`tdd-guide`, `ui-crafter`, `build-error-resolver`, `docs-architect`, `l10n-humanizer`, or `maintenance-bot`) via the 4-Slot Delegation Contract in [`orchestrator`](../orchestrator/SKILL.md).
+3. **Clean Code & Fast Syntax Gate**:
+   - Zero unneeded abstractions, zero generic AI comments, strict preservation of existing defensive logic (timeouts, retries, null checks, calibrated thresholds), and bracketed `<...>` placeholders for secret scanner hygiene.
+   - Run the **Pre-Mutation Syntax Interception Gate** (`orchestrator/SKILL.md#17-pre-mutation-syntax-interception-swe-agent-fast-syntax-gate--ssot`) before running full test suites so syntax typos are fixed in-turn without burning `global_attempt_counter` ($\le 2$).
 
 ### Phase 4: Local Verification & Review
-1. **Test Suite Verification**:
-   - **Repos with Test Harnesses**: Execute relevant unit/integration tests directly to capture: (a) exact CLI test command executed, (b) terminal exit code (0), and (c) verbatim assertion stdout/stderr snippet confirming `> 0` passed assertions and `0` failed (turning the Phase 1 RED test into GREEN without weakening existing test assertions). In addition to targeted tests, execute the full project test suite (`rtk npm test`, `rtk python -m pytest`); any unmentioned failing test is treated as an incomplete report. Circuit Breaker: After two failed fix attempts on unexpected test/build failures, execute `Restore-AuditCheckpoint.ps1` to revert the working tree cleanly and escalate to the user per `GEMINI.md (Stop Rule & Auto-Rollback)`.
-   - **Testless Repositories**: For repositories lacking automated test suites (documentation, infra/devops configs, initial prototypes), substitute with static verification: syntax checking (e.g. `python -m py_compile`, `rtk npx eslint`), build checks, or dry-run execution. Explicitly annotate Gate 2 with `[TEST HARNESS: NONE — STATIC/BUILD EVIDENCE PROVIDED]`.
+1. **Test Suite Verification & Parent VCS Receipt Check**:
+   - **Parent VCS Receipt Invariant**: On delegated work, Parent independently inspects `rtk git status --short` and `rtk git diff --stat` and executes test runners directly via `run_command`.
+   - **Repos with Test Harnesses**: Capture (a) exact CLI test command executed, (b) terminal exit code (`0`), and (c) verbatim assertion output confirming `> 0` passed assertions and `0` failed, plus full project test suite verification (`rtk npm test`, `rtk python -m pytest`). After two failed fix attempts, execute `Restore-AuditCheckpoint.ps1` and escalate.
+   - **Testless Repositories**: Substitute with static syntax/build/linter verification and annotate Gate 2 with `[TEST HARNESS: NONE — STATIC/BUILD EVIDENCE PROVIDED]`.
 2. **Unified Diff & Spec Verification (Two-Stage Five-Axis Rubric)**:
-   - Review the diffstat (`rtk git diff --stat=140,80 HEAD`) and unified diff against the plan. Ensure no accidental changes or debug artifacts were left behind.
-   - **Stage 1 (Spec & Acceptance Compliance)**: Verify line-by-line against the approved plan and requirements. Confirm every requested behavior is implemented and reject unapproved scope creep.
-   - **Stage 2 (Code Quality & Five-Axis Rubric)**: Verify safety, security, test integrity, and anti-slop. When delegating diff reviews to subagents or external models, enforce the "skip style" directive: report only correctness defects, security gaps, and spec violations while ignoring purely stylistic or subjective formatting preferences:
-     - **Axis 1 (Correctness & Invariants)**: Boundary checks, state transitions, loop invariants, type safety, caller regressions, async/await/lock ordering, and zero dropped defensive logic (never silently strip timeouts, retries, null checks, or calibrated thresholds). Avoid specificity/precedence surprises and unverified "dead code" claims. Modern active runtimes only (Python 3.12+, Node 20/22+).
-     - **Axis 2 (Security & Attack Surface)**: Input sanitization, auth boundaries, injection/deserialization safety, cross-module blast radius, and Secret Scanner Hygiene (bracketed `<TOKEN>`, `<API_KEY>` placeholders; zero raw sample credentials exceeding 12-16 chars).
-     - **Axis 3 (Over-Engineering / Ponytail & Anti-Slop)**: Shortest working diff wins. Reject speculative abstractions, generic wrappers, and single-impl interfaces. Comment hygiene: strip generic AI narrative comments (`// Update state`); keep comments strictly for non-obvious *why* rationale, OS workarounds, or protocol quirks. Zero corporate/academic fluff in docstrings per [`clean-docs`](../clean-docs/SKILL.md).
-     - **Axis 4 (Edge Cases & Silent Failures)**: No swallowed exceptions (bare `catch {}`), no masking defaults (`.catch(() => [])`), no silent `null` returns on critical paths, no resource leaks (unclosed streams, orphaned subprocesses, lingering event listeners, unreleased locks), and explicit boundary and timeout checks (`0`, `null`, `undefined`, empty collections, negative numbers, timeouts). Fix root causes, not symptom patching.
-     - **Axis 5 (Test Integrity & Fault Injection)**: No mock-cheating (no mocks replacing the unit under test; no asserting only `mock.called == True` without verifying state/data/return values). Both happy paths and negative paths must be verified. Guard against mock/harness drift. When in doubt, perform a temporary fault injection (flip a conditional or invalidate an input) to verify that the test fails before finalizing.
+   - Review `rtk git diff --stat=140,80 HEAD` and full unified diff against the approved plan.
+   - **Stage 1 (Spec & Acceptance Compliance)**: Verify line-by-line against requirements; reject unapproved scope creep.
+   - **Stage 2 (Code Quality & Five-Axis Rubric — "Skip Style")**: Report only correctness defects, security gaps, and spec violations:
+     - **Axis 1 (Correctness & Invariants)**: Boundary checks, state transitions, loop invariants, type safety, caller regressions, async/lock ordering, non-EOL runtimes (Python 3.12+, Node 20+), and zero dropped defensive logic.
+     - **Axis 2 (Security & Attack Surface)**: Input sanitization, auth boundaries, injection safety, cross-module blast radius, and Secret Scanner Hygiene (bracketed `<TOKEN>` placeholders; scrub test log tokens to `<TEST_HASH_SANITIZED>` or `<MOCK_TOKEN>`).
+     - **Axis 3 (Over-Engineering / Ponytail & Anti-Slop)**: Shortest working diff wins. Reject speculative abstractions and single-impl interfaces. Strip obvious comments; keep only non-obvious *why* rationale per [`clean-docs`](../clean-docs/SKILL.md).
+     - **Axis 4 (Edge Cases & Silent Failures)**: No swallowed exceptions (`catch {}`), no masking defaults (`.catch(() => [])`), no resource leaks (streams, subprocesses, listeners, locks), and explicit boundary/timeout checks.
+     - **Axis 5 (Test Integrity & Fault Injection)**: No mock-cheating (never mock out the unit under test or assert only `mock.called`). Verify both happy and negative paths; perform fault injection (flip a condition) when in doubt to prove tests fail.
 
 ### Phase 5: Gate 2 Review, Commit & Non-Interactive CI
 1. **Gate Packaging & Reviewer Payloads**:
-   - **Tier 0 (Trivial Fast-Path)**: Header `[TRIVIAL REVIEW]`. Allowed ONLY if modifying <= 2 files AND <= 3 lines of executable code (or <= 5 lines of non-executable documentation/comments), with ZERO changes to business logic, conditionals, loops, state transitions, error handlers, public API signatures, schemas, or security boundaries. Must include diffstat and full inline unified diff (`+`/`-`) to verify compliance.
-   - **Gate 2 (Post-Execution Handoff & Diff)**: Header `# Review Request: Gate 2 (Post-Execution Handoff & Diff)`.
-     - **Mandatory Artifact Packaging**: Gate 2 handoff payloads MUST be written as an Antigravity UserFacing Artifact (`<appDataDir>\brain\<conversation-id>/gate2_handoff.md` with `UserFacing: true`). Never dump full diffs directly into chat; chat must only provide a 1–3 line notification linking to the artifact for clean reviewer copying.
-     - High-level diffstat & full unified diff (`+`/`-`). If > 800 lines, chunk by module starting with diffstat + core domain logic first.
-     - Mandatory Real Test Evidence: (1) exact CLI command, (2) terminal exit code (0), and (3) verbatim snippet of stdout/stderr showing passed assertions (with mock tokens scrubbed to `<TEST_HASH_SANITIZED>` or `<MOCK_TOKEN>`). If repo is testless, supply static/build evidence under `[TEST HARNESS: NONE]`.
+   - **Tier 0 (`[TRIVIAL REVIEW]`)**: Inline in chat (for diffs $\le 5$ lines per `config/GEMINI.md#L36`) or artifact, containing diffstat and full unified diff (`+`/`-`).
+   - **Gate 2 (`# Review Request: Gate 2 (Post-Execution Handoff & Diff)`)**: Written exclusively as an Antigravity UserFacing Artifact (`<appDataDir>\brain\<conversation-id>/gate2_handoff.md` with `UserFacing: true`) per [`handoff-spec.md`](./references/handoff-spec.md). Chat response must remain 1–3 lines linking to the artifact.
 2. **Reviewer Return Loop Handling (Gate 2)**:
-   - Before `git commit` or `git push`, evaluate the review verdict via two modes:
-     - **Mode A (Direct Human Operator Chat)**: Explicit conversational confirmation in chat (e.g., `"approve"`, `"acc"`, `"lanjut"`, `"gas"`, `"LGTM"`) immediately satisfies Gate 2 (`APPROVE`). Natural-language critiques or questions are resolved directly before commit.
-     - **Mode B (Structured or Pasted External AI Review)**: Ingest `# Review Feedback...` or `# Technical Review...` (from Claude, Gemini Web, or pasted external audit):
-       - On `APPROVE` or `APPROVE (Trivial: <rationale>)`: Proceed to repository commit discipline.
-       - On `QUESTIONS FOR IMPLEMENTER`: Run `rtk rg "<symbol>"` and return exact file coordinates (`file.ext#Lxx-Lyy`) and verbatim definitions.
-       - On `REJECT`: Stop and evaluate reviewer feedback via two branches:
-         - *Implementation Fix (Iterative Phase 3)*: If the rejection requests code tweaks or test additions, do NOT run `Restore-AuditCheckpoint.ps1` and do NOT create a new checkpoint. Keep the active `checkpoint-<task>` branch as the baseline rollback point, apply requested modifications directly in working tree, re-verify tests, and present an updated Gate 2 handoff.
-         - *Architectural Abort (Return to Phase 1)*: If the rejection invalidates the core architecture or approach, run `Restore-AuditCheckpoint.ps1` to revert working tree to clean checkpoint state, report rollback confirmation, and produce a new Gate 1 proposal.
-3. **Repository Commit Discipline**:
-   - Report a concise summary in chat (1-2 lines with diffstat / action items). For major milestones, an Antigravity UserFacing Artifact can be generated for structured persistence.
-   - **Code Repository**: Commit code changes using clean Conventional Commits (`fix(scope): ...`, `feat(scope): ...`) with zero AI buzzwords or process tags per [`clean-docs`](../clean-docs/SKILL.md).
-   - **Context Tracking (Twin-Repo or Single-Repo)**:
-     - **Twin-Repo Mode**: Update `task_state.md` (and new ADRs in `docs/adr/`) in the sibling context repo per `sync-task-state`, then commit:
-       ```powershell
-       rtk git -C "<AiContextPath>" add task_state.md docs/adr/
-       rtk git -C "<AiContextPath>" commit -m "chore(context): update active task state and record ADR-xxxx"
-       ```
-     - **Single-Repo Mode**: If no companion context repo exists, maintain local `docs/adr/` and `task_state.md` (if used) within the primary repo and commit them in clean, atomic steps.
+   - Evaluate operator chat confirmation (Mode A) or structured review verdict (Mode B):
+     - On `APPROVE`: Proceed to commit discipline.
+     - On `QUESTIONS FOR IMPLEMENTER`: Run `rtk rg "<symbol>"` and return exact coordinates (`file.ext#Lxx-Lyy`) and verbatim snippet.
+     - On `REJECT`:
+       - *Implementation Fix (Iterative Phase 3)*: Keep active `checkpoint-<task>` branch as baseline (do NOT run `Restore-AuditCheckpoint.ps1` or overwrite the checkpoint), apply requested fixes, re-verify, and update `gate2_handoff.md`.
+       - *Architectural Abort (Return to Phase 1)*: Run `Restore-AuditCheckpoint.ps1` to revert working tree cleanly, confirm rollback, and draft a new Gate 1 proposal.
+3. **Repository Commit Discipline (Parent Agent Only)**:
+   - Commit code changes using humanized Conventional Commits (`fix(scope): ...`, `feat(scope): ...`) with zero AI process tags per [`clean-docs`](../clean-docs/SKILL.md).
+   - **Context Tracking**: In Twin-Repo mode, synchronize `task_state.md` and `docs/adr/` in `<Project>-AI-Context` per [`sync-task-state`](../sync-task-state/SKILL.md) and commit atomically; in Single-Repo mode, commit local `docs/adr/` and `task_state.md` in clean atomic steps.
 4. **Push & Non-Interactive CI**:
-   - Prompt user in chat for explicit push approval.
-   - After approval, push and monitor CI non-interactively:
-     ```powershell
-     $run = gh run list --limit 1 --json databaseId,status,conclusion,url | ConvertFrom-Json
-     gh run watch $run.databaseId --exit-status --compact
-     ```
-   - On CI failure: stop, inspect `gh run view <id> --log-failed`, and propose a fix with new approval.
+   - Prompt user in chat for explicit push approval, then push and monitor CI via [`gh-workflow`](../gh-workflow/SKILL.md).
 5. **Post-Commit Checkpoint Branch Cleanup (GAP-MED-05)**:
-   - Once changes are committed, verified, and approved, delete the local checkpoint branch to prevent branch accumulation:
-     ```powershell
-     rtk git branch -d "checkpoint-<task>"
-     ```
-   - Never use `-D` for routine branch deletion.
+   - Once changes are committed and verified, delete the local checkpoint branch (`rtk git branch -d "checkpoint-<task>"`; never use `-D`).
 
 ---
 
@@ -124,5 +101,5 @@ Establish a rollback point before modifying files:
 
 - [Clean Docs Standard](../clean-docs/SKILL.md): Plain-spoken repo prose, zero process leaks, public repo hygiene, and humanized commit messages.
 - [Engineering Pitfalls](./references/pitfalls.md): Agentic traps and Five-Axis logic pitfalls to double-check.
-- [Handoff Specification & Guidelines](./references/handoff-spec.md): Practical guidelines for milestone handoffs and change summaries.
-- [Subagent Execution Patterns](./references/subagent-patterns.md): Subagent deployment patterns, 4-slot contracts, and compact return receipts.
+- [Handoff Specification & Guidelines](./references/handoff-spec.md): Normative schemas for Gate 1, Gate 2, and dispute resolution.
+- [Subagent Execution Patterns](./references/subagent-patterns.md): 11-agent fleet responsibilities, dynamic model elevation, and 4-slot templates.

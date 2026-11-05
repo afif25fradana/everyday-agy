@@ -1,6 +1,6 @@
 ---
 name: differential-review
-description: Security-focused differential review of diffs and PRs: caller blast radius, git blame context, and test coverage.
+description: Security-focused differential review (/differential-review) of diffs/PRs: caller blast radius, git blame, and test coverage.
 ---
 
 # Differential Security Review
@@ -9,11 +9,11 @@ Security-focused code review for PRs, commits, and diffs.
 
 ## Core Principles
 
-1. **Risk-First**: Focus on auth, crypto, value transfer, external calls
-2. **Evidence-Based**: Every finding backed by git history, line numbers, attack scenarios
-3. **Adaptive**: Scale to codebase size (SMALL/MEDIUM/LARGE)
+1. **Risk-First**: Focus on auth, crypto, command/query execution, external calls, and validation changes
+2. **Evidence-Based**: Every finding backed by git history, line numbers, and concrete attack scenarios
+3. **Adaptive**: Scale to codebase size (`SMALL` / `MEDIUM` / `LARGE`)
 4. **Honest**: Explicitly state coverage limits and confidence level
-5. **Output-Driven**: Always generate comprehensive markdown report file
+5. **Output-Driven**: Always generate a structured markdown report artifact (`<appDataDir>\brain\<conversation-id>\...`)
 
 ---
 
@@ -45,7 +45,7 @@ Security-focused code review for PRs, commits, and diffs.
 
 | Risk Level | Triggers |
 |------------|----------|
-| HIGH | Auth, crypto, external calls, value transfer, validation removal |
+| HIGH | Auth, crypto, external calls, command/SQL execution, validation removal |
 | MEDIUM | Business logic, state changes, new public APIs |
 | LOW | Comments, tests, UI, logging |
 
@@ -105,13 +105,13 @@ instructing it to apply `adversarial.md`.
 
 Before delivering:
 
-- [ ] All changed files analyzed
+- [ ] All changed files analyzed (strictly read-only via `rtk git diff` / `rtk git show`)
 - [ ] Git blame on removed security code
 - [ ] Blast radius calculated for HIGH risk
 - [ ] Attack scenarios are concrete (not generic)
 - [ ] Findings reference specific line numbers + commits
-- [ ] Report file generated
-- [ ] User notified with summary
+- [ ] Report file generated in `<appDataDir>\brain\<conversation-id>\...`
+- [ ] User notified with concise 1–3 line summary
 
 ---
 
@@ -120,44 +120,6 @@ Before delivering:
 **audit-context-building skill:**
 - Pre-Analysis: Build baseline context
 - Phase 4: Deep context on HIGH RISK changes
-
----
-
-## Example Usage
-
-### Quick Triage (Small PR)
-```
-Input: 5 file PR, 2 HIGH RISK files
-Strategy: Use Quick Reference
-1. Classify risk level per file (2 HIGH, 3 LOW)
-2. Focus on 2 HIGH files only
-3. Git blame removed code
-4. Generate minimal report
-Time: ~30 minutes
-```
-
-### Standard Review (Medium Codebase)
-```
-Input: 80 files, 12 HIGH RISK changes
-Strategy: FOCUSED (see methodology.md)
-1. Full workflow on HIGH RISK files
-2. Surface scan on MEDIUM
-3. Skip LOW risk files
-4. Complete report with all sections
-Time: ~3-4 hours
-```
-
-### Deep Audit (Large, Critical Change)
-```
-Input: 450 files, auth system rewrite
-Strategy: SURGICAL + audit-context-building
-1. Baseline context with audit-context-building
-2. Deep analysis on auth changes only
-3. Blast radius analysis
-4. Adversarial modeling
-5. Comprehensive report
-Time: ~6-8 hours
-```
 
 ---
 
@@ -176,9 +138,9 @@ For these cases, use standard code review instead.
 
 **Immediate escalation triggers:**
 - Removed code from "security", "CVE", or "fix" commits
-- Access control modifiers removed (onlyOwner, internal → external)
+- Access control modifiers or guards removed
 - Validation removed without replacement
-- External calls added without checks
+- External or shell calls added without sanitization
 - High blast radius (50+ callers) + HIGH risk change
 
 These patterns require adversarial analysis even in quick triage.
@@ -201,7 +163,7 @@ These patterns require adversarial analysis even in quick triage.
 - Claim full analysis when time-limited
 - Forget to check test coverage
 - Miss high blast radius changes
-- Output report only to chat (output report as a standalone UserFacing Artifact following handoff-spec.md, and save raw evidence to `$HOME/.gemini/antigravity/scratch/<task>/`)
+- Output report only to chat (output report as a standalone UserFacing Artifact following `handoff-spec.md`, and save raw evidence to `<appDataDir>\brain\<conversation-id>\scratch\<task>\`)
 
 ---
 
@@ -211,12 +173,6 @@ These patterns require adversarial analysis even in quick triage.
 - **[adversarial.md](adversarial.md)** - Attacker modeling and exploit scenarios (Phase 5)
 - **[reporting.md](reporting.md)** - Report structure and formatting (Phase 6)
 - **[patterns.md](patterns.md)** - Common vulnerability patterns reference
-
----
-
-**For first-time users:** Start with [methodology.md](methodology.md) to understand the complete workflow.
-
-**For experienced users:** Use this page's Quick Reference and Decision Tree to navigate directly to needed content.
 
 ---
 

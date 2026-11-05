@@ -1,8 +1,7 @@
 # ADR-0017: Custom Agent Fleet Consolidation, AST Security Hardening, and Mandatory Skill Activation Architecture
 
 ## Status
-Accepted
-
+Accepted (Partially Superseded by ADR-0018)
 ## Date
 2026-11-01
 

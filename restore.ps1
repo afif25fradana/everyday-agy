@@ -22,10 +22,12 @@ $secretPatterns = @(
     @{ Kind = "Cloud API Key"; Pattern = '\b(AKIA[0-9A-Z]{16}|ASIA[0-9A-Z]{16}|AIza[0-9A-Za-z\-_]{35}|sk-ant-(?:api|admin)\d{2}-[a-zA-Z0-9_-]{30,}|sk-(?:proj|svcacct|admin)-[a-zA-Z0-9_-]{30,}|sk-[a-zA-Z0-9]{20,})\b' }
 )
 
+$binaryExtensions = @('.png', '.jpg', '.jpeg', '.gif', '.ico', '.webp', '.woff', '.woff2', '.ttf', '.otf', '.zip', '.pdf')
+
 function Assert-NoCredentialsInFile($filePath) {
-    if (-not (Test-Path $filePath)) { return }
+    if (-not (Test-Path -LiteralPath $filePath)) { return }
     try {
-        $lines = Get-Content -Path $filePath -ErrorAction Stop
+        $lines = Get-Content -LiteralPath $filePath -ErrorAction Stop
     } catch {
         Write-Error "Security Audit Failure: Unable to read file for credential verification ($filePath): $($_.Exception.Message). Aborting to prevent credential leaks."
         exit 1
@@ -49,7 +51,7 @@ $deployScanTargets = @(
 ) | Where-Object { Test-Path $_ }
 
 if ($deployScanTargets) {
-    $deployFiles = Get-ChildItem -Path $deployScanTargets -Recurse -File -Include "*.md", "*.json", "*.ps1", "*.mjs", "*.py", "*.yml", "*.yaml", "LICENSE*"
+    $deployFiles = Get-ChildItem -Path $deployScanTargets -Recurse -File -Force | Where-Object { $_.Extension.ToLowerInvariant() -notin $binaryExtensions }
     foreach ($df in $deployFiles) {
         Assert-NoCredentialsInFile $df.FullName
     }

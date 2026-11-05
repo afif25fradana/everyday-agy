@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+
 jobs:
   validate:
     name: Validate Integrity (${{ matrix.os }})
@@ -75,8 +78,12 @@ jobs:
               exit 1
             }
             $content = Get-Content $agentFile -Raw
-            if ($content -notmatch '(?m)^name:\s+' -or $content -notmatch '(?m)^model:\s+' -or $content -notmatch '(?m)^tools:\s+') {
+            if ($content -notmatch '(?m)^name:\s+' -or $content -notmatch '(?m)^description:\s+' -or $content -notmatch '(?m)^model:\s+(inherit|flash)\s*$' -or $content -notmatch '(?m)^tools:\s+') {
               Write-Error "Invalid frontmatter in $agentFile"
+              exit 1
+            }
+            if ($a.Name -eq "build-error-resolver" -and $content -match '(?m)^\s*-\s*write_to_file\b') {
+              Write-Error "Security invariant violation: build-error-resolver must not possess write_to_file"
               exit 1
             }
           }
@@ -140,9 +147,10 @@ jobs:
             '-----BEGIN\s+([A-Z0-9_-]+\s+)?PRIVATE\s+KEY-----',
             '\b(AKIA[0-9A-Z]{16}|ASIA[0-9A-Z]{16}|AIza[0-9A-Za-z\-_]{35}|sk-ant-(?:api|admin)\d{2}-[a-zA-Z0-9_-]{30,}|sk-(?:proj|svcacct|admin)-[a-zA-Z0-9_-]{30,}|sk-[a-zA-Z0-9]{20,})\b'
           )
-          $files = Get-ChildItem -Path "README.md", "TOOLKIT.md", "sync.ps1", "restore.ps1", "config", "docs", ".github" -Recurse -File -Include "*.md", "*.json", "*.ps1", "*.mjs", "*.py", "*.yml", "*.yaml", "LICENSE*"
+          $binaryExtensions = @('.png', '.jpg', '.jpeg', '.gif', '.ico', '.webp', '.woff', '.woff2', '.ttf', '.otf', '.zip', '.pdf')
+          $files = Get-ChildItem -Path "README.md", "TOOLKIT.md", "sync.ps1", "restore.ps1", "config", "docs", ".github" -Recurse -File -Force | Where-Object { $_.Extension.ToLowerInvariant() -notin $binaryExtensions }
           foreach ($f in $files) {
-            $content = Get-Content $f.FullName
+            $content = Get-Content -LiteralPath $f.FullName
             foreach ($line in $content) {
               foreach ($p in $secretPatterns) {
                 if ($line -match $p) {

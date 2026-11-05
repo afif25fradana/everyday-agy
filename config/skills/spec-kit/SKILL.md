@@ -1,11 +1,11 @@
 ---
 name: spec-kit
-description: Spec-Driven Development (SDD) for greenfield features: requirements specification, tech plan, and task checklist.
+description: Spec-Driven Development (/speckit.specify, .plan, .tasks) for greenfield features: requirements, tech plan, and task checklist.
 ---
 
 # Spec-Kit (Spec-Driven Development)
 
-A structured specification framework for designing and delivering new features. Complements `audit-dev-workflow` by providing a deliberate, test-first specification phase before any code is generated.
+A structured specification framework for designing and delivering new features. Complements `audit-dev-workflow` and `orchestrator` by providing a deliberate, test-first specification phase before any application code is generated.
 
 Governed by the minimalist principles of `config/GEMINI.md` (`~/.gemini/GEMINI.md`) and Ponytail (anti-slop, YAGNI, shortest working diff).
 
@@ -19,7 +19,7 @@ Phase 1: Specify        Phase 2: Plan           Phase 3: Tasks
 Requirements & ACs       Technical Contracts     Atomic Checklist        Red-Green Code
 ```
 
-All artifacts are persisted in `specs/<feature_name>/` within the project root.
+All artifacts are drafted as Antigravity UserFacing Artifacts first, or persisted in `specs/<feature_name>/` within the project root once approved by the user.
 
 ---
 
@@ -28,7 +28,7 @@ All artifacts are persisted in `specs/<feature_name>/` within the project root.
 Focus on **WHAT** is needed and **WHY**, without prescribing internal implementation details or prematurely picking libraries.
 - **Socratic 1-Question Discipline**: Clarifying turns must end with exactly one focused question to prevent user fatigue.
 - **Scope & Constraint Discovery**: Surface implied constraints and cheaper alternative paths in 1–3 lines (strictly zero prompt restating per `GEMINI.md#L35`).
-- **Design Gate**: Hard boundary prohibiting code writing or project scaffolding until the user explicitly approves `spec.md`.
+- **Design Gate**: Hard boundary prohibiting application code writing or project scaffolding until the user explicitly approves `spec.md`.
 
 Create `specs/<feature_name>/spec.md`:
 ```markdown
@@ -75,7 +75,7 @@ Create `specs/<feature_name>/plan.md`:
 
 ## 4. Verification Harness
 - **Test Strategy**: [Unit tests, integration tests, or mock-free CLI invocations]
-- **Verification Command**: [Exact command to test, e.g. `npm test` or `python -m pytest`]
+- **Verification Command**: [Exact command to test, e.g. `rtk npm test` or `rtk python -m pytest`]
 
 ## 5. Review Focus (Top 5 Implied Edge Cases & Failure Modes)
 - [Identify top 5 implied edge cases, race hazards, or boundary limits; each must map to an atomic test task in tasks.md]
@@ -93,21 +93,22 @@ Create `specs/<feature_name>/tasks.md`:
 
 ## Milestone 1: Contracts & Scaffolding
 - [ ] Task 1.1: Add schema/types for [Contract]
-- [ ] Task 1.2: Add failing unit tests covering R1 and R2 (Red)
+- [ ] Task 1.2: Establish git checkpoint (`New-AuditCheckpoint.ps1`) and add failing unit tests covering R1 and R2 (Red)
 
 ## Milestone 2: Implementation & Verification
 - [ ] Task 2.1: Implement minimal business logic to pass tests (Green)
 - [ ] Task 2.2: Refactor for lean code, remove temporary stubs (Refactor)
 
 ## Milestone 3: Review & Handoff
-- [ ] Task 3.1: Execute full test suite and verify 100% exit code 0
-- [ ] Task 3.2: Create PR using `gh-workflow`
+- [ ] Task 3.1: Execute full test suite and verify exit code 0 with > 0 passed assertions
+- [ ] Task 3.2: Present Gate 2 (`gate2_handoff.md`) and create PR using `gh-workflow`
 ```
 
 ---
 
-## Execution Guardrails
+## Execution Guardrails & Stop Condition
 
-1. **Never Skip to Code**: Wait for explicit user confirmation on `spec.md` before generating code.
+1. **Never Skip to Code**: Wait for explicit user confirmation on `spec.md` and `plan.md` before modifying application code.
 2. **Minimalist Requirements**: Only specify what the user actually cares about. Avoid over-constraining the agent with unnecessary abstractions.
 3. **Trace Back to Acceptance Criteria**: Every task in `tasks.md` must link back to at least one acceptance criterion in `spec.md`.
+4. **Stop Condition**: Pause after presenting each phase artifact (`spec.md` $\rightarrow$ `plan.md` $\rightarrow$ `tasks.md`) and await user confirmation before advancing to implementation via `orchestrator` / `audit-dev-workflow`.

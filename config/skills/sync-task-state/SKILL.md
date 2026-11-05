@@ -1,6 +1,6 @@
 ---
 name: sync-task-state
-description: Maintain lightweight active AI context (task_state.md) in Twin-Repo workflows with size limits and atomic commits.
+description: Maintain lightweight active AI context (/sync-task-state, task_state.md) in Twin-Repo workflows with strict size limits.
 ---
 
 # Sync Task State (Twin-Repo Context Hygiene)
@@ -25,9 +25,9 @@ Enforces strict size limits (target: **<= 8,192 bytes** and **<= 100 lines**) wh
     1. *Active Capture*: Record tactical pitfalls into `## Known Edge Cases` during execution.
     2. *Code Inlining*: Permanent tactical workarounds are inlined directly into code comments per `clean-docs` (explaining *why*).
     3. *ADR Promotion*: Significant decisions altering protocols, dependencies, or security boundaries are promoted to `docs/adr/` and removed from `task_state.md`.
-  - **Tactical Gotchas**: Immediate pitfalls, OS quirks, or concurrency locks belong in `## Known Edge Cases` in `task_state.md` (or inline code comments per `antislop-code`).
   - **Architectural Decisions**: Decisions that choose dependencies, protocols, security policies, or data models must be documented in `docs/adr/000x-...md` per `documentation-and-adrs`. Edge cases that inspired an ADR should simply include a link: `[ADR-0004: Subagent Cognitive Model Tiering](../../../docs/adr/0004-subagent-model-tiering-inherit.md)`.
-- **Atomic Git Tracking**: Always stage and commit files explicitly with `rtk git add task_state.md` in the target context repository (or code repo in Single-Repo mode). Never accidentally leak confidential planning notes into public releases.
+- **Commit Authority Boundary (ADR-0019 Subagent Commit Ban)**:
+  - Subagents (`docs-architect`, `system-architect`) may edit and validate `task_state.md` (Steps 1–4), but **MUST NOT** execute `git commit` when running under `ROLE_TYPE: SUBAGENT`. Staging and committing `task_state.md` (Step 5) belongs exclusively to the **Parent Agent** after operator approval.
 
 ---
 
@@ -38,7 +38,6 @@ Enforces strict size limits (target: **<= 8,192 bytes** and **<= 100 lines**) wh
 ### Step 1: Pre-Sync Status Check
 1. Resolve context repository and check git status:
    ```pwsh
-   # Resolves <AiContextPath> if provided, otherwise checks sibling context or current repo:
    $ctx = if ($AiContextPath -and (Test-Path $AiContextPath)) { $AiContextPath } elseif (Test-Path "..\*-AI-Context") { (Resolve-Path "..\*-AI-Context").Path } else { "." }
    rtk git -C $ctx status --porcelain
    ```
@@ -57,17 +56,10 @@ Enforces strict size limits (target: **<= 8,192 bytes** and **<= 100 lines**) wh
 Follow the standardized section layout:
 
 1. **`# Task State`**: Top-level title.
-2. **`## Current Task`**:
-   - 1–2 sentences summarizing the active task, current objectives, and target commit `$codeHead`.
-3. **`## Completed Steps`**:
-   - Retain only the most recent **1–2 immediate milestones** relevant to current work.
-   - **Pruning rule**: Remove older, finished stages. They are already permanently preserved in the code repo's `rtk git log` and releases.
-4. **`## Deferred / Next Milestone`**:
-   - Bulleted list of immediate backlog items or future version tasks.
-5. **`## Known Edge Cases`**:
-   - 1–2 line summaries of active edge cases, gotchas, or platform quirks.
-   - If an edge case is backed by an ADR, add a relative link to `docs/adr/000x-....md`.
-   - Remove resolved edge cases that are covered by regression tests.
+2. **`## Current Task`**: 1–2 sentences summarizing the active task, current objectives, and target commit `$codeHead`.
+3. **`## Completed Steps`**: Retain only the most recent **1–2 immediate milestones** relevant to current work. Remove older finished stages (already preserved in `rtk git log`).
+4. **`## Deferred / Next Milestone`**: Bulleted list of immediate backlog items or future version tasks.
+5. **`## Known Edge Cases`**: 1–2 line summaries of active edge cases, gotchas, or platform quirks (max 5 items). Link to `docs/adr/000x-....md` where applicable and remove resolved edge cases covered by regression tests.
 
 ### Step 4: Verification Gate (Size, Line & Gotcha Limits)
 Verify that `task_state.md` meets the constraints directly in pwsh:
@@ -86,8 +78,8 @@ if ($item.Length -gt 8192 -or $lines -gt 100) {
 }
 ```
 
-### Step 5: Atomic Git Commit
-Commit the pruned state in the target repository:
+### Step 5: Atomic Git Commit (Parent Agent Post-Approval Only)
+After operator approval (never inside a background subagent), the Parent Agent commits the pruned state in the target repository:
 ```pwsh
 $ctx = if ($AiContextPath -and (Test-Path $AiContextPath)) { $AiContextPath } elseif (Test-Path "..\*-AI-Context") { (Resolve-Path "..\*-AI-Context").Path } else { "." }
 $taskFile = if (Test-Path "$ctx\task_state.md") { "$ctx\task_state.md" } else { ".\task_state.md" }
@@ -99,8 +91,6 @@ rtk git -C $ctx commit -m "chore(context): update active task state"
 
 ## 3. Subagent Execution Report Contract
 
-When invoked as a subagent for task state synchronization, return only:
+When invoked inside a subagent (`ROLE_TYPE: SUBAGENT`) for task state synchronization, execute Steps 1–4 only (zero `git commit`) and return the standard 4-slot receipt noting:
 - Pre-sync vs Post-sync byte size and line count of `task_state.md`.
-- Code repo HEAD SHA referenced.
-- Number of active edge cases retained.
-- Commit hash created in the AI-Context repository.
+- Code repo HEAD SHA referenced and number of active edge cases retained ($\le 5$).

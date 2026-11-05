@@ -1,6 +1,6 @@
 ---
 name: orchestrator
-description: Meta-orchestrator protocol for Parent Agent: task decomposition, context insulation, and subagent fleet governance.
+description: Meta-orchestrator protocol (/orchestrator) for Parent Agent: task triage, context insulation, and subagent fleet governance.
 ---
 
 # Universal Lead Orchestrator Protocol (Operational Runbook)
@@ -13,20 +13,20 @@ A high-rigor governance runbook enforcing Anthropic Lead-Agent context insulatio
 
 ### 1.1 Parent Context Insulation Invariant (Strict Application Code Ban)
 - **Rule**: On Tier 2 (`standard`) and Tier 3 (`large`) tasks, the **Parent Agent** (identified by possessing `invoke_subagent` and `read_file`) is strictly prohibited from invoking `read_file` or `view_file` on application source code (`src/**`, `core/**`, `web/**`, `lib/**`, business logic implementations).
-- **Allowed Parent Reads**: High-level task coordination files (`task_state.md`, ADR summaries), intermediate subagent dossiers in scratch (`~/.gemini/antigravity/scratch/` or `<appDataDir>\brain\<conversation-id>\scratch\`), git tracking receipts (`rtk git status --short`, `rtk git diff --stat`), and CLI test output.
+- **Allowed Parent Reads**: High-level task coordination files (`task_state.md`, ADR summaries, `specs/<feature>/*.md`), intermediate subagent dossiers in scratch (`<appDataDir>\brain\<conversation-id>\scratch\<task>\` or `$HOME/.gemini/antigravity/scratch/<task>/`), git tracking receipts (`rtk git status --short`, `rtk git diff --stat`), and CLI test output.
 - **Subagent Mandate**: All deep code reading, syntax analysis, code editing, and test authoring belong exclusively to subagents (identified by possessing `view_file`, `replace_file_content`, and `write_to_file`).
 
-### 1.2 Zero-Read Triage Gate (Step 0 Blast Radius Sizing)
+### 1.2 Zero-Read Triage Gate (Step 0 Blast Radius Sizing — SSOT)
 Before opening any source file, the Parent Agent classifies task blast radius using **zero-read metadata commands only**:
 1. `rtk git status --short`: modified and untracked file counts.
 2. `rtk rg --files` or `rtk rg -l "<symbol>"`: list of candidate files without reading contents.
 3. `rtk rg -c "<symbol>"`: caller counts per file.
 4. User prompt, issue description, or `task_state.md`.
 
-*Sizing Thresholds*:
-- **Tier 0 (`trivial`: $\le 2$ files, $\le 3$ exec / $\le 5$ doc lines)**: Single-turn Parent fast-path post-checkpoint. Subagents bypassed.
-- **Tier 1 (`small`: 1 module bugfix/enhancement)**: Autonomous Parent TDD post-checkpoint. Subagents optional on-demand.
-- **Tier 2 (`standard`: 2–5 files, internal boundaries)**: Lead Parent Orchestrator + Direct Specialist Subagents. Parent inline reading strictly banned.
+*Sizing Thresholds (Canonical Definition)*:
+- **Tier 0 (`trivial`: $\le 2$ files, $\le 3$ exec / $\le 5$ doc lines, zero logic/state/schema mutation)**: Single-turn Parent fast-path post-checkpoint. Subagents and Gate 1 bypassed; pauses at `[TRIVIAL REVIEW]` before commit.
+- **Tier 1 (`small`: 1 module bugfix/enhancement)**: Autonomous Parent TDD post-checkpoint (`New-AuditCheckpoint.ps1` $\rightarrow$ RED test $\rightarrow$ GREEN fix $\rightarrow$ 5-Axis check $\rightarrow$ Gate 2 `gate2_handoff.md`). Subagents optional on-demand.
+- **Tier 2 (`standard`: 2–5 files, internal boundaries)**: Lead Parent Orchestrator + Direct Specialist Subagents. Parent inline code reading strictly banned. Read-only exploration precedes Gate 1 approval and Phase 2 checkpoint.
 - **Tier 3 (`large`: >5 files, architectural overhaul, schema rewrite)**: Lead Parent Orchestrator + Single `teamwork` Council Review dispatch.
 - **Package Installations**: Any addition, removal, or upgrade of dependencies (regardless of file count) strictly requires Gate 1 human approval before modifying files.
 
@@ -40,15 +40,16 @@ Before opening any source file, the Parent Agent classifies task blast radius us
 - **Abnormal Termination**: If a mutating subagent crashes, times out, or leaves a dirty tree, Parent immediately executes `Restore-AuditCheckpoint.ps1` before secondary actions.
 
 ### 1.5 Anti-Mock Cheating & Repro-First RED Verification
-- **Rule**: For bug fixes in Tier 2/3, Parent must witness a failing test receipt (`run_command`) on unmodified code (RED state) authored by `tdd-guide` before delegating the fix.
+- **Rule**: For bug fixes in Tier 2/3, after Gate 1 approval and verified `New-AuditCheckpoint.ps1`, Parent dispatches `tdd-guide` to author a failing test on unmodified production code (RED state) and witnesses the failing CLI test receipt (`run_command`) before delegating the fix.
 - **Diff Audit**: Before presenting Gate 2, Parent delegates line-by-line diff review to `code-auditor` or `silent-failure-hunter` to audit for mock-cheating, weakened assertions, or test deletion.
 
-### 1.6 Subagent Commit Ban & Direct Parent CLI Test Runner Execution
-- **Subagent Commit Ban**: Subagents are strictly barred from running `git commit`, `git tag`, or `git push`. Commit authority belongs exclusively to the Parent Agent post-Gate 2 approval.
+### 1.6 Subagent Commit/Push Ban, Shell Safety & Direct Parent CLI Test Runner
+- **Subagent Commit & PR Ban**: Subagents are strictly barred from running `git commit`, `git tag`, `git push`, `gh pr create`, `gh pr merge`, or `gh release create`. Commit and PR authority belongs exclusively to the Parent Agent post-Gate 2 approval.
+- **AST Shell Validation**: Any non-standard mutating or file-deleting shell command executed by Parent or Subagent must first pass `Test-PowerShellCommandSafety.ps1` per `config/GEMINI.md#L63`.
 - **Direct Parent Test Runner**: Parent must directly run the verification test command via `run_command`, verifying exit code 0 AND positive assertion count ($>0$ passed, $0$ failed per ADR-0015). For testless repos, label `[TEST HARNESS: NONE]` and verify via static compilation/linter/build checks.
 
-### 1.7 Pre-Mutation Syntax Interception (SWE-Agent Fast Syntax Gate)
-- **Fast Syntax Gate**: Before executing test runners or presenting verification, mutators or Parent run a rapid syntax check on modified files (`node --check <file>` for Node/JS, `python -m py_compile <file>` for Python, `[System.Management.Automation.Language.Parser]::ParseFile("<file>", [ref]$null, [ref]$err)` for PowerShell).
+### 1.7 Pre-Mutation Syntax Interception (SWE-Agent Fast Syntax Gate — SSOT)
+- **Fast Syntax Gate**: Before executing test runners or presenting verification, mutators or Parent run a rapid syntax check on modified files (`node --check <file>` or `rtk npx tsc --noEmit` for Node/JS/TS, `python -m py_compile <file>` for Python, `[System.Management.Automation.Language.Parser]::ParseFile("<file>", [ref]$null, [ref]$err)` for PowerShell).
 - **In-Turn Fix**: Syntax typos, missing delimiters, or parse errors caught by this pre-mutation check are fixed immediately in-turn without incrementing `global_attempt_counter` ($\le 2$), which is reserved strictly for semantic, build, or test assertion failures.
 
 ---
@@ -80,14 +81,15 @@ Dispatch exactly ONE call to `teamwork` with `Role: "Council Review Panel"` per 
 
 ### Pathway B: Focused Domain Specialists (Tier 1 On-Demand / Tier 2 Execution)
 Parent dispatches targeted custom subagents directly via `invoke_subagent`:
-- Discovery: `system-architect` (contracts/topology), `code-auditor` (hygiene/security).
-- Test Authoring: `tdd-guide` (Red-Green-Refactor, boundary assertions).
-- Fix Implementation: `build-error-resolver` (type errors), `tdd-guide` (logic fixes).
-- Quality Gate: `code-auditor` (diff review), `spec-verifier` (Context7 API checks).
+- Greenfield Spec & Planning: `system-architect` applying [`spec-kit`](../spec-kit/SKILL.md) (`/speckit.specify` $\rightarrow$ `/speckit.plan` $\rightarrow$ `/speckit.tasks`) and [`contract-first`](../contract-first/SKILL.md).
+- Discovery: `system-architect` (contracts/topology), `code-auditor` (hygiene/security), `database-reviewer` (schema/index review).
+- Test Authoring (Post-Gate 1 & Post-Checkpoint): `tdd-guide` (Red-Green-Refactor, boundary assertions).
+- Fix / Feature Implementation: `tdd-guide` (logic/feature code), `ui-crafter` (frontend UI/accessibility), `build-error-resolver` (type/compiler errors via `replace_file_content`), `docs-architect` (ADRs/docs/`task_state.md`), `l10n-humanizer` (localization resources), `maintenance-bot` (CI/Dependabot).
+- Quality Gate: `code-auditor` or `silent-failure-hunter` (diff review), `spec-verifier` (Context7 & [`deep-web-research`](../deep-web-research/SKILL.md) API checks).
 
 ---
 
-## 3. The 4-Slot Delegation Contract
+## 3. The 4-Slot Delegation Contract (SSOT)
 
 Every `invoke_subagent` prompt issued by the Parent Orchestrator MUST adhere to this 4-slot structure:
 
@@ -101,27 +103,26 @@ Zero Process Leaks: do not emit AI process tags or commit markers.
 
 <SCOPE_AND_BOUNDARIES>
 Target Coordinates: <file.ext#Lxx-Lyy>
-Allowed Mutation Paths: <explicit file list or directory>
+Allowed Mutation Paths: <explicit file list, directory, or NONE (Read-Only)>
 Deny Paths: ~/.ssh/**, ~/.aws/**, ~/.gnupg/**, **/.env*, **/*.key, **/*.pem, mcp/**
 </SCOPE_AND_BOUNDARIES>
 
 <TOOLS_AND_ABSOLUTE_SKILL_PATHS>
-Tools: Use view_file to inspect code; use replace_file_content or write_to_file for edits.
-Bound Skills (resolve via absolute paths from prompt header):
-- <Absolute path to skill 1>
-- <Absolute path to skill 2>
+Tools: Use view_file to inspect code; use replace_file_content (or write_to_file if granted in agent manifest) for edits.
+Bound Skills (resolve exact OS absolute paths from <skills> header; never pass ~ or $HOME to view_file):
+- <Absolute OS path to skill 1, e.g. C:\Users\<User>\.gemini\config\skills\<skill>\SKILL.md>
 </TOOLS_AND_ABSOLUTE_SKILL_PATHS>
 
 <RETURN_CONTRACT>
-Write detailed forensic reports to <appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md.
+Write detailed forensic reports to <appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md (unless using build-error-resolver without write_to_file).
 In your final chat message, return ONLY this compact receipt (<= 15 lines):
 - Status: [PASS | FAIL | BLOCKED]
 - Target Coordinates: <file.ext#Lxx-Lyy>
 - Caller Blast Radius: <N callers across M files>
-- CLI Test Command: <command executed>
+- CLI Test Command: <command executed or N/A>
 - Exit Code: <0 or non-zero>
 - Assertions: <N passed, 0 failed>
-- Deliverable Path: <scratch path if applicable>
+- Deliverable Path: <scratch path or N/A (in-place edit only)>
 </RETURN_CONTRACT>
 ```
 

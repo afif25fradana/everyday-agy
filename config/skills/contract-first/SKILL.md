@@ -1,6 +1,6 @@
 ---
 name: contract-first
-description: Coordinate frontend/backend APIs via authoritative machine-checkable contracts (OpenAPI, JSON Schema, Protobuf).
+description: Coordinate frontend/backend APIs (/contract-first) via machine-checkable contracts (OpenAPI, JSON Schema, and Protobuf).
 ---
 
 # Contract-First Collaboration

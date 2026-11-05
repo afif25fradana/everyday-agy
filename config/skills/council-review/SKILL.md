@@ -1,6 +1,6 @@
 ---
 name: council-review
-description: Multi-Agent Council Review panel for high-stakes architecture evaluations, deep code audits, and pre-release gates.
+description: Multi-Agent Council Review (/council) via teamwork for Tier 3 architecture evaluations, deep audits, and pre-release gates.
 ---
 
 # Deliberative Council Review Orchestration (Operational Runbook)
@@ -77,7 +77,7 @@ A high-rigor, evidence-backed evaluation framework combining Anthropic's **Evalu
 Before convening the Council, establish an objective factual baseline to prevent speculative debate:
 1. Identify target modules, boundaries, and dependencies.
 2. Map function guarantees (what must always hold), unenforced assumptions (marked `nothing found` if unvalidated), and upstream/downstream callers.
-3. For large codebases, Parent conducts baseline scoping via zero-read metadata (`rtk rg`), while deep read-only inspection is executed concurrently by Explorer agents inside `teamwork` Phase 0 (dossier compiled under `<appDataDir>\brain\<conversation-id>\scratch\<task>\audit-context/`).
+3. For large codebases, Parent conducts baseline scoping via zero-read metadata (`rtk rg`), while deep read-only inspection is executed concurrently by Explorer agents inside `teamwork` Phase 0 (dossier compiled under `<appDataDir>\brain\<conversation-id>\scratch\<task>\audit-context\`).
 4. Proceed to Pillar 2 once factual boundaries are verified.
 
 ---
@@ -130,7 +130,7 @@ Requested team: Council review panel (read-only audit & comparison)
 
 Conduct a comprehensive, read-only multi-perspective Council evaluation of <target_name> to determine whether it is optimal, ergonomically sound, spec-compliant, and competitive against top GitHub community standards.
 
-Working directory: <appDataDir>\scratch\<project>
+Working directory: <appDataDir>\brain\<conversation-id>\scratch\<task>
 Integrity mode: development
 
 ## References
@@ -152,24 +152,24 @@ Hunt swallowed exceptions, silent defaults, masking catches, and resource leaks.
 Benchmark against top GitHub repositories and state-of-the-art patterns.
 
 ### R5. Official Spec & Remediation Verification (Council Seat: spec-verifier)
-Cross-check all proposed remediation plans, code snippets, and third-party library recommendations against live authoritative documentation. Use Context7 MCP (`resolve-library-id` -> `query-docs`) as primary verification; fallback to `search_web` targeting official documentation domains if Context7 lacks coverage. Veto deprecated APIs, unverified syntax, or speculative abstractions.
+Cross-check all proposed remediation plans, code snippets, and third-party library recommendations against live authoritative documentation. Use Context7 MCP (`resolve-library-id` -> `query-docs`) as primary verification; fallback to `search_web` targeting official documentation domains governed by `deep-web-research/SKILL.md` if Context7 lacks coverage. Veto deprecated APIs, unverified syntax, or speculative abstractions.
 
 ### R6. Strictly Read-Only Execution & Infrastructure
 The evaluation must remain strictly read-only. Zero mutating file edits, package installations, or system changes are permitted outside the scratch workspace.
 
 ### R7. Structured Deliverable & Chairman Synthesis
-Generate a comprehensive evaluation report saved to `<appDataDir>\scratch\<project>\council_evaluation_report.md`. The report must include:
+Generate a comprehensive evaluation report saved to `<appDataDir>\brain\<conversation-id>\scratch\<task>\council_evaluation_report.md`. The report must include:
 1. Executive Summary & Final Verdict from the Chairman.
 2. Numerical Scorecards (scale 1.0 to 5.0 for Rigor, Ergonomics, Token Efficiency, and Spec Alignment across all active seats).
 3. Prioritized Gap Matrix (Critical / High / Medium / Low).
 4. Non-breaking actionable optimization roadmap grounded in verified documentation.
 
 ## Acceptance Criteria & Adversarial Verification
-- [ ] Evaluation report exists at `<appDataDir>\scratch\<project>\council_evaluation_report.md`
+- [ ] Evaluation report exists at `<appDataDir>\brain\<conversation-id>\scratch\<task>\council_evaluation_report.md`
 - [ ] Report contains numerical scorecards (1.0 to 5.0) across all seats with normalized arithmetic closure ($4 \times N_{\text{seats}}$ cells)
 - [ ] Report lists concrete line-number citations for every identified discrepancy (`file.ext#Lxx-Lyy`)
 - [ ] Anti-Sycophancy Mandate: Scores >= 4.50 are prohibited unless backed by automated fault injection or rigorous proof. Every seat must surface at least 2 critical/high gap observations
-- [ ] Remediation Verification: Every action item in the optimization roadmap is cross-checked against Context7 or official documentation
+- [ ] Remediation Verification: Every action item in the optimization roadmap is cross-checked against Context7 or official documentation per `deep-web-research`
 - [ ] Adversarial Challengers independently verify all line references against codebase HEAD
 - [ ] Zero mutating file edits or package installations were performed during the run
 ```
@@ -191,7 +191,7 @@ Generate a comprehensive evaluation report saved to `<appDataDir>\scratch\<proje
 
 ### Pillar 4: Certified Deliverable Packaging
 
-Once `teamwork` returns, the Parent Agent reads `<appDataDir>\scratch\<project>\council_evaluation_report.md` and presents the certified deliverable meeting [`scorecard-rubric.md`](./references/scorecard-rubric.md):
+Once `teamwork` returns, the Parent Agent reads `<appDataDir>\brain\<conversation-id>\scratch\<task>\council_evaluation_report.md` and presents the certified deliverable meeting [`scorecard-rubric.md`](./references/scorecard-rubric.md):
 1. **Executive Summary & Chairman Verdict**: Clear grade (A, B+, B, C) and composite score (out of 5.0).
 2. **16-Cell Scorecard Matrix**: Normalized arithmetic closure across Rigor, Ergonomics, Token Efficiency, and Spec Alignment.
 3. **Concrete Discrepancies**: Citations anchored strictly to line coordinates (`file.ext#Lxx-Lyy`).

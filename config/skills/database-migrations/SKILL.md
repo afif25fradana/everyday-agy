@@ -1,6 +1,6 @@
 ---
 name: database-migrations
-description: Reversible database migrations: expand-contract zero-downtime renames, concurrent indexes, and batched backfills.
+description: Reversible database migrations (/database-migrations): expand-contract renames, concurrent indexes, and batched backfills.
 ---
 
 # Database Migration Patterns
@@ -56,12 +56,14 @@ ALTER TABLE users ADD COLUMN role TEXT NOT NULL;
 -- BAD: Takes SHARE lock, blocks concurrent writes on large tables
 CREATE INDEX idx_users_email ON users (email);
 
--- GOOD: Non-blocking, allows concurrent reads and writes
+-- GOOD: Non-blocking, acquires SHARE UPDATE EXCLUSIVE lock (allows concurrent reads and writes)
 CREATE INDEX CONCURRENTLY idx_users_email ON users (email);
--- Note: CONCURRENTLY cannot run inside a multi-statement transaction block.
+-- Note 1: CONCURRENTLY cannot run inside a multi-statement transaction block (BEGIN ... COMMIT).
+-- Note 2: If build fails or deadlocks, Postgres leaves behind an INVALID index (pg_index.indisvalid = false).
+-- Clean up before re-running: DROP INDEX CONCURRENTLY idx_users_email;
 ```
 
-### 3. Renaming a Column (Expand-Contract Pattern)
+### 3. Renaming a Column (5-Phase Expand-Contract Pattern — SSOT)
 
 Never rename a column directly in production (`ALTER TABLE users RENAME COLUMN ...`). Use Expand-Contract:
 
@@ -79,8 +81,11 @@ Never rename a column directly in production (`ALTER TABLE users RENAME COLUMN .
 
 ### 4. Batched Data Migrations (Prevent Table Locks)
 
+> [!IMPORTANT]
+> Per official PostgreSQL `DO` documentation (`sql-do.html`), `COMMIT` inside a `DO $$` block is **only permitted when `DO` is executed outside an outer transaction block**. If your migration runner wraps files in `BEGIN ... COMMIT` by default (e.g. Prisma, Flyway, Kysely), either disable transactional wrapping for the backfill migration or run the batch loop from an application/CLI script where each `UPDATE ... LIMIT` runs in its own autocommit transaction.
+
 ```sql
--- GOOD: Batch update with progress to avoid long-lived transaction locks
+-- Execute outside an outer BEGIN...COMMIT transaction block:
 DO $$
 DECLARE
   batch_size INT := 5000;

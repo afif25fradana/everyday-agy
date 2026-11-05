@@ -86,8 +86,8 @@ jobs:
         shell: pwsh
         run: |
           $skills = Get-ChildItem -Path "config/skills" -Filter "SKILL.md" -Recurse
-          if ($skills.Count -ne 14) {
-            Write-Error "Expected exactly 14 bespoke skills, found $($skills.Count)"
+          if ($skills.Count -ne 15) {
+            Write-Error "Expected exactly 15 bespoke skills, found $($skills.Count)"
             exit 1
           }
           foreach ($s in $skills) {

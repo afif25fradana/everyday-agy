@@ -1,6 +1,6 @@
 ---
 name: deep-web-research
-description: Verifiable primary-source web research protocol enforcing version-locked queries, official domain targeting, and anti-hallucination grounding.
+description: Verifiable primary-source web research protocol enforcing version-locked queries and official domain constraints.
 ---
 
 # Deep Web Research Protocol

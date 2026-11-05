@@ -52,7 +52,7 @@ The setup evolves continuously as I test new patterns, encounter edge cases, and
 
 External CLI commands (`git`, `npm`, `ripgrep`, `ast-grep`) execute through [`rtk`](https://github.com/rtk-ai/rtk) when available to compress command output and eliminate token waste before reaching the model.
 
-For the complete catalog of verified CLI tools, official repositories, and an automated Windows administrator installer script, see **[TOOLKIT.md#1-verified-cli-tools](./TOOLKIT.md#1-verified-cli-tools)**.
+For the complete catalog of verified CLI tools, official repositories, and an automated Windows administrator installer script, see **[Verified CLI Tools in TOOLKIT.md](./TOOLKIT.md#1-verified-cli-tools)**.
 
 ## Architecture
 
@@ -85,7 +85,7 @@ Eleven custom subagents handle delegated tasks under a two-tier cognitive model 
 - **Analytical & Architecture Roles** (`model: inherit`): Run with full primary model reasoning capacity and read-only/spec boundaries (`system-architect`, `code-auditor`, `database-reviewer`, `silent-failure-hunter`, `spec-verifier`).
 - **Focused Execution Roles** (`model: flash`): Optimized for fast, cost-effective diffs and tight scoping (`tdd-guide`, `build-error-resolver`, `ui-crafter`, `docs-architect`, `maintenance-bot`, `l10n-humanizer`).
 
-For the full agent directory, tool boundaries, and delegation parameters, see **[TOOLKIT.md#5-custom-subagents](./TOOLKIT.md#5-custom-subagents)**.
+For the full agent directory, tool boundaries, and delegation parameters, see **[Custom Subagents Fleet in TOOLKIT.md](./TOOLKIT.md#5-custom-subagents)**.
 
 ### Workflow Skills and Provenance (`config/skills/`)
 
@@ -99,13 +99,13 @@ Fifteen modular skills are maintained directly within `config/skills/`. Third-pa
 Third-party upstream suites (`ponytail`, `taste-skill`, `anti-slop`, and Chrome DevTools) are decoupled from Git tracking per ADR-0016 to prevent vendor bloat.
 
 For trigger commands, detailed skill descriptions, and upstream installation links, see:
-- **[Tracked Skills Catalog (`TOOLKIT.md#3-custom-skills-catalog`)](./TOOLKIT.md#3-custom-skills-catalog)**
-- **[Decoupled Upstream Skills & Plugins (`TOOLKIT.md#4-recommended-upstream-skills--plugins-decoupled-per-adr-0016`)](./TOOLKIT.md#4-recommended-upstream-skills--plugins-decoupled-per-adr-0016)**
+- [**Tracked Skills Catalog**](./TOOLKIT.md#3-custom-skills-catalog)
+- [**Recommended Upstream Skills & Plugins**](./TOOLKIT.md#4-recommended-upstream-skills--plugins-decoupled-per-adr-0016)
 
 ### Architectural Decision Records (`docs/adr/`)
 Significant technical decisions, architectural constraints, and operational trade-offs are permanently recorded following the Michael Nygard format.
 
-All 22 active and historical decision records—covering cognitive model tiering, checkpoint gating, lead orchestrator context insulation, and AST safety hardening—are indexed with their status and context in the **[ADR Catalog (`docs/adr/README.md`)](./docs/adr/README.md)**.
+All 22 active and historical decision records—covering cognitive model tiering, checkpoint gating, lead orchestrator context insulation, and AST safety hardening—are indexed with their status and context in the **[ADR Catalog](./docs/adr/README.md)**.
 
 ## Contributing
 

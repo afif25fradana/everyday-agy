@@ -46,7 +46,9 @@ $forbiddenCommands = @(
     'Format-Volume', 'Format-Disk', 'Clear-Disk', 'Initialize-Disk',
     'Stop-Computer', 'Restart-Computer',
     'Start-Process', 'saps', 'start',
-    'Invoke-CimMethod', 'icim', 'Invoke-WmiMethod', 'iwmi'
+    'Invoke-CimMethod', 'icim', 'Invoke-WmiMethod', 'iwmi',
+    'Invoke-Command', 'icm', 'Start-Job', 'sajb', 'Start-ThreadJob',
+    'Remove-WmiObject', 'rwmi', 'Remove-CimInstance', 'rcim'
 )
 
 # 2. Inspect command elements
@@ -205,7 +207,7 @@ foreach ($cmdAst in $commandElements) {
             }
         }
 
-        # Block recursive deletions OR root deletions regardless of -Force (ADR-0011#L29)
+        # Block recursive deletions OR root deletions regardless of -Force (ADR-0011#L25)
         if ($hasRecurse -or $targetRoot) {
             Write-Error "Safety Violation: Prohibited recursive or root deletion '$($cmdAst.Extent.Text)' detected."
             exit 1
@@ -283,7 +285,9 @@ foreach ($cmdAst in $commandElements) {
                 }
             }
             if ($subCmd -eq 'branch') {
-                if ($subArgs -cmatch '(^|\s)-D\b' -or $subArgs -match '(^|\s)(--delete\s+-f\b|--delete\s+--force\b)') {
+                $hasShortForceDelete = [bool]($argTokens | Where-Object { $_ -cmatch '^-[a-zA-Z]*D[a-zA-Z]*$' -or $_ -match '^-[a-zA-Z]*d[a-zA-Z]*f[a-zA-Z]*$' -or $_ -match '^-[a-zA-Z]*f[a-zA-Z]*d[a-zA-Z]*$' })
+                $hasSplitForceDelete = [bool]($argTokens -match '^(-d|--delete)$') -and [bool]($argTokens -match '^(-f|--force)$')
+                if ($hasShortForceDelete -or $hasSplitForceDelete) {
                     Write-Error "Safety Violation: Prohibited destructive git branch force deletion detected."
                     exit 1
                 }
@@ -405,6 +409,12 @@ foreach ($mem in $memberExpressions) {
     # Intercept WMI process creation (GAP-CRIT-04)
     if ($memberVal -eq 'Create' -and ($exprText -match '(?i)(wmiclass|Win32_Process)' -or $mem.Extent.Text -match '(?i)(wmiclass|Win32_Process)')) {
         Write-Error "Safety Violation: WMI process creation is prohibited."
+        exit 1
+    }
+
+    # Intercept COM ProgID/CLSID instantiation via .NET Type reflection
+    if ($memberVal -in @('GetTypeFromProgID', 'GetTypeFromCLSID')) {
+        Write-Error "Safety Violation: Prohibited COM ProgID/CLSID instantiation '$($mem.Extent.Text)' detected."
         exit 1
     }
 

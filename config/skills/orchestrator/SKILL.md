@@ -55,7 +55,7 @@ Before opening any source file, the Parent Agent classifies task blast radius us
 
 ### 1.6 Subagent Commit/Push Ban, Shell Safety & Direct Parent CLI Test Runner
 - **Subagent Commit & PR Ban**: Subagents are strictly barred from running `git commit`, `git tag`, `git push`, `gh pr create`, `gh pr merge`, or `gh release create`. Commit and PR authority belongs exclusively to the Parent Agent post-Gate 2 approval.
-- **AST Shell Validation**: Any non-standard mutating or file-deleting shell command executed by Parent or Subagent must first pass `Test-PowerShellCommandSafety.ps1` per `config/GEMINI.md#L63`.
+- **AST Shell Validation**: Any non-standard mutating or file-deleting shell command executed by Parent or Subagent must first pass `Test-PowerShellCommandSafety.ps1` per `config/GEMINI.md#L64`.
 - **Direct Parent Test Runner**: Parent must directly run the verification test command via `run_command`, verifying exit code 0 AND positive assertion count ($>0$ passed, $0$ failed per ADR-0015). For testless repos, label `[TEST HARNESS: NONE]` and verify via static compilation/linter/build checks.
 
 ### 1.7 Pre-Mutation Syntax Interception (SWE-Agent Fast Syntax Gate — SSOT)
@@ -77,7 +77,7 @@ flowchart TD
     S1 --> Gate1["Parent Gate 1 Proposal Artifact & Approval"]
     Gate1 --> Ckpt["Parent Verified Checkpoint<br/>New-AuditCheckpoint.ps1"]
     Ckpt --> S2["Sequential Mutator 1: tdd-guide<br/>Repro-First RED Test"]
-    S2 --> S3["Sequential Mutator 2: Implementer<br/>tdd-guide / ui-crafter / build-error-resolver<br/>Green Implementation"]
+    S2 --> S3["Sequential Mutator 2: Implementer<br/>tdd-guide / ui-crafter / build-error-resolver /<br/>docs-architect / l10n-humanizer / maintenance-bot<br/>Green Implementation"]
     S3 --> S4["Diff Audit: code-auditor<br/>Anti-Mock & Five-Axis Check"]
     S4 --> Gate2["Parent Gate 2 Handoff"]
     

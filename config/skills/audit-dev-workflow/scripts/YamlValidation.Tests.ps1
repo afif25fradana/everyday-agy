@@ -119,6 +119,7 @@ function Test-YamlBlockSyntax {
             }
 
             # 3. Check Unquoted Colons in Scalar Values (skip flow mappings, arrays, or quoted strings)
+            $val = $val -replace '^("[^"]*"|''[^'']*'')\s+#.*$', '$1'
             if ($val -and $val -notmatch '^\[.*\]$' -and $val -notmatch '^\{.*\}$') {
                 $isQuoted = ($val -match '^".*"$' -or $val -match "^'.*'$")
                 if (-not $isQuoted -and $val -match ':\s') {
@@ -226,6 +227,15 @@ foreach ($s in $skills) {
         }
     }
 }
+
+# ---------------------------------------------------------
+# Part 4: Parser Unit Tests
+# ---------------------------------------------------------
+Write-Host "`n[4] Running Parser Unit Tests..." -ForegroundColor White
+
+$inlineCommentYaml = 'title: "[BUG]: " # issue prefix'
+$inlineCommentResult = Test-YamlBlockSyntax -Content $inlineCommentYaml -FilePath "inline-comment-test.yml"
+Assert-Test -Name "Quoted scalar with inline comment syntax" -Condition ($inlineCommentResult.Success) -Details ($inlineCommentResult.Error)
 
 # ---------------------------------------------------------
 # Final Summary

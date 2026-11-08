@@ -34,7 +34,7 @@ function Sanitize-DiffContent {
     $Content = [System.Text.RegularExpressions.Regex]::Replace($Content, '\b(ghp|github_pat|gho|ghu|ghs|ghr)_[A-Za-z0-9_]{20,}', '<TEST_HASH_SANITIZED>')
 
     # Private keys
-    $Content = [System.Text.RegularExpressions.Regex]::Replace($Content, '-----BEGIN\s+([A-Z0-9_-]+\s+)?PRIVATE\s+KEY-----', '-----BEGIN PRIVATE KEY <TEST_HASH_SANITIZED>-----')
+    $Content = [System.Text.RegularExpressions.Regex]::Replace($Content, '(?i)-----BEGIN\s+([A-Z0-9_-]+\s+)?PRIVATE\s+KEY-----', '-----BEGIN PRIVATE KEY <TEST_HASH_SANITIZED>-----')
 
     # Cloud API keys
     $Content = [System.Text.RegularExpressions.Regex]::Replace($Content, '\b(AKIA[0-9A-Z]{16}|ASIA[0-9A-Z]{16}|AIza[0-9A-Za-z\-_]{35}|sk-ant-(?:api|admin)\d{2}-[a-zA-Z0-9_-]{30,}|sk-(?:proj|svcacct|admin)-[a-zA-Z0-9_-]{30,}|sk-[a-zA-Z0-9]{20,})\b', '<TEST_HASH_SANITIZED>')
@@ -74,7 +74,7 @@ try {
         return
     }
 
-    $untracked = @(git -c core.quotePath=false ls-files --others --exclude-standard | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    $untracked = @(git -c core.quotePath=false ls-files --others --exclude-standard | Where-Object { -not [string]::IsNullOrWhiteSpace($_) -and (Test-Path -LiteralPath $_ -PathType Leaf) })
 
     $tempDiff = [System.IO.Path]::GetTempFileName()
     $tempStat = [System.IO.Path]::GetTempFileName()
@@ -85,7 +85,13 @@ try {
         }
 
         git --no-pager -c core.quotePath=false diff --output=$tempDiff HEAD
+        if ($LASTEXITCODE -ne 0) {
+            throw "git diff failed with exit code $LASTEXITCODE"
+        }
         git --no-pager diff --stat=140,80 --output=$tempStat HEAD
+        if ($LASTEXITCODE -ne 0) {
+            throw "git diff --stat failed with exit code $LASTEXITCODE"
+        }
 
         $rawDiff = [System.IO.File]::ReadAllText($tempDiff, [System.Text.Encoding]::UTF8)
         $rawStat = [System.IO.File]::ReadAllText($tempStat, [System.Text.Encoding]::UTF8)

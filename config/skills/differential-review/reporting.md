@@ -198,4 +198,4 @@ N HIGH-risk functions without tests → Recommend blocking merge
 
 ## User Notification Standard
 
-After generating the report artifact, emit a concise 1–3 line summary in chat linking to the artifact with finding counts (`CRITICAL`/`HIGH`) and final recommendation (`APPROVE`/`REJECT`/`CONDITIONAL`), adhering to `config/GEMINI.md#L35-L36`.
+After generating the report artifact, emit a concise 1–3 line summary in chat linking to the artifact with finding counts (`CRITICAL`/`HIGH`) and final recommendation (`APPROVE`/`REJECT`/`CONDITIONAL`), adhering to `config/GEMINI.md#L36-L37`.

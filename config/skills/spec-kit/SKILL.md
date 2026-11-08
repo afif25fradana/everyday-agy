@@ -29,7 +29,7 @@ Requirements & ACs       Technical Contracts     Atomic Checklist        Red-Gre
 
 Focus on **WHAT** is needed and **WHY**, without prescribing internal implementation details or prematurely picking libraries.
 - **Socratic 1-Question Discipline**: Clarifying turns must end with exactly one focused question to prevent user fatigue.
-- **Scope & Constraint Discovery**: Surface implied constraints and cheaper alternative paths in 1–3 lines (strictly zero prompt restating per `GEMINI.md#L35`).
+- **Scope & Constraint Discovery**: Surface implied constraints and cheaper alternative paths in 1–3 lines (strictly zero prompt restating per `config/GEMINI.md#L36`).
 - **Design Gate**: Hard boundary prohibiting application code writing or project scaffolding until the user explicitly approves `spec.md`.
 
 Draft artifact `<appDataDir>\brain\<conversation-id>/spec.md`:

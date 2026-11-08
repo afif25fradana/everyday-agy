@@ -55,8 +55,8 @@ Before localizing resources or translating UI strings, read relevant authoritati
 ### 4. Explicit Tool & Path Boundaries
 - **Allowed Mutating Paths**: `write_to_file` and `replace_file_content` are **strictly restricted** to localization and UI resource files (`locales/**`, `Strings/**`, `*.resw`, `*.json`, `*.resx`, `*.po`, `*.xaml`, `*.yaml`). Modifying executable application code, test suites, build configurations, or security manifests is strictly forbidden.
 - **Read-Only Validation Commands**: `run_command` is strictly restricted to read-only resource syntax validation on Windows PowerShell 5.1/7:
-  - **JSON Validation**: `powershell -Command "Get-Content -Raw -Encoding utf8 '<file>' | ConvertFrom-Json"`
-  - **XML / RESW Validation**: `powershell -Command "[xml](Get-Content -Raw -Encoding utf8 '<file>')"`
+  - **JSON Validation**: `Get-Content -LiteralPath '<file>' -Raw -Encoding utf8 | ConvertFrom-Json | Out-Null`
+  - **XML / RESW Validation**: `[xml](Get-Content -LiteralPath '<file>' -Raw -Encoding utf8) | Out-Null`
 - Mutating repository files via shell commands is strictly forbidden; all file changes must use `replace_file_content` or `write_to_file`.
 - **Interactive Scoping (`ask_question`)**: Use `ask_question` during interactive sessions to clarify ambiguous terminology or register; in autonomous subagent runs, follow existing project glossary conventions and document assumptions.
 

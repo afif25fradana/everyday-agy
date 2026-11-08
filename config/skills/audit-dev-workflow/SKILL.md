@@ -22,14 +22,11 @@ Classify the incoming task using the **Zero-Read Triage Gate** in [`orchestrator
 - **`large` (Tier 3)**: Cross-cutting architecture/schema overhaul ($>5$ files). Convene [`council-review`](../council-review/SKILL.md) via single `teamwork` dispatch $\rightarrow$ Gate 1 approval $\rightarrow$ sequential Tier 2 work packages.
 - **Mid-Execution Escalation**: If scope exceeds initial tier boundaries, immediately halt mutations, retain active checkpoint, author `gate1_proposal.md`, and obtain explicit approval before resuming edits per [`orchestrator`](../orchestrator/SKILL.md#12-zero-read-triage-gate-step-0-blast-radius-sizing--ssot).
 
-### Mandatory Parent Skill & Reference Activation Gate
-Before initiating Phase 1 on Tier 2 (`standard`) or Tier 3 (`large`) tasks, Parent Agent MUST actively load the authoritative operational runbooks via `read_file`:
-1. **Fleet Governance & Context Insulation**: Read `config/skills/orchestrator/SKILL.md`.
-2. **Normative Gate Schemas & ADR-0023 Rules**: Read `config/skills/audit-dev-workflow/references/handoff-spec.md` to enforce:
-   - The Zero-Decision Rule & Alternatives Considered at Gate 1.
-   - The 4-Bucket Resolution Taxonomy (`CONTEST | ESCALATE | PROPOSE FIX | DECLINE`).
-   - Failed Reviewer Accounting (`Status: not run`) and Settled vs. Fixed Finding Immunity.
-Failure to load these references prior to generating Gate 1 or processing Gate 2 feedback is an operational violation.
+### Mandatory Parent Skill & Reference Activation Gate (JIT Progressive Disclosure)
+Before each development phase, Parent Agent loads the authoritative operational runbooks Just-In-Time (JIT) via `read_file` using exact OS absolute paths (e.g. `C:\Users\<User>\.gemini\config\skills\...` — never pass unexpanded `~` or `$HOME` paths):
+1. **Prior to Tier 2/3 Discovery & Fleet Governance**: Read `config/skills/orchestrator/SKILL.md` to enforce context insulation, monotonic stop rules, and subagent fleet governance.
+2. **Prior to Drafting Gate 1 Proposals**: Read `config/skills/audit-dev-workflow/references/handoff-spec.md` to enforce the Zero-Decision Rule and Alternatives Considered.
+3. **Prior to Gate 2 Packaging & Review Loop Processing**: Read `config/skills/audit-dev-workflow/references/handoff-spec.md` to enforce the 4-Bucket Resolution Taxonomy (`CONTEST | ESCALATE | PROPOSE FIX | DECLINE`), Failed Reviewer Accounting (`Status: not run`), and Settled vs. Fixed Finding Immunity.
 
 ### Phase 1: Investigation & Blast Radius Analysis (Strictly Read-Only on Tier 2/3)
 1. **Trace Callers & Invariants (Parallel Fan-Out)**: Batch read-only caller searches (`rtk rg`) in parallel within a single turn before proposing edits. For Tier 0/1, inspect target files directly (`read_file`). For Tier 2/3, delegate target file reading to read-only specialist subagents (`system-architect` or `code-auditor` via `view_file`) per [`orchestrator`](../orchestrator/SKILL.md).
@@ -94,7 +91,7 @@ Failure to load these references prior to generating Gate 1 or processing Gate 2
 
 ### Phase 5: Gate 2 Review, Commit & Non-Interactive CI
 1. **Gate Packaging & Reviewer Payloads**:
-   - **Tier 0 (`[TRIVIAL REVIEW]`)**: Inline in chat (for diffs $\le 5$ lines per `config/GEMINI.md#L36`) or artifact, containing diffstat and full unified diff (`+`/`-`).
+   - **Tier 0 (`[TRIVIAL REVIEW]`)**: Inline in chat (for diffs $\le 5$ lines per `config/GEMINI.md#L37`) or artifact, containing diffstat and full unified diff (`+`/`-`).
    - **Gate 2 (`# Review Request: Gate 2 (Post-Execution Handoff & Diff)`)**: Written exclusively as an Antigravity UserFacing Artifact (`<appDataDir>\brain\<conversation-id>/gate2_handoff.md` with `UserFacing: true`) per [`handoff-spec.md`](./references/handoff-spec.md). Chat response must remain 1–3 lines linking to the artifact.
    - **Programmatic Diff Injection**: To eliminate autoregressive paraphrasing and hallucination, unified diffs must NEVER be manually typed. Implementers draft `gate2_handoff.md` with `{{VERBATIM_GIT_DIFFSTAT}}` and `{{VERBATIM_GIT_DIFF}}` placeholders, then execute `Update-Gate2Diff.ps1` to automatically handle untracked files, secret scrubbing, and verbatim diff replacement:
      ```powershell

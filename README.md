@@ -66,7 +66,7 @@ everyday-agy/
 │   ├── agents/          # 11 specialized subagents with hybrid model tiering (ADR-0004, ADR-0017, ADR-0018)
 │   └── skills/          # 15 bespoke and engine-adapted workflow skills
 ├── docs/
-│   └── adr/             # Architectural Decision Records (ADR-0001 through ADR-0024)
+│   └── adr/             # Architectural Decision Records (Nygard format)
 ├── sync.ps1             # Pulls live configs from ~/.gemini/ into this repo
 └── restore.ps1          # Deploys this repo into ~/.gemini/ with automatic backup
 ```
@@ -77,7 +77,7 @@ The global rules file stays compact by defining only active behavioral boundarie
 - Checkpoint-gated execution: autonomous execution and verification for small fixes (Tier 0/1); explicit approval before multi-file or architectural changes (Tier 2/3, ADR-0015).
 - Rollback safety: maintain a clean git checkpoint before modifying files.
 - Lean chat: concise status responses (1 to 3 lines) pointing to structured artifacts for review payloads.
-- Security boundaries: deny paths (`.env`, `~/.ssh`, token MCP configs), AST command interception (`Test-PowerShellCommandSafety.ps1` regression test suite), and quarantine for external inputs.
+- Security boundaries: deny paths (`.env`, `~/.ssh`, token MCP configs), AST command interception and checkpoint verification test suites (`Test-PowerShellCommandSafety.Tests.ps1`, `AuditCheckpoint.Tests.ps1`, `YamlValidation.Tests.ps1`), and quarantine for external inputs.
 
 ### Specialized Agent Roles (`config/agents/`)
 
@@ -105,14 +105,14 @@ For trigger commands, detailed skill descriptions, and upstream installation lin
 ### Architectural Decision Records (`docs/adr/`)
 Significant technical decisions, architectural constraints, and operational trade-offs are permanently recorded following the Michael Nygard format.
 
-All 24 active and historical decision records—covering cognitive model tiering, checkpoint gating, lead orchestrator context insulation, and AST safety hardening—are indexed with their status and context in the **[ADR Catalog](./docs/adr/README.md)**.
+All active and historical architectural decision records—covering cognitive model tiering, checkpoint gating, lead orchestrator context insulation, and AST safety hardening—are indexed with their status and context in the **[ADR Catalog](./docs/adr/README.md)**.
 
 ## Contributing
 
 1. Keep modifications minimal: shortest working diff wins (see `ponytail`).
 2. Avoid generic commentary: remove empty AI narrative comments from code.
 3. Propose structural changes through ADRs before modifying directory layouts or core guardrails.
-4. Verify PowerShell syntax and run AST safety tests (`Test-PowerShellCommandSafety.Tests.ps1`) locally before committing.
+4. Verify PowerShell syntax and run regression test suites (`Test-PowerShellCommandSafety.Tests.ps1`, `AuditCheckpoint.Tests.ps1`, `YamlValidation.Tests.ps1`) locally before committing.
 
 ## License
 

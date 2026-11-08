@@ -1,7 +1,7 @@
 # ADR-0005: Spec-Kit, GitHub Workflow & AST-Grep Integration
 
 ## Status
-Accepted
+Partially Superseded by ADR-0024 (for pre-checkpoint Spec-Kit artifact drafting and Gate 1 equivalence)
 
 ## Date
 2026-10-22

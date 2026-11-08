@@ -8,7 +8,7 @@ This directory contains the record of technical and architectural decisions for 
 | [ADR-0002](./0002-domain-partitioned-skills-vs-greedy-references.md) | Domain-Scoped Skills vs Monolithic Reference Trees | Superseded (ADR-0016) | 2026-10-22 | Skill Packaging |
 | [ADR-0003](./0003-ponytail-5-suite-architecture.md) | Discrete Commands for Ponytail Pair-Programming vs Audits | Superseded (ADR-0016) | 2026-10-22 | Skill Packaging |
 | [ADR-0004](./0004-subagent-model-tiering-inherit.md) | Model Inheritance for Planners/Auditors and Flash for Routine Tasks | Accepted | 2026-10-22 | Model Selection |
-| [ADR-0005](./0005-spec-kit-and-ast-grep-tooling.md) | Spec-Kit, GitHub CLI Workflow & AST-Grep Integration | Accepted | 2026-10-22 | Developer Tooling |
+| [ADR-0005](./0005-spec-kit-and-ast-grep-tooling.md) | Spec-Kit, GitHub CLI Workflow & AST-Grep Integration | Partially Superseded (ADR-0024) | 2026-10-22 | Developer Tooling |
 | [ADR-0006](./0006-marketplace-plugin-decoupling-and-security-adaptation.md) | Decouple Marketplace Plugins from Git Tracking | Superseded (ADR-0011, 0016) | 2026-10-22 | Git Tracking |
 | [ADR-0007](./0007-audit-dev-workflow-harmonization-and-anti-cheating.md) | Development Workflow Tooling and Reproducer-First Tests | Superseded (ADR-0014, 0015, 0022) | 2026-10-22 | Workflow Protocol |
 | [ADR-0008](./0008-tri-pillar-council-review-architecture.md) | Multi-Perspective Architecture and Pre-Release Review Board | Accepted | 2026-10-22 | Multi-Agent Review |

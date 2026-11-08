@@ -44,7 +44,7 @@ try {
         foreach ($rawTarget in $allTargets) {
             $target = "$rawTarget".Trim().Trim('"').Trim("'")
             if ([string]::IsNullOrWhiteSpace($target)) { continue }
-            $resolvedPath = if (Test-Path -Path $target) {
+            $resolvedPath = if (Test-Path -LiteralPath $target) {
                 (Resolve-Path -LiteralPath $target).Path
             } else {
                 $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($target)
@@ -60,7 +60,7 @@ try {
             $hashedBackup = Join-Path $scratchDir "${pathHash}_${leafName}.bak"
             $legacyBackup = Join-Path $scratchDir "$leafName.bak"
 
-            $backupPath = if (Test-Path -Path $hashedBackup) { $hashedBackup } elseif (Test-Path -Path $legacyBackup) { $legacyBackup } else { $null }
+            $backupPath = if (Test-Path -LiteralPath $hashedBackup) { $hashedBackup } elseif (Test-Path -LiteralPath $legacyBackup) { $legacyBackup } else { $null }
 
             if (-not $backupPath) {
                 Write-Error "Backup file not found in scratch: checked '$hashedBackup' and '$legacyBackup'"
@@ -70,7 +70,7 @@ try {
             if ($parentDir -and -not (Test-Path -LiteralPath $parentDir)) {
                 New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
             }
-            Copy-Item -Path $backupPath -Destination $resolvedPath -Force
+            Copy-Item -LiteralPath $backupPath -Destination $resolvedPath -Force
             Write-Output "Checkpoint restored: $backupPath -> $resolvedPath"
         }
     } else {
@@ -90,9 +90,9 @@ try {
                     exit 1
                 }
                 $untrackedBaseline = Join-Path $scratchDir "untracked_baseline.txt"
-                if (Test-Path -Path $untrackedBaseline) {
+                if (Test-Path -LiteralPath $untrackedBaseline) {
                     $baselineSet = @{}
-                    foreach ($line in (Get-Content -Path $untrackedBaseline)) {
+                    foreach ($line in (Get-Content -LiteralPath $untrackedBaseline)) {
                         $cleanLine = $line.Trim().TrimStart([char]0xFEFF)
                         if (-not [string]::IsNullOrWhiteSpace($cleanLine)) { $baselineSet[$cleanLine] = $true }
                     }

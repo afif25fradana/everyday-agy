@@ -11,7 +11,7 @@ This specification defines the communication contracts, trigger headers, quantit
 - **Missing Evidence Rule**: Omitting test/verification logs, exit codes, function signatures, caller context, or diffstats immediately halts review with `QUESTIONS FOR IMPLEMENTER`. For testless codebases, substitute automated tests with static syntax/build verification.
 - **Zero Diff Starvation**: Never cite a branch or patch on disk instead of including the actual unified diff (`+`/`-`).
 - **Evidence Citation**: All claims must be anchored to exact code coordinates (`file.ext#Lxx-Lyy`), unified diff lines, or verbatim CLI command output.
-- **Mandatory UserFacing Artifact Packaging**: Formal review payloads (Gate 1 proposals, Gate 2 handoffs, unified diffs exceeding 5 lines, and deep audit reports) are packaged into Antigravity UserFacing Artifacts (`<appDataDir>\brain\<conversation-id>/<name>.md`). Chat responses must remain 1–3 lines linking to the artifact for clean reviewer copy-pasting (compact $\le 5$-line Tier 0 `[TRIVIAL REVIEW]` diffs may be presented inline in chat per `config/GEMINI.md#L36`).
+- **Mandatory UserFacing Artifact Packaging**: Formal review payloads (Gate 1 proposals, Gate 2 handoffs, unified diffs exceeding 5 lines, and deep audit reports) are packaged into Antigravity UserFacing Artifacts (`<appDataDir>\brain\<conversation-id>/<name>.md`). Chat responses must remain 1–3 lines linking to the artifact for clean reviewer copy-pasting (compact $\le 5$-line Tier 0 `[TRIVIAL REVIEW]` diffs may be presented inline in chat per `config/GEMINI.md#L37`).
 
 ---
 

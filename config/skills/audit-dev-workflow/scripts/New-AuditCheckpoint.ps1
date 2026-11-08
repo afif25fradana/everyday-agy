@@ -28,7 +28,7 @@ try {
     $scratchDir = Join-Path $userHome ".gemini/antigravity/scratch/$safeTask"
 
     function Ensure-ScratchDir {
-        if (-not (Test-Path -Path $scratchDir)) {
+        if (-not (Test-Path -LiteralPath $scratchDir)) {
             New-Item -ItemType Directory -Path $scratchDir -Force | Out-Null
         }
     }
@@ -51,7 +51,7 @@ try {
         foreach ($rawTarget in $allTargets) {
             $target = "$rawTarget".Trim().Trim('"').Trim("'")
             if ([string]::IsNullOrWhiteSpace($target)) { continue }
-            if (-not (Test-Path -Path $target)) {
+            if (-not (Test-Path -LiteralPath $target)) {
                 Write-Error "Target file not found: $target"
                 exit 1
             }
@@ -65,13 +65,13 @@ try {
             }
             $leafName = Split-Path -Leaf $resolvedPath
             $backupPath = Join-Path $scratchDir "${pathHash}_${leafName}.bak"
-            Copy-Item -Path $resolvedPath -Destination $backupPath -Force
+            Copy-Item -LiteralPath $resolvedPath -Destination $backupPath -Force
 
             $sha = [System.Security.Cryptography.SHA256]::Create()
             try { $fullHash = ([BitConverter]::ToString($sha.ComputeHash([System.IO.File]::ReadAllBytes($backupPath)))).Replace('-', '').ToLower() }
             finally { $sha.Dispose() }
             $shortHash = $fullHash.Substring(0, 12)
-            "$fullHash  $backupPath  $resolvedPath" | Add-Content -Path (Join-Path $scratchDir "hashes.txt")
+            "$fullHash  $backupPath  $resolvedPath" | Add-Content -LiteralPath (Join-Path $scratchDir "hashes.txt")
             Write-Output "Checkpoint created: $backupPath (sha $shortHash)"
         }
     } else {
@@ -104,7 +104,7 @@ try {
                 Write-Error "Failed to record untracked directories baseline."
                 exit 1
             }
-            (@($untrackedFiles) + @($untrackedDirs)) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique | Set-Content -Path $untrackedBaseline -Encoding utf8
+            (@($untrackedFiles) + @($untrackedDirs)) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique | Set-Content -LiteralPath $untrackedBaseline -Encoding utf8
             $rawSha = ((Invoke-GitCmd @("rev-parse", "HEAD")) | Out-String).Trim()
             $headSha = $rawSha.Substring(0, [Math]::Min(12, $rawSha.Length))
             Write-Output "Checkpoint created: git branch $branchName (sha $headSha)"

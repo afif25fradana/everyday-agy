@@ -81,6 +81,24 @@ try {
     $nestedRestored = if (Test-Path -Path $nestedFile) { (Get-Content -Path $nestedFile -Raw).Trim() } else { "" }
     Assert-Test -Name "File mode restore recreates parent directories" -Condition ($nestedRestored -eq '{"status":"ok"}')
 
+    # Test 3c: File mode checkpoint & restore on bracket filenames like Next.js [id].tsx
+    $bracketFile = Join-Path $testDir "[id].tsx"
+    Set-Content -LiteralPath $bracketFile -Value "export default function Page() { return <div>ID</div>; }" -Encoding utf8
+    $bracketTask = "bracket-$taskName"
+    try {
+        & $newScript -Task $bracketTask -FilePath $bracketFile 2>&1 | Out-Null
+    } catch {
+        # Expected failure on unmodified code
+    }
+    Set-Content -LiteralPath $bracketFile -Value "tampered bracket content" -Encoding utf8
+    try {
+        & $restoreScript -Task $bracketTask -FilePath $bracketFile 2>&1 | Out-Null
+    } catch {
+        # Expected failure on unmodified code
+    }
+    $restoredBracket = if (Test-Path -LiteralPath $bracketFile) { (Get-Content -LiteralPath $bracketFile -Raw).Trim() } else { "" }
+    Assert-Test -Name "File mode checkpoint and restore on bracket filename [id].tsx" -Condition ($restoredBracket -eq "export default function Page() { return <div>ID</div>; }")
+
     # Test 4: File mode fails gracefully on missing backup
     $missingFile = Join-Path $testDir "never_backed_up.txt"
     Set-Content -Path $missingFile -Value "ghost" -Encoding utf8
@@ -322,6 +340,10 @@ try {
     $nestedScratchDir = Join-Path $userHome ".gemini/antigravity/scratch/nested-$taskName"
     if (Test-Path -Path $nestedScratchDir) {
         Remove-Item -Path $nestedScratchDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    $bracketScratchDir = Join-Path $userHome ".gemini/antigravity/scratch/bracket-$taskName"
+    if (Test-Path -LiteralPath $bracketScratchDir) {
+        Remove-Item -LiteralPath $bracketScratchDir -Recurse -Force -ErrorAction SilentlyContinue
     }
     $failScratch = Join-Path $userHome ".gemini/antigravity/scratch/fail-nongit-$testId"
     if (Test-Path -Path $failScratch) {

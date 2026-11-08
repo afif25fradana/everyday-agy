@@ -146,6 +146,23 @@ $testCases = @(
     @{ Expected = "BLOCK"; Cmd = 'New-Object -Com "Shell.Application"'; Reason = "New-Object -Com Shell.Application execution" },
     @{ Expected = "BLOCK"; Cmd = '([wmiclass]"Win32_Process").Create("calc.exe")'; Reason = "([wmiclass]Win32_Process).Create execution" },
 
+    # Blocked: Remote execution and background jobs
+    @{ Expected = "BLOCK"; Cmd = 'Invoke-Command -ScriptBlock { Get-Process }'; Reason = "Invoke-Command execution" },
+    @{ Expected = "BLOCK"; Cmd = 'icm -ScriptBlock { Get-Process }'; Reason = "icm alias execution" },
+    @{ Expected = "BLOCK"; Cmd = 'Start-Job -ScriptBlock { Get-Process }'; Reason = "Start-Job execution" },
+    @{ Expected = "BLOCK"; Cmd = 'sajb -ScriptBlock { Get-Process }'; Reason = "sajb alias execution" },
+    @{ Expected = "BLOCK"; Cmd = 'Start-ThreadJob -ScriptBlock { Get-Process }'; Reason = "Start-ThreadJob execution" },
+
+    # Blocked: Compound and flag-order git branch force deletions
+    @{ Expected = "BLOCK"; Cmd = 'git branch -df main'; Reason = "git branch -df compound force delete" },
+    @{ Expected = "BLOCK"; Cmd = 'git branch -fd main'; Reason = "git branch -fd compound force delete" },
+    @{ Expected = "BLOCK"; Cmd = 'git branch -f --delete main'; Reason = "git branch -f --delete force delete" },
+    @{ Expected = "BLOCK"; Cmd = 'git branch --delete -f main'; Reason = "git branch --delete -f force delete" },
+
+    # Blocked: COM/CLSID type reflection
+    @{ Expected = "BLOCK"; Cmd = '[type]::GetTypeFromProgID("Scripting.FileSystemObject")'; Reason = "[type]::GetTypeFromProgID COM activation" },
+    @{ Expected = "BLOCK"; Cmd = '[System.Type]::GetTypeFromCLSID("{00000000-0000-0000-0000-000000000000}")'; Reason = "[System.Type]::GetTypeFromCLSID COM activation" },
+
     # Allowed: Standard developer commands
     @{ Expected = "ALLOW"; Cmd = 'git status'; Reason = "git status" },
     @{ Expected = "ALLOW"; Cmd = 'git push git@github.com:user/repo.git main'; Reason = "git push to SSH remote URL containing colon" },
@@ -170,7 +187,10 @@ $testCases = @(
     @{ Expected = "ALLOW"; Cmd = 'git branch -d checkpoint-test1'; Reason = "Valid unforced branch deletion with git branch -d" },
     @{ Expected = "ALLOW"; Cmd = 'rtk proxy git status'; Reason = "rtk proxy benign command" },
     @{ Expected = "ALLOW"; Cmd = '& { Write-Host "safe scriptblock" }'; Reason = "Safe script block execution" },
-    @{ Expected = "ALLOW"; Cmd = 'rtk git commit -m "fix(safety): block git clean -fdx and git push -f"'; Reason = "Commit message containing flag text" }
+    @{ Expected = "ALLOW"; Cmd = 'rtk git commit -m "fix(safety): block git clean -fdx and git push -f"'; Reason = "Commit message containing flag text" },
+    @{ Expected = "ALLOW"; Cmd = 'git branch -f checkpoint-diff HEAD'; Reason = "git branch -f checkpoint-diff HEAD" },
+    @{ Expected = "ALLOW"; Cmd = 'git branch -f checkpoint-pdf HEAD'; Reason = "git branch -f checkpoint-pdf HEAD" },
+    @{ Expected = "ALLOW"; Cmd = '[System.Activator]::CreateInstance([System.Text.StringBuilder])'; Reason = "[System.Activator]::CreateInstance safe type" }
 )
 
 $passed = 0

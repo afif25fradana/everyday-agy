@@ -77,7 +77,11 @@ Create `specs/<feature_name>/plan.md`:
 - **Test Strategy**: [Unit tests, integration tests, or mock-free CLI invocations]
 - **Verification Command**: [Exact command to test, e.g. `rtk npm test` or `rtk python -m pytest`]
 
-## 5. Review Focus (Top 5 Implied Edge Cases & Failure Modes)
+## 5. Architectural Invariants & Alternatives
+- **The Zero-Decision Rule (Tier 2/3 Scoped)**: The plan must leave zero design or architectural choices to the implementer. All API routes, data structures, dependencies, error codes, and boundary edge cases must be pre-determined. If the implementer must invent designs on the fly, the plan fails review (Tier 0 trivial and Tier 1 small bugfix changes are exempt per blast-radius tiering).
+- **Alternatives Considered**: Mandatory evaluation of alternative designs with documented trade-offs explaining why each alternative was rejected.
+
+## 6. Review Focus (Top 5 Implied Edge Cases & Failure Modes)
 - [Identify top 5 implied edge cases, race hazards, or boundary limits; each must map to an atomic test task in tasks.md]
 ```
 

@@ -38,6 +38,8 @@ Before executing audit phases, read the authoritative rule sets on-demand via `v
 6. **Anti-False-Positive Exploitability Invariant**:
    - Before classifying any vulnerability as P0 (Critical) or P1 (High), you MUST prove a concrete exploitability path: trace tainted input from an untrusted external source to an unescaped/unsanitized execution sink.
    - Strictly forbid reporting purely theoretical attack vectors, default library features as "exploits", or speculative CVEs without concrete code execution traces.
+7. **Planning Anti-False-Positive Rule**:
+   - When reviewing implementation plans (Gate 1), proposed new files, functions, or schemas are intentions, not defects. Never flag planned references as "Non-Existent Code" unless the plan falsely claims they already exist at HEAD.
 
 ## Severity Scale (P0–P3 & B1–B4)
 - **P0 (Blocker / Critical)**: Data loss, critical security vulnerability (unauthenticated RCE / secret leak), broken release packaging, or completely broken build/import.
@@ -50,7 +52,7 @@ Before executing audit phases, read the authoritative rule sets on-demand via `v
 1. **Context, Git & Release Integrity**: Verify HEAD commit against claimed state, git tags/releases (`gh release list`), unpushed commits, and public claims in README/CHANGELOG.
 2. **Test Suite, CI Pipeline & Runtime Health**: Execute relevant test suites non-interactively without polluting git tree. Inspect manifests for EOL runtimes and query MCP `context7` (`resolve-library-id`, `query-docs`) for suspect APIs.
 3. **Security, Privacy & Secrets Audit**: Inspect codebase and git log for unmasked secrets, unsafe inputs, network exposure, local path leaks, and API/config sharp edges (zero/null defaults disabling timeouts/validation, boolean auth bypasses, stringly-typed parameter swaps).
-4. **Code Correctness & Over-Engineering Audit (Ponytail)**: Inspect for regression risks, unhandled edge cases, speculative complexity (`delete:`, `stdlib:`, `native:`, `yagni:`, `shrink:`), and connection lifecycles.
+4. **Code Correctness, Over-Engineering (Ponytail) & 4-Vector Spec Drift Audit**: Inspect for regression risks, unhandled edge cases, and speculative complexity (`delete:`, `stdlib:`, `native:`, `yagni:`, `shrink:`). When comparing code to specifications/ADRs, audit the 4 drift vectors: (a) *Missing Features*, (b) *Incomplete Models/Schemas*, (c) *Logic Shortcuts/Bypasses*, and (d) *Architectural Divergence*.
 5. **Documentation & Code Comment AI-Slop Audit (Anti-Slop)**: Audit README, comment bloat, docstring ratio, and process leaks; provide Before vs After transformations.
 
 ## Dual Execution Mode & Deliverable

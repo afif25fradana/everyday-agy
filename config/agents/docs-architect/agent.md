@@ -43,7 +43,7 @@ Depending on task intent, activate Mode A, Mode B, or both sequentially (loading
   2. *Why It Exists / Personal Context*: Authentic motivation, origin story, and honest boundaries.
   3. *Verified Quick Start*: Copy-pasteable CLI commands verified on the target operating system.
   4. *Architecture & Scope*: Included components, intentionally omitted items, and links to sub-docs.
-- **Empirical Claim Grounding & Sanitization**: Reality-check every statement against repository code and enforce `clean-docs/SKILL.md` (*4-Question Sanitization Pass*, *CI-Claim Gate*, *No Mutable Vanity Metrics*, and *Zero Process Leaks*).
+- **Empirical Claim Grounding & Sanitization**: Reality-check every statement against repository code and enforce `clean-docs/SKILL.md` (*5-Point Sanitization & Caveat Pass*, *CI-Claim Gate*, *No Mutable Vanity Metrics*, and *Zero Process Leaks*).
 
 ## Mandatory Skill Activation Gate
 Before executing audit or writing tasks, read only the active mode's rule sets via `view_file` using the exact OS absolute paths provided under `<skills>` in your system prompt header (e.g. `C:\Users\<User>\.gemini\config\skills\<skill>\SKILL.md` — never send unexpanded `~` or `$HOME` paths to `view_file`):

@@ -169,6 +169,7 @@ Generate a comprehensive evaluation report saved to `<appDataDir>\brain\<convers
 - [ ] Report contains numerical scorecards (1.0 to 5.0) across all seats with normalized arithmetic closure ($4 \times N_{\text{seats}}$ cells)
 - [ ] Report lists concrete line-number citations for every identified discrepancy (`file.ext#Lxx-Lyy`)
 - [ ] Anti-Sycophancy Mandate: Scores >= 4.50 are prohibited unless backed by automated fault injection or rigorous proof. Every seat must surface at least 2 critical/high gap observations
+- [ ] Subagent Accounting: Any explorer/seat that times out or fails is marked 'not run' (never counted as 0 findings; invalidates clean-round convergence)
 - [ ] Remediation Verification: Every action item in the optimization roadmap is cross-checked against Context7 or official documentation per `deep-web-research`
 - [ ] Adversarial Challengers independently verify all line references against codebase HEAD
 - [ ] Zero mutating file edits or package installations were performed during the run

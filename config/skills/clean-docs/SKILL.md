@@ -22,7 +22,7 @@ Never let internal AI orchestration or audit machinery leak into repository file
   - Describe **what** changed in the software and **why**, exactly as a pragmatist human software engineer would write it.
   - Zero AI buzzwords, zero process tags, and zero robotic self-congratulations.
 - **Review Anti-Sycophancy**:
-  - Strictly ban performative praise in code review dialogs: `"You're absolutely right!"`, `"Great point!"`, `"Thanks for catching that!"`, `"Excellent feedback!"`. Evaluate feedback purely on caller verification, YAGNI, and technical merits.
+  - Strictly ban performative praise in code review dialogs (`"You're absolutely right!"`, `"Great point!"`, `"Thanks for catching that!"`, `"Excellent feedback!"`, `"Brilliant!"`, `"Perfect!"`) and polite apologies (`"I apologize"`, `"I am sorry"`). Evaluate feedback purely on caller verification, YAGNI, and technical merits.
 
 ---
 
@@ -69,10 +69,12 @@ When preparing or reviewing public-facing files (`README.md`, `CHANGELOG.md`, `C
    - After renaming a project, grep tracked files (`rtk rg`) and build configurations to verify all references are updated.
 6. **Stranger Test (30-Second Impression)**:
    - First line of `README.md` must state plainly what the tool is and what problem it solves. No promotional fluff or hyperbolic claims.
+7. **Naive Reader Paraphrase Test**:
+   - Before approving or publishing, ensure a fresh reader can plainly articulate in two paragraphs: (1) what the document/architecture proposes, and (2) how the existing system works. If either cannot be plainly paraphrased, report a blocker for unstated assumptions.
 
 ---
 
-## 5. The 4-Question Sanitization Pass
+## 5. The 5-Point Sanitization & Caveat Pass
 
 Before finalizing any commit message, PR description, README, or doc change, run this quick filter:
 
@@ -80,3 +82,8 @@ Before finalizing any commit message, PR description, README, or doc change, run
 2. **Simplicity**: Can this be phrased more simply and directly without losing technical precision?
 3. **Human Naturalness**: Would this look completely natural in a pragmatic human engineer's personal GitHub repo?
 4. **Zero Leaks**: Are there any leftover AI session tags, checkpoint references, artifact markers, or internal stage labels?
+5. **Defensive Caveat Calibration (`DROP | CALIBRATE | RELOCATE | KEEP`)**:
+   - `DROP`: Strip speculative hedging with no reachable user/operator decision.
+   - `CALIBRATE`: Narrow the claim to match exact verified evidence.
+   - `RELOCATE`: Move operational caveats to the specific step where the user makes a choice.
+   - `KEEP`: Retain caveats directly backed by documented system limits.

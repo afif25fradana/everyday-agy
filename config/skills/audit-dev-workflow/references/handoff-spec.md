@@ -36,6 +36,7 @@ This specification defines the communication contracts, trigger headers, quantit
   4. Upstream caller context & consumer blast radius (verified via `rtk rg`).
   5. Minimal implementation plan adhering to `ponytail` (shortest working diff).
   6. Repro test plan (for bug fixes; executed immediately after Gate 1 approval and Phase 2 checkpoint).
+  7. Zero-Decision Check: All data structures, error codes, and signatures pre-determined; zero architectural choices delegated to implementer (Tier 2/3).
 
 ### 2.3 Gate 2 (Post-Execution Handoff & Diff Review)
 - **Trigger Header**: `# Review Request: Gate 2 (Post-Execution Handoff & Diff)`
@@ -87,6 +88,7 @@ The required structure for each gate payload is:
 - Target Files: `<files>`
 - Repro Test Plan (RED): `<test file and assertion to verify failure post-checkpoint>`
 - Proposed Diff Strategy (GREEN): <Shortest working diff plan>
+- Zero-Decision Check: <Confirmed: schemas, APIs, and boundary choices pre-determined (Tier 2/3)>
 ```
 
 ### 3.3 Gate 2 Schema (`# Review Request: Gate 2`)
@@ -156,10 +158,28 @@ The local implementer supports two feedback ingestion modes:
 | `REJECT` | Stop immediately. Review feedback findings. Return to Phase 1 investigation or Phase 3 implementation. Do not commit or push. |
 | `QUESTIONS FOR IMPLEMENTER` | Run `rtk rg "<symbol>"` locally to verify the symbol, caller, or invariant. Return the response using the Dispute Resolution Format below. |
 
-### 6.2 Factual Code Dispute Format (Responding to `QUESTIONS FOR IMPLEMENTER`)
+### 6.2 The 4-Bucket Resolution Taxonomy
+When responding to review feedback or `QUESTIONS FOR IMPLEMENTER`, classify each finding into exactly one bucket:
+- **`CONTEST`**: The critique is factually inaccurate or based on a misunderstanding of code. Must cite checkable code coordinates (`file.ext#Lxx-Lyy`) verified via `rtk rg`. ("This was intentional" is not evidence).
+- **`ESCALATE`**: The critique is inaccurate, but the evidence relies on out-of-band context (oral team decision, unwritten convention) not present in repository files. State this directly; do not add code or documentation bloat solely to satisfy an external reviewer.
+- **`PROPOSE FIX`**: The critique is valid. Define precise textual replacements or code fixes adhering to Ponytail.
+- **`DECLINE`**: The finding is a cosmetic Nit with no security or functional risk. Record it as an accepted trade-off; do not modify code.
+
+**Anti-Rationalization Prohibitions**:
+- Do not contest a comprehension gap: if a fresh reader could not follow the document or code intent, it is missing context.
+- You authored the plan/code under review; a wish to contest is not evidence that the reviewer is wrong.
+
+### 6.3 Review Accounting & State Tracking
+- **Failed Reviewer Accounting (`not run` vs 0 Findings)**: Any reviewer or subagent that times out, encounters an unhandled tool exception, or fails to deliver a complete report must be recorded with `Status: not run`. It is strictly forbidden to treat a failed reviewer as having "0 findings". A required reviewer with `not run` status invalidates approval.
+- **Settled vs Fixed Finding States**:
+  - `Settled`: Finding was contested with verified code coordinates or accepted as a documented trade-off by the human operator. Immune to re-litigation by subsequent subagents.
+  - `Fixed`: Finding was addressed via code/doc mutation. Must be re-verified by subsequent verification passes.
+
+### 6.4 Factual Code Dispute Format (Responding to `QUESTIONS FOR IMPLEMENTER`)
 
 ```markdown
 # Implementer Response: Factual Code Resolution
+- **Bucket**: <CONTEST | ESCALATE | PROPOSE FIX | DECLINE>
 - **Target Question / Symbol**: `<symbol or invariant in question>`
 - **Command Executed**: `rtk rg "<symbol>"`
 

@@ -174,6 +174,38 @@ try {
         $subSurvived = Test-Path -Path $subUntracked
         $rogueRemoved = -not (Test-Path -Path $rogueFile)
         Assert-Test -Name "Subdirectory checkpoint anchors to root and preserves pre-existing untracked files" -Condition ($rootSurvived -and $subSurvived -and $rogueRemoved) -Details "root=$rootSurvived, sub=$subSurvived, rogueRemoved=$rogueRemoved"
+
+        # Test 8: Restore-AuditCheckpoint preserves staged pre-existing untracked files during rollback
+        $stagedRepoDir = Join-Path $testDir "git_staged_repo"
+        New-Item -ItemType Directory -Path $stagedRepoDir -Force | Out-Null
+        Set-Location -LiteralPath $stagedRepoDir
+        git init --quiet
+        git config user.name "TestRunner"
+        git config user.email "test@example.com"
+        
+        $initFile = Join-Path $stagedRepoDir "init.txt"
+        Set-Content -Path $initFile -Value "initial commit" -Encoding utf8
+        git add init.txt
+        git commit -m "initial commit" --quiet
+        
+        # Create pre-existing untracked file
+        $baselineFile = Join-Path $stagedRepoDir "baseline.txt"
+        $baselineContent = "pre-existing untracked content"
+        Set-Content -Path $baselineFile -Value $baselineContent -Encoding utf8
+        
+        # Create checkpoint
+        $stageTask = "staged-untracked-$testId"
+        & $newScript -Task $stageTask -RepoPath $stagedRepoDir | Out-Null
+        
+        # Stage baseline.txt
+        git add baseline.txt
+        
+        # Run restore
+        & $restoreScript -Task $stageTask -RepoPath $stagedRepoDir | Out-Null
+        
+        $baselineStillExists = Test-Path -Path $baselineFile
+        $baselineRestoredContent = if ($baselineStillExists) { (Get-Content -Path $baselineFile -Raw).Trim() } else { "" }
+        Assert-Test -Name "Restore-AuditCheckpoint preserves staged pre-existing untracked files during rollback" -Condition ($baselineStillExists -and ($baselineRestoredContent -eq $baselineContent)) -Details "exists=$baselineStillExists, contentMatch=$($baselineRestoredContent -eq $baselineContent)"
     } finally {
         Set-Location -LiteralPath $origPwd
         $gitScratchDir = Join-Path $userHome ".gemini/antigravity/scratch/git-fail-closed-$testId"
@@ -183,6 +215,10 @@ try {
         $subScratchDir = Join-Path $userHome ".gemini/antigravity/scratch/sub-anchor-$testId"
         if (Test-Path -Path $subScratchDir) {
             Remove-Item -Path $subScratchDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+        $stageScratchDir = Join-Path $userHome ".gemini/antigravity/scratch/staged-untracked-$testId"
+        if (Test-Path -Path $stageScratchDir) {
+            Remove-Item -Path $stageScratchDir -Recurse -Force -ErrorAction SilentlyContinue
         }
     }
 

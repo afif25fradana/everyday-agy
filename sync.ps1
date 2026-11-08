@@ -203,6 +203,13 @@ if (Test-Path $srcAdrsDir) {
     if ($srcAdrs.Count -gt 0) {
         $dstAdr = Join-Path (Join-Path $scriptRoot "docs") "adr"
         New-Item -ItemType Directory -Force -Path $dstAdr | Out-Null
+        $srcAdrNames = @(Get-ChildItem -Path $srcAdrsDir -Filter "*.md" | ForEach-Object { $_.Name })
+        Get-ChildItem -Path $dstAdr -Filter "*.md" | ForEach-Object {
+            if ($_.Name -notin $srcAdrNames) {
+                Remove-Item -Path $_.FullName -Force
+                Write-Host "[CLEANUP] Pruned stale ADR: $($_.Name)" -ForegroundColor DarkGray
+            }
+        }
         Copy-Item -Path (Join-Path $srcAdrsDir "*") -Destination $dstAdr -Recurse -Force
         $adrCount = (Get-ChildItem -Path $dstAdr -Filter "*.md" | Where-Object { $_.Name -ne "README.md" }).Count
         Write-Host "[OK] Synced $adrCount Architectural Decision Records (ADRs)" -ForegroundColor Green

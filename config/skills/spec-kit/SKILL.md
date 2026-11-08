@@ -1,6 +1,6 @@
 ---
 name: spec-kit
-description: Spec-Driven Development (/speckit.specify, .plan, .tasks) for greenfield features: requirements, tech plan, and task checklist.
+description: "Spec-Driven Development (/speckit.specify, .plan, .tasks) for greenfield features: requirements, tech plan, and task checklist."
 ---
 
 # Spec-Kit (Spec-Driven Development)
@@ -19,7 +19,9 @@ Phase 1: Specify        Phase 2: Plan           Phase 3: Tasks
 Requirements & ACs       Technical Contracts     Atomic Checklist        Red-Green Code
 ```
 
-All artifacts are drafted as Antigravity UserFacing Artifacts first, or persisted in `specs/<feature_name>/` within the project root once approved by the user.
+- **Antigravity UserFacing Artifacts Exclusively**: Phases 1–3 (`/speckit.specify`, `/speckit.plan`, `/speckit.tasks`) draft outputs exclusively as Antigravity UserFacing Artifacts in the conversation artifact directory (`<appDataDir>\brain\<conversation-id>/`). Zero workspace files are written before the Phase 2 audit checkpoint (`New-AuditCheckpoint.ps1`).
+- **Gate 1 Satisfaction**: An approved spec-kit artifact trilogy (`spec.md` + `plan.md` + `tasks.md`) formally satisfies Gate 1 of `audit-dev-workflow` (no redundant `gate1_proposal.md` is drafted).
+- **Post-Checkpoint Workspace Persistence**: Workspace file creation (`specs/<feature_name>/*.md`) occurs post-checkpoint in Phase 3 alongside or immediately preceding the RED repro test.
 
 ---
 
@@ -30,7 +32,7 @@ Focus on **WHAT** is needed and **WHY**, without prescribing internal implementa
 - **Scope & Constraint Discovery**: Surface implied constraints and cheaper alternative paths in 1–3 lines (strictly zero prompt restating per `GEMINI.md#L35`).
 - **Design Gate**: Hard boundary prohibiting application code writing or project scaffolding until the user explicitly approves `spec.md`.
 
-Create `specs/<feature_name>/spec.md`:
+Draft artifact `<appDataDir>\brain\<conversation-id>/spec.md`:
 ```markdown
 # Specification: [Feature Name]
 
@@ -58,7 +60,7 @@ Create `specs/<feature_name>/spec.md`:
 
 Map the specification to the concrete architecture, data contracts, and verification harnesses.
 
-Create `specs/<feature_name>/plan.md`:
+Draft artifact `<appDataDir>\brain\<conversation-id>/plan.md`:
 ```markdown
 # Technical Plan: [Feature Name]
 
@@ -91,13 +93,13 @@ Create `specs/<feature_name>/plan.md`:
 
 Break down the plan into a sequential, atomic checklist where each task represents an incremental, testable step.
 
-Create `specs/<feature_name>/tasks.md`:
+Draft artifact `<appDataDir>\brain\<conversation-id>/tasks.md`:
 ```markdown
 # Tasks: [Feature Name]
 
 ## Milestone 1: Contracts & Scaffolding
-- [ ] Task 1.1: Add schema/types for [Contract]
-- [ ] Task 1.2: Establish git checkpoint (`New-AuditCheckpoint.ps1`) and add failing unit tests covering R1 and R2 (Red)
+- [ ] Task 1.1: Establish git checkpoint (`New-AuditCheckpoint.ps1`) and persist `specs/<feature_name>/*.md` to workspace
+- [ ] Task 1.2: Add schema/types for [Contract] and add failing unit tests covering R1 and R2 (Red)
 
 ## Milestone 2: Implementation & Verification
 - [ ] Task 2.1: Implement minimal business logic to pass tests (Green)
@@ -112,7 +114,9 @@ Create `specs/<feature_name>/tasks.md`:
 
 ## Execution Guardrails & Stop Condition
 
-1. **Never Skip to Code**: Wait for explicit user confirmation on `spec.md` and `plan.md` before modifying application code.
-2. **Minimalist Requirements**: Only specify what the user actually cares about. Avoid over-constraining the agent with unnecessary abstractions.
-3. **Trace Back to Acceptance Criteria**: Every task in `tasks.md` must link back to at least one acceptance criterion in `spec.md`.
-4. **Stop Condition**: Pause after presenting each phase artifact (`spec.md` $\rightarrow$ `plan.md` $\rightarrow$ `tasks.md`) and await user confirmation before advancing to implementation via `orchestrator` / `audit-dev-workflow`.
+1. **Zero Workspace Writes Before Checkpoint**: Phases 1–3 draft outputs exclusively as session artifacts (`<appDataDir>\brain\<conversation-id>/`). Never write workspace files (`specs/<feature_name>/*.md`) or application code prior to Gate 1 approval and `New-AuditCheckpoint.ps1`.
+2. **Gate 1 Equivalence**: An approved spec-kit artifact trilogy (`spec.md` + `plan.md` + `tasks.md`) formally satisfies Gate 1 of `audit-dev-workflow`; no redundant `gate1_proposal.md` is drafted.
+3. **Post-Checkpoint Persistence**: Workspace file creation (`specs/<feature_name>/*.md`) occurs post-checkpoint in Phase 3 alongside or immediately preceding the RED repro test.
+4. **Minimalist Requirements**: Only specify what the user actually cares about. Avoid over-constraining the agent with unnecessary abstractions.
+5. **Trace Back to Acceptance Criteria**: Every task in `tasks.md` must link back to at least one acceptance criterion in `spec.md`.
+6. **Stop Condition**: Pause after presenting each phase artifact (`spec.md` $\rightarrow$ `plan.md` $\rightarrow$ `tasks.md`) and await user confirmation before advancing to implementation via `orchestrator` / `audit-dev-workflow`.

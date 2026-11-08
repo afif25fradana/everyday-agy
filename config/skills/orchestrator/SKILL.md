@@ -1,11 +1,11 @@
 ---
 name: orchestrator
-description: Meta-orchestrator protocol (/orchestrator) for Parent Agent: task triage, context insulation, and subagent fleet governance.
+description: "Meta-orchestrator protocol (/orchestrator) for Parent Agent: task triage, context insulation, and subagent fleet governance."
 ---
 
 # Universal Lead Orchestrator Protocol (Operational Runbook)
 
-A high-rigor governance runbook enforcing Anthropic Lead-Agent context insulation, `obra/superpowers` subagent-driven development, and Antigravity multi-agent fleet coordination. Governed by `config/GEMINI.md` (`~/.gemini/GEMINI.md`) and [`ADR-0019`](docs/adr/0019-universal-lead-orchestrator-and-context-insulation.md).
+A high-rigor governance runbook enforcing Anthropic Lead-Agent context insulation, `obra/superpowers` subagent-driven development, and Antigravity multi-agent fleet coordination. Governed by `config/GEMINI.md` (`~/.gemini/GEMINI.md`) and [`ADR-0019`](../../../docs/adr/0019-universal-lead-orchestrator-and-context-insulation.md).
 
 > [!TIP]
 > **Workflow Routing**: `audit-dev-workflow` is the operational runbook for all changes (Tier 0–3). For Tier 2/3 multi-file changes, Parent Agent activates `orchestrator` for context insulation and subagent fleet governance.
@@ -16,7 +16,7 @@ A high-rigor governance runbook enforcing Anthropic Lead-Agent context insulatio
 
 ### 1.1 Parent Context Insulation Invariant (Strict Application Code Ban)
 - **Rule**: On Tier 2 (`standard`) and Tier 3 (`large`) tasks, the **Parent Agent** (identified by possessing `invoke_subagent` and `read_file`) is strictly prohibited from invoking `read_file` or `view_file` on application source code (`src/**`, `core/**`, `web/**`, `lib/**`, business logic implementations).
-- **Allowed Parent Reads**: High-level task coordination files (`task_state.md`, ADR summaries, `specs/<feature>/*.md`), intermediate subagent dossiers in scratch (`<appDataDir>\brain\<conversation-id>\scratch\<task>\` or `$HOME/.gemini/antigravity/scratch/<task>/`), git tracking receipts (`rtk git status --short`, `rtk git diff --stat`), and CLI test output.
+- **Allowed Parent Reads**: High-level task coordination files (`task_state.md`, ADR summaries, `specs/<feature>/*.md`), intermediate subagent dossiers in scratch (`<appDataDir>\brain\<conversation-id>\scratch\<task>\` or `$HOME/.gemini/antigravity/scratch/<task>/`), git tracking receipts (`rtk git status --short`, `rtk git diff --stat`), CLI test output, and raw `git --no-pager diff HEAD` / `git --no-pager diff --stat` specifically for programmatic Gate 2 artifact injection.
 - **Subagent Mandate**: All deep code reading, syntax analysis, code editing, and test authoring belong exclusively to subagents (identified by possessing `view_file`, `replace_file_content`, and `write_to_file`).
 
 ### 1.2 Zero-Read Triage Gate (Step 0 Blast Radius Sizing — SSOT)
@@ -46,10 +46,12 @@ Before opening any source file, the Parent Agent classifies task blast radius us
 - **Enforcement**: Any failed repair attempt by any subagent or Parent increments the counter. At 2, all automation halts, Parent executes `Restore-AuditCheckpoint.ps1 -Task "<task>"`, reports verbatim failure receipts, and pauses for human direction. Zero escape-hatch code reads are permitted.
 - **Re-Entry Post-Rollback**: When human operator provides explicit redirection or an alternative approach following a 2-attempt rollback halt, `global_attempt_counter` resets to 0 for the newly approved strategy.
 - **Abnormal Termination**: If a mutating subagent crashes, times out, or leaves a dirty tree, Parent immediately executes `Restore-AuditCheckpoint.ps1` before secondary actions.
+- **Failed Reviewer Accounting (`Status: not run` vs 0 Findings)**: Any delegated reviewer or subagent that times out, encounters an unhandled tool exception, or fails to complete execution MUST be accounted as `Status: not run`. It is strictly prohibited to treat a failed or aborted reviewer run as "0 findings" or an implicit pass. Any required reviewer with `not run` status invalidates approval.
 
 ### 1.5 Anti-Mock Cheating & Repro-First RED Verification
 - **Rule**: For bug fixes in Tier 2/3, after Gate 1 approval and verified `New-AuditCheckpoint.ps1`, Parent dispatches `tdd-guide` to author a failing test on unmodified production code (RED state) and witnesses the failing CLI test receipt (`run_command`) before delegating the fix.
 - **Diff Audit**: Before presenting Gate 2, Parent delegates line-by-line diff review to `code-auditor` or `silent-failure-hunter` to audit for mock-cheating, weakened assertions, or test deletion against the [Five-Axis rubric](../audit-dev-workflow/SKILL.md#phase-4-local-verification--review).
+- **Settled Findings Immunity**: Review findings that have been formally settled (contested with verified code coordinates or accepted as documented operator trade-offs) are immune to re-litigation by subsequent review passes or subagent dispatches. Parent must pass settled items under `Settled Findings:` in `<SCOPE_AND_BOUNDARIES>` to prevent endless review churn.
 
 ### 1.6 Subagent Commit/Push Ban, Shell Safety & Direct Parent CLI Test Runner
 - **Subagent Commit & PR Ban**: Subagents are strictly barred from running `git commit`, `git tag`, `git push`, `gh pr create`, `gh pr merge`, or `gh release create`. Commit and PR authority belongs exclusively to the Parent Agent post-Gate 2 approval.
@@ -95,6 +97,9 @@ Parent dispatches targeted custom subagents directly via `invoke_subagent`:
 - Fix / Feature Implementation: `tdd-guide` (logic/feature code), `ui-crafter` (frontend UI/accessibility), `build-error-resolver` (type/compiler errors via `replace_file_content`), `docs-architect` (ADRs/docs/`task_state.md`), `l10n-humanizer` (localization resources), `maintenance-bot` (CI/Dependabot).
 - Quality Gate: `code-auditor` or `silent-failure-hunter` (diff review), `spec-verifier` (Context7 & [`deep-web-research`](../deep-web-research/SKILL.md) API checks).
 
+> [!NOTE]
+> **Dynamic Model Elevation (ADR-0015)**: When Parent Orchestrator runs on `flash` for cost/speed efficiency, specialized verification dispatches involving high-stakes schema migrations (`database-reviewer`) or deep third-party API contract verification (`spec-verifier`) may dynamically elevate subagent invocation to `Model: pro` or `Model: inherit` per `subagent-patterns.md` to prevent subtle logical drift.
+
 ---
 
 ## 3. The 4-Slot Delegation Contract (SSOT)
@@ -112,6 +117,7 @@ Zero Process Leaks: do not emit AI process tags or commit markers.
 <SCOPE_AND_BOUNDARIES>
 Target Coordinates: <file.ext#Lxx-Lyy>
 Allowed Mutation Paths: <explicit file list, directory, or NONE (Read-Only)>
+Settled Findings: <list of established baseline non-issues / accepted trade-offs immune to re-litigation, or NONE>
 Deny Paths: ~/.ssh/**, ~/.aws/**, ~/.gnupg/**, **/.env*, **/*.key, **/*.pem, mcp/**
 </SCOPE_AND_BOUNDARIES>
 
@@ -124,7 +130,7 @@ Bound Skills (resolve exact OS absolute paths from <skills> header; never pass ~
 <RETURN_CONTRACT>
 Write detailed forensic reports to <appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md (unless using build-error-resolver without write_to_file).
 In your final chat message, return ONLY this compact receipt (<= 15 lines):
-- Status: [PASS | FAIL | BLOCKED]
+- Status: [PASS | FAIL | BLOCKED | NOT RUN]
 - Target Coordinates: <file.ext#Lxx-Lyy>
 - Caller Blast Radius: <N callers across M files>
 - CLI Test Command: <command executed or N/A>

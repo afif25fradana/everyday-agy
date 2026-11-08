@@ -66,7 +66,7 @@ everyday-agy/
 │   ├── agents/          # 11 specialized subagents with hybrid model tiering (ADR-0004, ADR-0017, ADR-0018)
 │   └── skills/          # 15 bespoke and engine-adapted workflow skills
 ├── docs/
-│   └── adr/             # Architectural Decision Records (ADR-0001 through ADR-0023)
+│   └── adr/             # Architectural Decision Records (ADR-0001 through ADR-0024)
 ├── sync.ps1             # Pulls live configs from ~/.gemini/ into this repo
 └── restore.ps1          # Deploys this repo into ~/.gemini/ with automatic backup
 ```
@@ -105,7 +105,7 @@ For trigger commands, detailed skill descriptions, and upstream installation lin
 ### Architectural Decision Records (`docs/adr/`)
 Significant technical decisions, architectural constraints, and operational trade-offs are permanently recorded following the Michael Nygard format.
 
-All 23 active and historical decision records—covering cognitive model tiering, checkpoint gating, lead orchestrator context insulation, and AST safety hardening—are indexed with their status and context in the **[ADR Catalog](./docs/adr/README.md)**.
+All 24 active and historical decision records—covering cognitive model tiering, checkpoint gating, lead orchestrator context insulation, and AST safety hardening—are indexed with their status and context in the **[ADR Catalog](./docs/adr/README.md)**.
 
 ## Contributing
 

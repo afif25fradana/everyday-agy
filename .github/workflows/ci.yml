@@ -103,7 +103,12 @@ jobs:
               Write-Error "Invalid frontmatter in $($s.FullName)"
               exit 1
             }
-            $desc = $Matches[1].Trim().Trim('''', '"').Replace("`r", "")
+            $rawDesc = $Matches[1].Trim()
+            if ($rawDesc -notmatch '^([''"]).*\1$' -and $rawDesc -match ':\s') {
+              Write-Error "YAML Syntax Violation in $($s.FullName): Unquoted description contains ': ' sequence. Must be enclosed in quotes."
+              exit 1
+            }
+            $desc = $rawDesc.Trim('''', '"').Replace("`r", "")
             if ($desc.Length -gt 128) {
               Write-Error "Frontmatter description in $($s.FullName) exceeds 128 chars ($($desc.Length) chars): $desc"
               exit 1

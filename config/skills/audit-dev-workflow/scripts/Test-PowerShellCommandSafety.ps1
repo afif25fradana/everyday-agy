@@ -180,17 +180,18 @@ foreach ($cmdAst in $commandElements) {
             if ($text -match '^-(f|fo|for|forc|force)(:\$?true)?$' -or $text -match '^/q$' -or ($isPosixCluster -and $text -match '(?i)f')) { $hasForce = $true }
             
             # Check sensitive credential directory deletions (~/.ssh, ~/.aws, ~/.gnupg)
-            if ($text -match '(?i)^(~|\$HOME|\$env:USERPROFILE)[/\\]+(\.ssh|\.aws|\.gnupg)($|[/\\])' -or $text -match '(?i)[/\\](\.ssh|\.aws|\.gnupg)($|[/\\])') {
+            $pathVal = $text -replace '^-(?i)(path|literalpath|lp):', ''
+            if ($pathVal -match '(?i)^(~|\$HOME|\$env:USERPROFILE)[/\\]+(\.ssh|\.aws|\.gnupg)($|[/\\])' -or $pathVal -match '(?i)[/\\](\.ssh|\.aws|\.gnupg)($|[/\\])') {
                 Write-Error "Safety Violation: Prohibited deletion of credential or sensitive directory '$text' detected."
                 exit 1
             }
 
             # Check root targets, drive roots, root wildcards, home, and environment path variables (ADR-0011 & ADR-0015)
-            if ($text -match '^[/\\]+(\*.*)?$' -or
-                $text -match '^[a-zA-Z]:[/\\]*(\*.*)?$' -or
-                $text -match '^~[/\\]*(\*.*)?$' -or
-                $text -match '^\$(HOME|env:(USERPROFILE|SystemDrive))([/\\]+(\*.*)?)?$' -or
-                $text -in @('$env:SystemDrive', '$HOME', '$env:USERPROFILE')) {
+            if ($pathVal -match '^[/\\]+(\*.*)?$' -or
+                $pathVal -match '^[a-zA-Z]:[/\\]*(\*.*)?$' -or
+                $pathVal -match '^~[/\\]*(\*.*)?$' -or
+                $pathVal -match '^\$(HOME|env:(USERPROFILE|SystemDrive))([/\\]+(\*.*)?)?$' -or
+                $pathVal -in @('$env:SystemDrive', '$HOME', '$env:USERPROFILE')) {
                 $targetRoot = $true
             }
         }
@@ -281,9 +282,41 @@ foreach ($cmdAst in $commandElements) {
                     exit 1
                 }
             }
-            if ($subCmd -eq 'branch' -and $subArgs -match '(^|\s)(-D\b|--delete\s+-f\b|--delete\s+--force\b)') {
-                Write-Error "Safety Violation: Prohibited destructive git branch force deletion detected."
-                exit 1
+            if ($subCmd -eq 'branch') {
+                if ($subArgs -cmatch '(^|\s)-D\b' -or $subArgs -match '(^|\s)(--delete\s+-f\b|--delete\s+--force\b)') {
+                    Write-Error "Safety Violation: Prohibited destructive git branch force deletion detected."
+                    exit 1
+                }
+                if ($subArgs -match '(^|\s)(-f\b|--force\b)') {
+                    $branchArgs = @()
+                    $afterBranch = $false
+                    for ($k = 0; $k -lt $argTokens.Count; $k++) {
+                        if ($argTokens[$k] -eq 'branch' -and -not $afterBranch) {
+                            $afterBranch = $true
+                            continue
+                        }
+                        if ($afterBranch -and $argTokens[$k] -notmatch '^-') {
+                            $branchArgs += $argTokens[$k]
+                        }
+                    }
+                    $targetBranch = if ($branchArgs.Count -gt 0) { $branchArgs[0] } else { '' }
+                    if ($targetBranch -notmatch '^checkpoint-[A-Za-z0-9_-]+$') {
+                        Write-Error "Safety Violation: git branch (-f|--force) cannot overwrite arbitrary branch pointers."
+                        exit 1
+                    }
+                }
+            }
+            if ($subCmd -eq 'worktree') {
+                $wtIdx = -1
+                for ($k = 0; $k -lt $argTokens.Count; $k++) {
+                    if ($argTokens[$k] -eq 'worktree') { $wtIdx = $k; break }
+                }
+                if ($wtIdx -ge 0 -and ($wtIdx + 1) -lt $argTokens.Count -and $argTokens[$wtIdx + 1] -eq 'remove') {
+                    if ($subArgs -match '(^|\s)(-f\b|--force\b)') {
+                        Write-Error "Safety Violation: git worktree remove (-f|--force) is prohibited."
+                        exit 1
+                    }
+                }
             }
             if ($subCmd -eq 'clean' -and $subArgs -match '(^|\s)(-[a-zA-Z]*f|--force\b)') {
                 Write-Error "Safety Violation: Prohibited git clean force flag detected."
@@ -339,6 +372,17 @@ foreach ($cmdAst in $commandElements) {
         }
     }
 
+    # COM object creation via New-Object
+    if ($cmdName -eq 'New-Object') {
+        foreach ($el in $targetElements) {
+            $t = Get-NormalizedTokenText $el.Extent.Text
+            if ($t -match '(?i)^-com(object)?\b') {
+                Write-Error "Safety Violation: New-Object COM object creation is prohibited."
+                exit 1
+            }
+        }
+    }
+
     # Dynamic code execution
     if ($cmdName -in @('Invoke-Expression', 'iex')) {
         Write-Error "Safety Violation: Prohibited dynamic code execution ($cmdName) detected."
@@ -355,6 +399,12 @@ foreach ($mem in $memberExpressions) {
     # Intercept direct process execution via .NET Process::Start (GAP-CRIT-04)
     if ($memberVal -eq 'Start' -and $exprText -match '(?i)(^|\[\s*)(System\.)?Diagnostics\.Process(\s*\]|:|$)') {
         Write-Error "Safety Violation: Prohibited direct .NET process execution '$($mem.Extent.Text)' detected."
+        exit 1
+    }
+
+    # Intercept WMI process creation (GAP-CRIT-04)
+    if ($memberVal -eq 'Create' -and ($exprText -match '(?i)(wmiclass|Win32_Process)' -or $mem.Extent.Text -match '(?i)(wmiclass|Win32_Process)')) {
+        Write-Error "Safety Violation: WMI process creation is prohibited."
         exit 1
     }
 

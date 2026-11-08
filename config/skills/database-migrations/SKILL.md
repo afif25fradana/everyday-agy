@@ -1,6 +1,6 @@
 ---
 name: database-migrations
-description: Reversible database migrations (/database-migrations): expand-contract renames, concurrent indexes, and batched backfills.
+description: "Reversible database migrations (/database-migrations): expand-contract renames, concurrent indexes, and batched backfills."
 ---
 
 # Database Migration Patterns

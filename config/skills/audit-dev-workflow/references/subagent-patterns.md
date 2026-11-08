@@ -1,6 +1,6 @@
 # Subagent Execution Patterns for Audit-First Workflow
 
-The multi-tiered architecture allows the **Parent Agent** to orchestrate specialized **Subagents** across the 11-agent fleet. This keeps parent context clean, eliminates token bloat during deep audits, and enables safe, disciplined execution. Governed by [`orchestrator`](../../orchestrator/SKILL.md) and [`ADR-0018`](docs/adr/0018-fleet-parity-and-deployment-path-symmetry.md).
+The multi-tiered architecture allows the **Parent Agent** to orchestrate specialized **Subagents** across the 11-agent fleet. This keeps parent context clean, eliminates token bloat during deep audits, and enables safe, disciplined execution. Governed by [`orchestrator`](../../orchestrator/SKILL.md) and [`ADR-0018`](../../../../docs/adr/0018-fleet-parity-and-deployment-path-symmetry.md).
 
 ---
 
@@ -64,6 +64,7 @@ Zero Process Leaks: do not emit AI process tags or commit markers.
 <SCOPE_AND_BOUNDARIES>
 Target Coordinates: <file.ext#Lxx-Lyy>
 Allowed Mutation Paths: NONE (Read-Only Inspection)
+Settled Findings: <list of established baseline non-issues / accepted trade-offs immune to re-litigation, or NONE>
 Deny Paths: ~/.ssh/**, ~/.aws/**, ~/.gnupg/**, **/.env*, **/*.key, **/*.pem, mcp/**
 </SCOPE_AND_BOUNDARIES>
 
@@ -77,7 +78,7 @@ Bound Skills (resolve exact OS absolute paths from prompt header; never pass lit
 <RETURN_CONTRACT>
 Write detailed forensic reports to <appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md.
 In your final chat message, return ONLY this compact receipt (<= 15 lines):
-- Status: [PASS | FAIL | BLOCKED]
+- Status: [PASS | FAIL | BLOCKED | NOT RUN]
 - Target Coordinates: <file.ext#Lxx-Lyy>
 - Caller Blast Radius: <N callers across M files>
 - CLI Test Command: <command executed or N/A>
@@ -105,6 +106,7 @@ Zero Process Leaks: do not emit AI process tags or commit markers.
 <SCOPE_AND_BOUNDARIES>
 Target Coordinates: <test_file.ext>
 Allowed Mutation Paths: <test_directory/**>
+Settled Findings: <list of established baseline non-issues / accepted trade-offs immune to re-litigation, or NONE>
 Deny Paths: ~/.ssh/**, ~/.aws/**, ~/.gnupg/**, **/.env*, **/*.key, **/*.pem, mcp/**
 </SCOPE_AND_BOUNDARIES>
 
@@ -117,7 +119,7 @@ Bound Skills (resolve exact OS absolute paths from prompt header; never pass lit
 <RETURN_CONTRACT>
 Write detailed test logs to <appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md.
 In your final chat message, return ONLY this compact receipt (<= 15 lines):
-- Status: [PASS | FAIL | BLOCKED]
+- Status: [PASS | FAIL | BLOCKED | NOT RUN]
 - Target Coordinates: <test_file.ext#Lxx-Lyy>
 - Caller Blast Radius: <N callers across M files>
 - CLI Test Command: <test runner command>
@@ -145,6 +147,7 @@ Zero Process Leaks: do not emit AI process tags or commit markers.
 <SCOPE_AND_BOUNDARIES>
 Target Coordinates: <file.ext#Lxx-Lyy>
 Allowed Mutation Paths: <explicit_files_or_directories>
+Settled Findings: <list of established baseline non-issues / accepted trade-offs immune to re-litigation, or NONE>
 Deny Paths: ~/.ssh/**, ~/.aws/**, ~/.gnupg/**, **/.env*, **/*.key, **/*.pem, mcp/**
 </SCOPE_AND_BOUNDARIES>
 
@@ -158,7 +161,7 @@ Bound Skills (resolve exact OS absolute paths from prompt header; never pass lit
 <RETURN_CONTRACT>
 Write implementation notes to <appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md (or omit file creation if running as build-error-resolver).
 In your final chat message, return ONLY this compact receipt (<= 15 lines):
-- Status: [PASS | FAIL | BLOCKED]
+- Status: [PASS | FAIL | BLOCKED | NOT RUN]
 - Target Coordinates: <file.ext#Lxx-Lyy>
 - Caller Blast Radius: <N callers across M files>
 - CLI Test Command: <test runner command>

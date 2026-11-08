@@ -41,6 +41,7 @@ This specification defines the communication contracts, trigger headers, quantit
 ### 2.3 Gate 2 (Post-Execution Handoff & Diff Review)
 - **Trigger Header**: `# Review Request: Gate 2 (Post-Execution Handoff & Diff)`
 - **Packaging Protocol**: Gate 2 handoff payloads MUST be written exclusively as an Antigravity UserFacing Artifact (`<appDataDir>\brain\<conversation-id>/gate2_handoff.md`) with `ArtifactMetadata` (`UserFacing: true`, `RequestFeedback: false`).
+- **Programmatic Diff Injection (Anti-Hallucination Invariant)**: Unified diffs and diffstats must NEVER be typed or reconstructed from memory by the LLM inside `write_file`. Instead, the implementer writes `gate2_handoff.md` containing `{{VERBATIM_GIT_DIFFSTAT}}` and `{{VERBATIM_GIT_DIFF}}` placeholders, runs `git add -N .` (to include new untracked files in the diff without full staging), and programmatically replaces the placeholders with the raw, byte-exact output of `git --no-pager diff --stat=140,80 HEAD` and `git --no-pager diff HEAD`.
 - **Chat Response Standard**: Chat responses must strictly be 1–3 lines linking directly to `gate2_handoff.md`, never dumping full diffs directly into chat.
 - **Lifecycle Timing**: Generated AFTER Phase 3 (RED Test & GREEN Patch Execution) and Phase 4 (Local Verification), strictly BEFORE `git commit` or `git push`.
 - **Required Payload**:

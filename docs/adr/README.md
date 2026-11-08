@@ -27,3 +27,4 @@ This directory contains the immutable record of significant technical and struct
 | [ADR-0021](./0021-orchestrator-implementer-parity-and-checkpoint-sequencing.md) | Orchestrator Implementer Parity, Checkpoint Sequencing, and Agent Skill Pruning | Partially Superseded (ADR-0022) | 2026-11-04 |
 | [ADR-0022](./0022-deep-web-research-and-5-axis-audit-hardening.md) | Deep Web Research Skill Registration, 5-Axis Ecosystem Audit Hardening, and Token De-duplication | Accepted | 2026-11-05 |
 | [ADR-0023](./0023-elephant-goldfish-heuristics-distillation.md) | Elephant-Goldfish Model Heuristics Distillation and Platform Adaptation | Accepted | 2026-11-08 |
+| [ADR-0024](./0024-checkpoint-data-loss-mitigation-and-protocol-unification.md) | Checkpoint Data-Loss Mitigation, AST Hardening, and Protocol Unification | Accepted | 2026-11-08 |

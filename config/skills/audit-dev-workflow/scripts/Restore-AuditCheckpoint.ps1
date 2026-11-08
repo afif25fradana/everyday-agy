@@ -29,11 +29,7 @@ try {
 
     function Invoke-GitCmd {
         param([string[]]$Arguments)
-        if (Get-Command rtk -ErrorAction SilentlyContinue) {
-            rtk git @Arguments
-        } else {
-            git @Arguments
-        }
+        git @Arguments
     }
 
     if ($FilePath -and $FilePath.Count -gt 0) {
@@ -87,6 +83,7 @@ try {
             $branchName = "checkpoint-$safeTask"
             $branchExists = Invoke-GitCmd @("rev-parse", "--verify", "refs/heads/$branchName") 2>$null
             if ($LASTEXITCODE -eq 0 -and $branchExists) {
+                Invoke-GitCmd @("reset", $branchName) | Out-Null
                 Invoke-GitCmd @("reset", "--hard", $branchName) | Out-Null
                 if ($LASTEXITCODE -ne 0) {
                     Write-Error "Failed to reset working tree to '$branchName'."

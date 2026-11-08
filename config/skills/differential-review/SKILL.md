@@ -1,6 +1,6 @@
 ---
 name: differential-review
-description: Security-focused differential review (/differential-review) of diffs/PRs: caller blast radius, git blame, and test coverage.
+description: "Security-focused differential review (/differential-review) of diffs/PRs: caller blast radius, git blame, and test coverage."
 ---
 
 # Differential Security Review

@@ -12,7 +12,7 @@ When the Parent Agent directly inspects implementation files across complex code
 1. **Context Window Exhaustion & Attention Drift**: Ingesting raw application code inflates Parent context by 20,000–80,000 tokens per session. This triggers LLM "attention fatigue" and middle-loss phenomena, causing the model to skip AST command safety verification, overlook 2-attempt stop rules, hallucinate test passes, and miss subtle caller regressions.
 2. **Cognitive Split-Brain**: The Parent Agent attempts to simultaneously serve as high-level system architect, project manager, line-by-line syntax editor, and verification auditor. This dual identity leads to unverified completion claims, dropped edge cases, and premature commits.
 3. **Turn-1 Triage Loophole & Subagent Inheritance Ambiguity**: Because `SKILL.md` bodies use progressive disclosure (ADR-0017), generic rules in `GEMINI.md` instructing agents to "read target files before editing" cause the Parent to read source files in Turn 1 before loading `/orchestrator`. Conversely, because subagents inherit global rules, naively forbidding "the agent" from reading code would paralyze subagents from performing their duties.
-4. **Subagent Fleet Underutilization**: While `everyday-agy` maintains an 11-agent specialized fleet (ADR-0018) and Antigravity multi-agent teamwork capabilities, existing runbooks (`audit-dev-workflow/SKILL.md#L24`) treat subagents as merely "optional on-demand," lacking an authoritative routing protocol.
+4. **Subagent Fleet Underutilization**: While `everyday-agy` maintains an 11-agent specialized fleet (ADR-0018) and Antigravity multi-agent teamwork capabilities, existing runbooks (`audit-dev-workflow/SKILL.md#step-0-blast-radius-size-tiered-pipeline-routing`) treat subagents as merely "optional on-demand," lacking an authoritative routing protocol.
 
 ## Decision
 
@@ -68,7 +68,7 @@ When the Parent Agent directly inspects implementation files across complex code
    - The Parent maintains a centralized monotonic `global_attempt_counter` initialized to 0.
    - Any failed fix attempt across ANY delegated subagent or Parent action increments this counter.
    - When `global_attempt_counter == 2`, all automated remediation halts. Parent executes `Restore-AuditCheckpoint.ps1`, documents failure receipts, and pauses asking the human operator for direction.
-   - Per `documentation-and-adrs/SKILL.md#L279-L280` (Zero Nuance Clauses), no "emergency escape hatch" reading is permitted.
+   - Per `documentation-and-adrs/SKILL.md#zero-nuance-clauses-invariant` (Zero Nuance Clauses), no "emergency escape hatch" reading is permitted.
 
 9. **Codify Parent VCS Receipt Verification & Anti-Mock Cheating Protocol**:
    - The Parent Agent must NEVER accept a subagent's text completion claim at face value.

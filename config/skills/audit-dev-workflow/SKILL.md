@@ -1,6 +1,6 @@
 ---
 name: audit-dev-workflow
-description: Defensive audit-first dev workflow (/audit-dev-workflow): caller tracing, checkpoints, approval gates, and verification.
+description: "Defensive audit-first dev workflow (/audit-dev-workflow): caller tracing, checkpoints, approval gates, and verification."
 ---
 
 # Audit-First Development Workflow (Operational Runbook)
@@ -22,6 +22,15 @@ Classify the incoming task using the **Zero-Read Triage Gate** in [`orchestrator
 - **`large` (Tier 3)**: Cross-cutting architecture/schema overhaul ($>5$ files). Convene [`council-review`](../council-review/SKILL.md) via single `teamwork` dispatch $\rightarrow$ Gate 1 approval $\rightarrow$ sequential Tier 2 work packages.
 - **Mid-Execution Escalation**: If scope exceeds initial tier boundaries, immediately halt mutations, retain active checkpoint, author `gate1_proposal.md`, and obtain explicit approval before resuming edits per [`orchestrator`](../orchestrator/SKILL.md#12-zero-read-triage-gate-step-0-blast-radius-sizing--ssot).
 
+### Mandatory Parent Skill & Reference Activation Gate
+Before initiating Phase 1 on Tier 2 (`standard`) or Tier 3 (`large`) tasks, Parent Agent MUST actively load the authoritative operational runbooks via `read_file`:
+1. **Fleet Governance & Context Insulation**: Read `config/skills/orchestrator/SKILL.md`.
+2. **Normative Gate Schemas & ADR-0023 Rules**: Read `config/skills/audit-dev-workflow/references/handoff-spec.md` to enforce:
+   - The Zero-Decision Rule & Alternatives Considered at Gate 1.
+   - The 4-Bucket Resolution Taxonomy (`CONTEST | ESCALATE | PROPOSE FIX | DECLINE`).
+   - Failed Reviewer Accounting (`Status: not run`) and Settled vs. Fixed Finding Immunity.
+Failure to load these references prior to generating Gate 1 or processing Gate 2 feedback is an operational violation.
+
 ### Phase 1: Investigation & Blast Radius Analysis (Strictly Read-Only on Tier 2/3)
 1. **Trace Callers & Invariants (Parallel Fan-Out)**: Batch read-only caller searches (`rtk rg`) in parallel within a single turn before proposing edits. For Tier 0/1, inspect target files directly (`read_file`). For Tier 2/3, delegate target file reading to read-only specialist subagents (`system-architect` or `code-auditor` via `view_file`) per [`orchestrator`](../orchestrator/SKILL.md).
 2. **External API & Library Verification (Context7 MCP)**: Verify third-party libraries, APIs, or framework contracts via Context7 MCP (`resolve-library-id` $\rightarrow$ `query-docs`) or [`deep-web-research`](../deep-web-research/SKILL.md) instead of training memory.
@@ -30,7 +39,10 @@ Classify the incoming task using the **Zero-Read Triage Gate** in [`orchestrator
    - Concurrency & threading locks, event loops, and daemon states.
    - Import directions (ensure DAG remains acyclic).
 4. **Proposal & Gate 1 Packaging (Tier 2/3 & Package Installations)**:
-   - Present findings, root cause, exact target coordinates (`file.ext#Lxx-Lyy`), target function signatures, upstream caller blast radius (`rtk rg`), repro test plan, and minimal implementation plan under `# Review Request: Gate 1 (Pre-Execution Proposal)` **exclusively inside an Antigravity UserFacing Artifact** (`write_file` to `<appDataDir>\brain\<conversation-id>/gate1_proposal.md` with `ArtifactMetadata.RequestFeedback: true`).
+   - Package the proposal per [`references/handoff-spec.md#22-gate-1-pre-execution-proposal-review`](./references/handoff-spec.md#22-gate-1-pre-execution-proposal-review) under `# Review Request: Gate 1 (Pre-Execution Proposal)` **exclusively inside an Antigravity UserFacing Artifact** (`write_file` to `<appDataDir>\brain\<conversation-id>/gate1_proposal.md` with `ArtifactMetadata.RequestFeedback: true`).
+   - Present findings, root cause, exact target coordinates (`file.ext#Lxx-Lyy`), target function signatures, upstream caller blast radius (`rtk rg`), repro test plan, minimal implementation plan adhering to `ponytail` (shortest working diff), and strictly enforce:
+     - **The Zero-Decision Rule**: Pre-determine all schemas, APIs, error codes, and boundary choices; zero architectural decisions are delegated to the implementer.
+     - **Alternatives Considered**: Mandatory evaluation of alternative designs with documented trade-offs explaining why each alternative was rejected.
    - Keep the working tree 100% clean prior to Gate 1 approval so Phase 2 `New-AuditCheckpoint.ps1` succeeds cleanly. Chat response must remain 1–3 lines linking to `gate1_proposal.md`.
    - Qualifying Tier 0 and Tier 1 tasks bypass Gate 1 ceremony and proceed directly to Phase 2 Checkpoint.
 5. **Architectural Decision Gate (ADR)**: If the proposed change introduces a new dependency, alters system protocols/topology, modifies data schemas, or establishes security boundaries, propose an ADR (`<Project>-AI-Context/docs/adr/000x-...md` in Twin-Repo mode, or `docs/adr/000x-...md` in Single-Repo mode per [`documentation-and-adrs`](../documentation-and-adrs/SKILL.md)).
@@ -84,10 +96,13 @@ Classify the incoming task using the **Zero-Read Triage Gate** in [`orchestrator
 1. **Gate Packaging & Reviewer Payloads**:
    - **Tier 0 (`[TRIVIAL REVIEW]`)**: Inline in chat (for diffs $\le 5$ lines per `config/GEMINI.md#L36`) or artifact, containing diffstat and full unified diff (`+`/`-`).
    - **Gate 2 (`# Review Request: Gate 2 (Post-Execution Handoff & Diff)`)**: Written exclusively as an Antigravity UserFacing Artifact (`<appDataDir>\brain\<conversation-id>/gate2_handoff.md` with `UserFacing: true`) per [`handoff-spec.md`](./references/handoff-spec.md). Chat response must remain 1–3 lines linking to the artifact.
+   - **Programmatic Diff Injection**: To eliminate autoregressive paraphrasing and hallucination, unified diffs must NEVER be manually typed. Implementers draft `gate2_handoff.md` with `{{VERBATIM_GIT_DIFFSTAT}}` and `{{VERBATIM_GIT_DIFF}}`, run `git add -N .`, and programmatically inject the raw, unparaphrased outputs of `git --no-pager diff --stat=140,80 HEAD` and `git --no-pager diff HEAD` into the artifact file.
 2. **Reviewer Return Loop Handling (Gate 2)**:
-   - Evaluate operator chat confirmation (Mode A) or structured review verdict (Mode B):
+   - Evaluate operator chat confirmation (Mode A) or structured review verdict (Mode B) per [`references/handoff-spec.md`](./references/handoff-spec.md):
      - On `APPROVE`: Proceed to commit discipline.
-     - On `QUESTIONS FOR IMPLEMENTER`: Run `rtk rg "<symbol>"` and return exact coordinates (`file.ext#Lxx-Lyy`) and verbatim snippet.
+     - On `QUESTIONS FOR IMPLEMENTER`: Run `rtk rg "<symbol>"` and return exact coordinates (`file.ext#Lxx-Lyy`) and verbatim snippet using the Dispute Resolution Format. Classify each finding into the 4-Bucket Resolution Taxonomy ([`references/handoff-spec.md#62-the-4-bucket-resolution-taxonomy`](./references/handoff-spec.md#62-the-4-bucket-resolution-taxonomy): `CONTEST | ESCALATE | PROPOSE FIX | DECLINE`).
+     - **Failed Reviewer Accounting**: Record any timed-out, errored, or aborted reviewer/subagent as `Status: not run`. Never treat a failed reviewer as "0 findings" (invalidates approval).
+     - **Settled vs. Fixed Finding Immunity**: Findings settled via verified code coordinates or accepted operator trade-offs are immune to re-litigation by subsequent review passes; only re-verify `Fixed` findings.
      - On `REJECT`:
        - *Implementation Fix (Iterative Phase 3)*: Keep active `checkpoint-<task>` branch as baseline (do NOT run `Restore-AuditCheckpoint.ps1` or overwrite the checkpoint), apply requested fixes, re-verify, and update `gate2_handoff.md`.
        - *Architectural Abort (Return to Phase 1)*: Run `Restore-AuditCheckpoint.ps1` to revert working tree cleanly, confirm rollback, and draft a new Gate 1 proposal.

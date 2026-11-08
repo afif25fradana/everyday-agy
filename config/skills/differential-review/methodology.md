@@ -72,7 +72,7 @@ rtk rg --files . | Measure-Object -Line
 
 For each changed file:
 
-1. **Read both versions** (baseline via `rtk git show <base>:<file>` and current via `view_file`)
+1. **Read both versions** (baseline via `rtk git show <base>:<file>` and current via `view_file` or `read_file`): Note that Parent `read_file` is restricted strictly to Tier 0/1 changes; Tier 2/3 changes delegate code reading exclusively to `code-auditor` (`view_file`) per ADR-0019 Parent Context Insulation.
 
 2. **Analyze each diff region:**
    ```
@@ -199,7 +199,7 @@ rtk rg "functionName\(" . | Measure-Object -Line
    - WHY is this approach chosen?
    - WHY could this fail in production?
 
-**If `audit-context-building` skill is NOT available**, manually perform the line-by-line analysis above using `read_file` (Parent) / `view_file` (Subagent), `rtk rg`, and code tracing.
+**If `audit-context-building` skill is NOT available**, manually perform the line-by-line analysis above using `read_file` (Parent, restricted strictly to Tier 0/1 changes; Tier 2/3 changes delegate code reading exclusively to `code-auditor` via `view_file` per ADR-0019 Parent Context Insulation) / `view_file` (Subagent), `rtk rg`, and code tracing.
 
 **Cross-cutting pattern detection:**
 ```pwsh

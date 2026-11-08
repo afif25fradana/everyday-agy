@@ -134,6 +134,18 @@ $testCases = @(
     @{ Expected = "BLOCK"; Cmd = 'git stash clear'; Reason = "git stash clear destructive drop" },
     @{ Expected = "BLOCK"; Cmd = 'robocopy C:\empty C:\target /MIR'; Reason = "robocopy /MIR destructive mirror wipe" },
 
+    # Blocked: Colon path parameter syntax, uncheckpointed git branch force, git worktree force, COM/WMI execution
+    @{ Expected = "BLOCK"; Cmd = 'Remove-Item -Path:C:\* -Force'; Reason = "Remove-Item -Path: colon parameter root wildcard" },
+    @{ Expected = "BLOCK"; Cmd = 'Remove-Item -LiteralPath:C:\* -Force'; Reason = "Remove-Item -LiteralPath: colon parameter root wildcard" },
+    @{ Expected = "BLOCK"; Cmd = 'Remove-Item -LiteralPath:~/.ssh/id_rsa -Force'; Reason = "Remove-Item -LiteralPath: sensitive ~/.ssh target" },
+    @{ Expected = "BLOCK"; Cmd = 'git branch -f main HEAD~1'; Reason = "Uncheckpointed git branch -f overwrite" },
+    @{ Expected = "BLOCK"; Cmd = 'git branch --force dev HEAD~2'; Reason = "Uncheckpointed git branch --force overwrite" },
+    @{ Expected = "BLOCK"; Cmd = 'git worktree remove --force wt1'; Reason = "git worktree remove --force" },
+    @{ Expected = "BLOCK"; Cmd = 'git worktree remove -f wt1'; Reason = "git worktree remove -f" },
+    @{ Expected = "BLOCK"; Cmd = 'New-Object -ComObject WScript.Shell'; Reason = "New-Object -ComObject WScript.Shell execution" },
+    @{ Expected = "BLOCK"; Cmd = 'New-Object -Com "Shell.Application"'; Reason = "New-Object -Com Shell.Application execution" },
+    @{ Expected = "BLOCK"; Cmd = '([wmiclass]"Win32_Process").Create("calc.exe")'; Reason = "([wmiclass]Win32_Process).Create execution" },
+
     # Allowed: Standard developer commands
     @{ Expected = "ALLOW"; Cmd = 'git status'; Reason = "git status" },
     @{ Expected = "ALLOW"; Cmd = 'git push git@github.com:user/repo.git main'; Reason = "git push to SSH remote URL containing colon" },
@@ -154,6 +166,8 @@ $testCases = @(
     # Allowed: Checkpoint rollback & commit messages containing flag text
     @{ Expected = "ALLOW"; Cmd = 'rtk git reset --hard checkpoint-fix-auth'; Reason = "Valid checkpoint branch reset" },
     @{ Expected = "ALLOW"; Cmd = 'git reset checkpoint-fix-auth --hard'; Reason = "Valid checkpoint branch reset with trailing --hard" },
+    @{ Expected = "ALLOW"; Cmd = 'git branch -f checkpoint-test1 HEAD'; Reason = "Valid checkpoint branch creation with git branch -f" },
+    @{ Expected = "ALLOW"; Cmd = 'git branch -d checkpoint-test1'; Reason = "Valid unforced branch deletion with git branch -d" },
     @{ Expected = "ALLOW"; Cmd = 'rtk proxy git status'; Reason = "rtk proxy benign command" },
     @{ Expected = "ALLOW"; Cmd = '& { Write-Host "safe scriptblock" }'; Reason = "Safe script block execution" },
     @{ Expected = "ALLOW"; Cmd = 'rtk git commit -m "fix(safety): block git clean -fdx and git push -f"'; Reason = "Commit message containing flag text" }

@@ -35,11 +35,7 @@ try {
 
     function Invoke-GitCmd {
         param([string[]]$Arguments)
-        if (Get-Command rtk -ErrorAction SilentlyContinue) {
-            rtk git @Arguments
-        } else {
-            git @Arguments
-        }
+        git @Arguments
     }
 
     if ($FilePath -and $FilePath.Count -gt 0) {

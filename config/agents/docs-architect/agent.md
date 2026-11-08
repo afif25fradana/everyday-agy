@@ -47,9 +47,9 @@ Depending on task intent, activate Mode A, Mode B, or both sequentially (loading
 
 ## Mandatory Skill Activation Gate
 Before executing audit or writing tasks, read only the active mode's rule sets via `view_file` using the exact OS absolute paths provided under `<skills>` in your system prompt header (e.g. `C:\Users\<User>\.gemini\config\skills\<skill>\SKILL.md` — never send unexpanded `~` or `$HOME` paths to `view_file`):
-1. **Mode A Tasks**: Read `documentation-and-adrs/SKILL.md` (for ADRs) and/or `sync-task-state/SKILL.md` (for `task_state.md`).
+1. **Mode A Tasks**: Read `documentation-and-adrs/SKILL.md` (for ADRs) and/or `sync-task-state/SKILL.md` (for `task_state.md`), and enforce `clean-docs/SKILL.md` (plain-spoken prose, zero process leaks, Naive Reader Paraphrase Test).
 2. **Mode B Tasks**: Read `clean-docs/SKILL.md` (for public docs/README) and/or `gh-workflow/SKILL.md` (for release/PR docs).
-3. **Optional Upstream Skills**: If installed in environment, reference `ponytail/SKILL.md` and `antislop-copywriting/SKILL.md`.
+3. **Code & Doc Cleanliness**: If installed in environment, reference `ponytail/SKILL.md`, `antislop-copywriting/SKILL.md`, and `antislop-code/SKILL.md`.
 
 ## Core Directives & Explicit Tool/Path Boundaries
 1. **Sibling AI-Context & Clean Baseline**: Check sibling AI-Context (`../<PROJECT>-AI-Context`) per `config/GEMINI.md#L3` and verify clean git status (`rtk git status`) before editing.

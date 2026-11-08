@@ -1,4 +1,4 @@
-# ADR-0023: Elephant-Goldfish Model Heuristics Distillation and Platform Adaptation
+# ADR-0023: Adopt Zero-Decision Planning, 4-Bucket Dispute Actions, and Unrun Checks
 
 ## Status
 Accepted
@@ -7,59 +7,50 @@ Accepted
 2026-11-08
 
 ## Context
-Following an exhaustive Council Review of Google's Elephant-Goldfish Model (EGM v0.1.1) across six constitutional seats (`system-architect`, `silent-failure-hunter`, `spec-verifier`, `tdd-guide`, `docs-architect`, `code-auditor`), direct monolithic installation was strictly vetoed (Grade C, 2.71/5.00 composite score; SHA-256: `61058575418317FA852C3CA1A63EC1DCB4AEE264DEC9B5B7B246F81EE15EFE77`).
+When evaluating external review and specification guidelines from Google's Elephant-Goldfish Model (EGM), direct installation of the plugin was unsuitable due to several structural limitations:
+1. **Agent and Skill Schema Mismatches**:
+   The external plugin defined 10 persona markdown files without required `model` or `tools` frontmatter fields, and several skill descriptions exceeded continuous integration character limits.
+2. **Conversation Context Overhead**:
+   The workflow instructed the primary conversation session to accumulate all drafting turns, multiple rounds of critique, and inline code editing, which caused large prompt token buildup and attention drift.
+3. **Subagent Nesting Incompatibility**:
+   The review pipeline routed through an intermediate delegator agent attempting to invoke subagents recursively. Antigravity's subagent harness is single-tiered and does not support nested subagent calls.
+4. **Lack of Automated Test Verification and Rollbacks**:
+   The plugin focused strictly on prose review without automated test-runner verification or git rollback checkpoints. Its automated acceptance mode modified workspace files without version control integration.
+5. **Static File Sprawl**:
+   The bootstrapping script created static `README.md` files in every subdirectory, adding unnecessary maintenance overhead.
 
-Forensic inspection established five critical operational and architectural barriers to raw EGM ingestion:
-1. **Continuous Integration Breakage (`.github/workflows/ci.yml`)**: EGM's monolithic plugin imports 10 flat markdown personas in `agents/*.md` (breaking the 11-agent fleet count assertion: $11 \rightarrow 21$) that lack required `model:` and `tools:` frontmatter schemas, while 6 of its 7 skills exceed the $\le 128$-character description limit (up to 367 chars).
-2. **Root Context Inversion (Violation of ADR-0019)**: EGM assigns the root conversation session ("The Elephant") to accumulate drafting turns, multi-round critiques, and inline code editing, resulting in massive context bloat ($>80\text{k}$ tokens), middle-loss, and cognitive split-brain. This contradicts everyday-agy's Parent Context Insulation Invariant.
-3. **Subagent Nesting Runtime Breakdown**: EGM's review pipeline routes through `egm-synthesizer` acting as an intermediate delegator that attempts to spawn child subagents. Antigravity's `invoke_subagent` harness is strictly single-tiered and disallows recursive subagent invocation, collapsing EGM's synthesis hierarchy.
-4. **Complete Absence of Execution Safety & Rollback**: EGM is strictly a prose-auditing tool (`resources/execution_instructions.md#L3-L6`). It provides zero automated test-runner verification, zero assertion count checks, and zero rollback protection (`Restore-AuditCheckpoint.ps1`). Its "Auto accept" mode batch-applies regex edits directly to repository files while forbidding version control tracking.
-5. **Documentation Sprawl & Bit-Rot**: EGM's `egm-bootstrap` traverses directories and forces static `README.md` files into every leaf folder ("Peanuts and Hay"), creating immediate maintenance debt and bit-rot that violates clean-docs and twin-repo invariants.
-
-However, EGM introduces high-leverage qualitative specification heuristics that dramatically curb LLM hallucination, unapproved architectural improvisations, and defensive review disputes. Following the distillation precedence established in Michael Nygard ADR-0014 (*Superpowers Heuristics Distillation and Platform Adaptation*), everyday-agy surgically harvests these mechanisms into existing skills and agents with zero plugin bloat and 100% CI compliance.
+However, the methodology contained practical heuristics: resolving architectural decisions in planning before writing code, classifying review disputes into four clear actions, tracking unrun checks honestly, auditing implementation against specifications across four drift vectors, and verifying documentation clarity. Rather than installing the plugin, these heuristics were adopted into existing skills.
 
 ## Decision
+1. **Require Zero Design Decisions Left to Implementers in Planning (`spec-kit`, `handoff-spec.md`)**:
+   - In `spec-kit` planning (`/speckit.plan`), mandate that technical plans determine schemas, API endpoints, dependencies, error codes, and edge-case behaviors before implementation starts.
+   - In `handoff-spec.md` (Gate 1 payload), include a verification check confirming all architectural choices are settled.
+   - Sizing exemption: this requirement applies to Tier 2 (`standard`) and Tier 3 (`large`) tasks. Tier 0 (`trivial`) and Tier 1 (`small bugfix`) changes are exempt to prevent over-specification on routine fixes.
+   - Require documenting evaluated design alternatives and trade-offs.
+2. **Classify Review Feedback into Four Action Buckets (`handoff-spec.md`)**:
+   - In `handoff-spec.md` (Section 6.2), categorize review responses into four unambiguous actions:
+     - `CONTEST`: The critique is factually incorrect or based on a misunderstanding of code; requires verifying checkable coordinates (`file.ext#Lxx-Lyy`) via `rtk rg`.
+     - `ESCALATE`: The critique is incorrect, but evidence relies on unwritten conventions or external agreements; state the context plainly without adding unnecessary code or documentation bloat.
+     - `PROPOSE FIX`: The critique is valid; provide the exact text replacement or code diff adhering to minimal change principles.
+     - `DECLINE`: The finding is a cosmetic preference with no functional or security risk; record as an accepted trade-off without code changes.
+3. **Record Failed Review Checks as Unrun (`handoff-spec.md`, `council-review`)**:
+   - Any review check or subagent that times out or encounters a tool exception must be recorded as `Status: not run`. Treating a failed check as having zero findings is prohibited, and unrun checks prevent clean review sign-off.
+   - Distinguish between `Settled` findings (contested with verified evidence or accepted as trade-offs) and `Fixed` findings (addressed via code edits, which require verification).
+4. **Audit Implementation Against Specifications Across Four Drift Vectors (`code-auditor`)**:
+   - When reviewing code against specifications or ADRs, check four specific vectors: (a) *Missing Features*, (b) *Incomplete Models/Schemas*, (c) *Logic Shortcuts or Bypasses*, and (d) *Architectural Divergence*.
+   - In planning reviews, treat proposed functions and files as planned additions rather than flagging them as missing code.
+5. **Enforce Documentation Clarity and Caveat Calibration (`clean-docs`)**:
+   - Ban performative praise and filler phrases in review discussions.
+   - Apply the Naive Reader Paraphrase Test: ensure a fresh reader can plainly articulate in two paragraphs what the document proposes and how the existing system works.
+   - Calibrate operational caveats (`DROP`, `CALIBRATE`, `RELOCATE`, `KEEP`) to remove speculative hedging while preserving real system limits.
 
-1. **Embed The Zero-Decision Rule (`spec-kit`, `handoff-spec.md`)**:
-   - In `config/skills/spec-kit/SKILL.md` (Phase 2: `/speckit.plan`), mandate that technical plans leave zero design or architectural choices to the implementer (schemas, API routes, dependencies, error codes, and boundary edge cases must be pre-determined).
-   - In `config/skills/audit-dev-workflow/references/handoff-spec.md` (Gate 1 payload and schema), codify a mandatory Zero-Decision verification check.
-   - **Blast-Radius Exemption**: Dogmatic zero-decision enforcement is strictly scoped to Tier 2 (`standard`) and Tier 3 (`large`) tasks; Tier 0 (`trivial`) and Tier 1 (`small bugfix`) changes are explicitly exempt per existing blast-radius tiering to prevent analysis paralysis.
-   - Require explicit evaluation of alternative designs with documented trade-offs explaining why each alternative was rejected.
-
-2. **Codify The 4-Bucket Resolution Taxonomy (`handoff-spec.md`)**:
-   - In `config/skills/audit-dev-workflow/references/handoff-spec.md` (Section 6.2), replace ambiguous dispute handling with the 4-bucket epistemic classification:
-     - `CONTEST`: Critique is factually inaccurate or based on a misunderstanding of code; requires checkable codebase coordinates (`file.ext#Lxx-Lyy`) verified via `rtk rg`. ("This was intentional" is banned as evidence).
-     - `ESCALATE`: Critique is inaccurate, but evidence relies on out-of-band context (oral decision, unwritten convention); state plainly without adding code/doc bloat solely to satisfy an external reviewer.
-     - `PROPOSE FIX`: Critique is valid; provide precise textual replacement or code diff adhering to Ponytail.
-     - `DECLINE`: Finding is a cosmetic Nit with no security or functional risk; record as accepted trade-off without code changes.
-   - Prohibit contesting comprehension gaps (if a fresh reader could not follow intent, context is missing) and authorial defensiveness.
-
-3. **Harden Review Accounting & State Tracking (`handoff-spec.md`, `council-review`)**:
-   - In `handoff-spec.md` (Section 6.3) and `config/skills/council-review/SKILL.md` (Acceptance Criteria), codify **Failed Reviewer Accounting (`not run` vs 0 Findings)**: any reviewer/subagent that times out or encounters an unhandled tool exception must be recorded as `Status: not run`. Treating a failed reviewer as having "0 findings" is strictly prohibited, and `not run` status invalidates clean-round convergence.
-   - Codify **`Settled` vs `Fixed` Finding State Tracking**: `Settled` findings (contested with verified evidence or accepted as documented trade-offs) are immune to re-litigation by subsequent subagents; `Fixed` findings (addressed via code/doc mutation) must be re-verified by subsequent verification passes.
-
-4. **Adopt The 4-Vector Spec Drift Audit Rubric (`code-auditor`)**:
-   - In `config/agents/code-auditor/agent.md` (Audit Protocol Step 4), formalize the 4 drift vectors when comparing implementation code to specifications or ADRs: (a) *Missing Features*, (b) *Incomplete Models/Schemas*, (c) *Logic Shortcuts/Bypasses*, and (d) *Architectural Divergence*.
-   - In `code-auditor/agent.md` (Execution Policy), codify the **Planning Anti-False-Positive Rule**: when reviewing Gate 1 plans, proposed new files/functions are intentions, not defects; do not flag candidate references as "Non-Existent Code" unless the plan falsely claims they already exist at HEAD.
-
-5. **Consolidate Review Anti-Sycophancy & Documentation Craft (`clean-docs`)**:
-   - In `config/skills/clean-docs/SKILL.md` (Section 1), strengthen Review Anti-Sycophancy to explicitly ban performative praise (`"Brilliant!"`, `"Perfect!"`) and polite apologies (`"I apologize"`, `"I am sorry"`).
-   - In `clean-docs/SKILL.md` (Section 4), codify **The Naive Reader Paraphrase Test**: ensuring a fresh reader can plainly articulate in two paragraphs what the document proposes and how the existing system works before approving/publishing.
-   - In `clean-docs/SKILL.md` (Section 5), codify **Defensive Caveat Calibration (`DROP | CALIBRATE | RELOCATE | KEEP`)** to strip speculative hedging while preserving evidence-backed constraints.
-   - Rely on `clean-docs` as the single source of truth (SSOT) bound by custom agents, avoiding redundant prompt duplication across manifests or global rules (`ADR-0022`).
-
-6. **Strict Monolithic Rejection**:
-   - Completely reject raw EGM plugins, flat agent personas, nested synthesizers, and Peanuts & Hay README generation.
+## Alternatives Considered & Rejected
+- **Installing the raw plugin**: Rejected due to agent frontmatter schema mismatches, recursive subagent nesting failures, and lack of rollback checkpoints.
+- **Applying zero-decision rules to trivial bug fixes**: Rejected because requiring full architectural plans for single-line or single-module fixes introduces unnecessary friction.
 
 ## Consequences
-
-- **Positive**:
-  - Eliminates premature implementation ambiguity, schema hallucination, and unapproved dependency additions via The Zero-Decision Rule.
-  - Eliminates circular review debates and sycophantic concessions via the 4-Bucket Resolution Taxonomy and checkability requirements.
-  - Prevents false-pass illusions in multi-agent evaluations by distinguishing `not run` from zero findings.
-  - Adds surgical precision to differential reviews via the 4-Vector Spec Drift rubric.
-  - Zero token inflation: keeps global rules and manifests lean by housing heuristics in specialized on-demand skills.
-  - Preserves 100% CI pass rate: agent count remains 11, skills count remains 15, and all skill descriptions remain $\le 128$ characters.
-- **Negative / Mitigations**:
-  - Risk of over-specification on simple fixes is mitigated by explicitly exempting Tier 0 and Tier 1 tasks from The Zero-Decision Rule.
-  - Authoring cognitive load is mitigated by keeping reviews grounded in existing Ponytail and clean-docs standards.
+- **Positive**: Resolves design choices before writing implementation code on multi-file tasks.
+- **Positive**: Replaces circular review debates with four concrete action categories and verified evidence.
+- **Positive**: Prevents false-pass assumptions by recording failed review checks as `not run`.
+- **Positive**: Adds clear evaluation criteria for comparing implementation code to specifications.
+- **Neutral / Operational Requirements**: Planning documents for Tier 2 and Tier 3 tasks must specify data schemas, error handling, and rejected alternatives before implementation begins.

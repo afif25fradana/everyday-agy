@@ -1,4 +1,4 @@
-# ADR-0008: Tri-Pillar Deliberative Multi-Agent Council Architecture
+# ADR-0008: Multi-Perspective Architecture and Pre-Release Review Board
 
 ## Status
 Accepted
@@ -7,24 +7,26 @@ Accepted
 2026-10-22
 
 ## Context
-Single-agent code reviews and architectural audits suffer from inherent confirmation bias, localized hallucinations, and blind spots. While the broader AI ecosystem has introduced multi-agent committee patterns (such as Andrej Karpathy's `llm-council`, Anthropic's Evaluator-Optimizer research, and Addy Osmani's SDLC gating), these tools are typically built for external runtimes like Claude Code or bespoke Docker environments.
+Single-perspective reviews and audits can miss blind spots, edge cases, and cross-cutting concerns. While external tooling ecosystems often use multi-agent committee patterns, they typically rely on external runtimes or containerized setups.
 
-Antigravity features a pool of 9 specialized custom subagents (`system-architect`, `code-auditor`, `silent-failure-hunter`, `tdd-guide`, `database-reviewer`, `ui-crafter`, `docs-architect`, `build-error-resolver`, `maintenance-bot`) operating with `model: inherit` (ADR-0004). However, the environment lacked a formalized workflow to convene these specialists into a coordinated, adversarial review board.
+Antigravity provides specialized custom subagents (`system-architect`, `code-auditor`, `silent-failure-hunter`, `tdd-guide`, `database-reviewer`, `ui-crafter`, `docs-architect`, `build-error-resolver`, `maintenance-bot`) operating with inherited model capabilities (ADR-0004). However, there was no standardized structure to convene these specialists into a coordinated, multi-perspective review panel for high-stakes evaluations.
 
 ## Decision
-1. **Adopt the Tri-Pillar Council Lifecycle (`council-review`)**:
-   - **Pillar 1 (Cold Context Grounding)**: Enforce objective fact-mapping via `audit-context-building` (guarantees, unvalidated assumptions, and caller topology) before opening debate.
-   - **Pillar 2 (Socratic Council Formation)**: Use `grill-me` with modal dialogs (`ask_question`) to allow human operators to select 3 to 5 domain seats and establish acceptance criteria.
-   - **Pillar 3 (Autonomous Council Deliberation)**: Delegate execution to `teamwork-preview`. The Sentinel and Orchestrator dispatch parallel custom subagents, submit findings to adversarial challengers testing line citations, compile Chairman scorecards with arithmetic closure, and require independent Victory Auditor certification.
+1. **Establish a Structured Multi-Perspective Review Workflow (`council-review`)**:
+   - **Phase 1: Codebase Fact-Mapping**: Map codebase invariants, assumptions, and caller topology (`audit-context-building`) before starting review discussions.
+   - **Phase 2: Review Scoping**: Select 3 to 5 domain-specific review roles based on the task scope (e.g. security, performance, ergonomics) and set explicit acceptance criteria.
+   - **Phase 3: Independent Evaluation and Synthesis**: Run specialized review roles in parallel, verify line citations against current source code, score findings against defined criteria, and synthesize an actionable finding matrix.
 2. **Enforce Read-Only Boundary**:
-   Council runs are strictly diagnostic. Zero file mutations and zero package installations are permitted during execution.
-3. **Standardize Deliverable Formats**:
-   Require all council outputs to feature a normalized 16-cell scorecard (Rigor, Ergonomics, Token Efficiency, Spec Alignment), a prioritized Gap Matrix (Critical, High, Medium, Low), and an actionable non-breaking roadmap.
+   Review panel sessions are strictly diagnostic. No file edits or package installations take place during the review.
+3. **Standardize Output Structure**:
+   Require review summaries to include a structured scorecard (Rigor, Ergonomics, Token Efficiency, Spec Alignment), a prioritized Gap Matrix (Critical, High, Medium, Low), and an actionable remediation roadmap.
+
+## Alternatives Considered & Rejected
+- **Ad-hoc unstructured reviews**: Rejected because open-ended reviews lack consistency and frequently miss cross-cutting edge cases.
+- **Granting write access during reviews**: Rejected to preserve clear separation between diagnostic review and implementation phases.
 
 ## Consequences
-- **Positive**:
-  - Eliminates single-model hallucination and self-certification traps.
-  - Converts loose prompts into verifiable, mathematically reconciled scorecards.
-  - Reuses existing specialized custom subagents rather than generic prompts.
-- **Trade-offs / Operational Requirements**:
-  - Higher token expenditure and wall-clock latency due to multi-agent exploration and adversarial verification gates.
+- **Positive**: Combines diverse perspectives across security, architecture, and ergonomics before merging high-stakes changes.
+- **Positive**: Checks line citations against current code to prevent inaccurate review comments.
+- **Positive**: Reuses existing specialized agent definitions rather than generic prompts.
+- **Trade-off**: Incurs higher token consumption and latency compared to a single-agent review.

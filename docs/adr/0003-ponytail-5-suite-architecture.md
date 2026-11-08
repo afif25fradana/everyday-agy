@@ -1,4 +1,4 @@
-# ADR-0003: Preservation of Ponytail 5 Discrete Modal Architecture
+# ADR-0003: Discrete Commands for Ponytail Pair-Programming vs Audits
 
 ## Status
 Superseded by ADR-0016
@@ -7,21 +7,20 @@ Superseded by ADR-0016
 2026-10-22
 
 ## Context
-Ponytail 5 is a published agentic benchmark framework (tested across 39 real-world tasks) designed around the philosophy of "lazy senior developer" minimalism (YAGNI, shortest working diff).
-The framework is partitioned into 6 discrete skills:
+The ponytail framework is designed around minimal code diffs and pragmatic developer practices. It is divided into six discrete skills:
 1. `ponytail`: Continuous pair-programming mode (`/ponytail lite|full|ultra`).
-2. `ponytail-audit`: One-shot whole-repo quality audit.
+2. `ponytail-audit`: One-shot whole-repository quality audit.
 3. `ponytail-review`: One-shot diff and pull request review.
 4. `ponytail-debt`: One-shot shortcut comment ledger scanner.
-5. `ponytail-gain`: Static benchmark scoreboard.
+5. `ponytail-gain`: Measured savings display.
 6. `ponytail-help`: Quick reference cheatsheet.
 
-A prior theoretical audit proposed consolidating all 6 skills into a single `ponytail` skill to reduce directory count.
+A proposal suggested consolidating all six skills into a single `ponytail` skill to reduce directory count.
 
 ## Decision
-Reject consolidation and preserve all 6 distinct skills:
-1. Each modality serves a completely different interaction lifecycle: continuous mode toggle vs one-shot commands (`/ponytail-audit`, `/ponytail-review`, `/ponytail-debt`).
-2. Merging them would force the agent to inject entire audit rubrics, regex scanning tables, and benchmark figures into the conversation turn even when the developer simply wants minimal code generation mode (`/ponytail`).
+Retain distinct skills for pair-programming mode versus one-shot commands:
+1. Each command serves a distinct interaction lifecycle: continuous mode toggle versus one-shot reports (`/ponytail-audit`, `/ponytail-review`, `/ponytail-debt`).
+2. Merging them would inject full audit rubrics, regex scanning patterns, and benchmark data into the conversation turn when the developer only wants minimal code generation mode (`/ponytail`).
 3. Discrete skills ensure progressive disclosure loads strictly what is invoked.
 
 ## Alternatives Considered & Rejected
@@ -29,4 +28,4 @@ Reject consolidation and preserve all 6 distinct skills:
 
 ## Consequences
 - **Positive**: Clean context boundaries. One-shot reports remain purely one-shot; pair-programming remains lean and uncluttered.
-- **Maintenance**: 6 short skill descriptors in `<skills>` list, consuming minimal base prompt footprint.
+- **Maintenance**: Six short skill descriptors in the `<skills>` list, consuming minimal base prompt footprint.

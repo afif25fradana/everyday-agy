@@ -1,4 +1,4 @@
-# ADR-0010: Domain-Specific Academic Council for Capital Market & Secondary Data Thesis Evaluation
+# ADR-0010: Academic Review Panel for Empirical Finance Research
 
 ## Status
 Accepted
@@ -7,37 +7,40 @@ Accepted
 2026-10-23
 
 ## Context
-Undergraduate and graduate research in accounting, finance, economics, and management relying on secondary capital market data (specifically Bursa Efek Indonesia / IDX) frequently suffers from recurring methodological and structural pitfalls:
-1. **Econometrics Specification Traps**: Incorrect regression models (e.g. applying pooled OLS to panel data without Chow/Hausman tests), invalid proxy operationalization (e.g. calculating Cash ETR on negative pre-tax income or misapplying manufacturing Altman Z-Scores to financial institutions), unaddressed endogeneity, and extreme outlier distortions.
-2. **Theoretical Disconnect ("Theory Name-Dropping")**: Citing grand theories (Agency Theory, Signaling Theory, Stakeholder Theory, Positive Accounting Theory) in literature reviews without establishing a deductive, causal mechanism that justifies hypothesis direction.
-3. **Data Availability Miscalculations**: Proposing variables requiring paid proprietary terminals (Bloomberg, Refinitiv, S&P Capital IQ) under the mistaken belief that the metrics are freely available in public financial statements or Notes to Financial Statements (CALK).
-4. **AI Citation Hallucination**: AI assistants commonly fabricate journal names, publication years, author pairings, and DOIs when drafting literature reviews.
-5. **Defense Unpreparedness**: Lack of structured adversarial simulation for thesis defense (*sidang skripsi*) and proposal seminars (*sempro*).
+Undergraduate and graduate research in accounting, finance, and economics using secondary capital market data (specifically Bursa Efek Indonesia / IDX) frequently encounters recurring methodological issues:
+1. **Econometrics and Model Selection**:
+   Incorrect regression model selection (e.g. pooling panel data without diagnostic tests), improper proxy formula operationalization, unaddressed endogeneity, or unadjusted outlier distortions.
+2. **Theoretical Grounding**:
+   Citing theoretical frameworks (Agency Theory, Signaling Theory, Stakeholder Theory) without clearly explaining the deductive mechanism connecting the theory to the hypothesis direction.
+3. **Data Availability Constraints**:
+   Proposing variables that require paid proprietary terminals (Bloomberg, Refinitiv) under the assumption that the data is available in free public filings.
+4. **Citation Verification**:
+   Language models can hallucinate publication years, journal names, author lists, or DOIs when drafting literature reviews.
+5. **Defense Preparation**:
+   Authors benefit from structured rehearsal of defense questions before oral examinations and proposal seminars.
 
-While ADR-0008 established the Tri-Pillar Council Review framework (`council-review`) for software engineering audits, Antigravity lacked a tailored deliberative board specialized for empirical social science and capital market research.
+While ADR-0008 established a general multi-perspective review panel (`council-review`) for software engineering, there was no tailored configuration for empirical finance and accounting research.
 
 ## Decision
-1. **Establish the Academic Council Skill (`academic-council`)**:
-   Implement a specialized deliberative panel powered by Antigravity's multi-agent runtime (`teamwork_preview`), tailored for empirical accounting and finance research:
-   - **Seat 1 (Econometrics & Methodology Specialist)**: Audits regression model selection, proxy formulas, purposive sampling criteria, and statistical assumptions.
-   - **Seat 2 (Theoretical Scholar)**: Audits grand theory coherence, hypothesis causality, and internal consistency.
-   - **Seat 3 (BEI Domain Specialist)**: Verifies empirical feasibility against real IDX annual reports, CALK, IDX-IC sector classifications, and OJK/PSAK regulatory timelines.
-   - **Seat 4 (Real Citation Auditor)**: Enforces forensic anti-hallucination verification using targeted web search against Google Scholar, SINTA, Scopus, and official repositories.
-   - **Seat 5 (Thesis Defense Simulator)**: Simulates examiner defense questions (Devil's Advocate) to stress-test research design and prepare researchers for oral defense.
-2. **Enforce Read-Only & Evidence-Backed Guarantees**:
-   - Council deliberation is strictly read-only with respect to project source documents.
-   - All citations and regulatory claims must be grounded in live web search verification.
-3. **Incorporate into Antigravity Customization Architecture**:
-   Install `academic-council` under `config/skills/academic-council/` with seat catalogs and normalized 16-cell scorecard rubrics.
+1. **Define Academic Review Seats for Empirical Finance (`academic-council`)**:
+   Implement a specialized review configuration tailored for empirical accounting and finance research:
+   - **Econometrics and Methodology**: Audits regression model selection, proxy formulas, sampling criteria, and statistical assumptions.
+   - **Theoretical Consistency**: Audits theoretical frameworks, hypothesis development, and logical consistency.
+   - **Market Domain and Data Feasibility**: Verifies data availability against real IDX annual reports, financial statement notes (CALK), sector classifications, and regulatory reporting rules.
+   - **Citation Verification**: Audits citations using targeted web search against academic search engines to prevent hallucinated references.
+   - **Defense Examiner Perspective**: Generates challenging defense questions to help researchers prepare for oral examinations.
+2. **Enforce Read-Only and Search-Verified Boundaries**:
+   - The review is strictly diagnostic and does not modify source manuscripts.
+   - Regulatory claims and journal citations must be grounded in verified search results.
+3. **Skill Packaging**:
+   Install `academic-council` under `config/skills/academic-council/` with seat catalogs and structured review rubrics.
+
+## Alternatives Considered & Rejected
+- **Using generic software engineering review roles**: Rejected because software review criteria (performance, type safety) do not address econometric validity or financial statement accounting standards.
+- **Unverified citation generation**: Rejected because hallucinated references undermine research credibility.
 
 ## Consequences
-
-### Positive
-- **Defensive Citation Verification**: Rigorously intercepts unverified or hallucinated citations in thesis drafts through forensic web verification.
-- **Pre-Collection Methodology Validation**: Catches econometrics errors and proxy formula mistakes before time-consuming data collection begins.
-- **Realistic Defense Preparation**: Equips students and researchers with anticipated examiner counterarguments and methodological defenses.
-- **Zero Repo Bloat**: Implemented as a modular, on-demand skill without modifying global runtime invariants.
-
-### Negative & Operational Requirements
-- **Search Dependency**: Seat 4 and Seat 3 require active internet connectivity and `search_web` invocations to verify journal indexing and regulatory circulars.
-- **Multi-Agent Latency**: Full panel deliberation involves multi-agent synthesis via `teamwork_preview`, taking several minutes per evaluation.
+- **Positive**: Intercepts incorrect regression models and proxy formulas before time-consuming data collection begins.
+- **Positive**: Verifies citations against academic sources to eliminate hallucinated references.
+- **Positive**: Provides structured rehearsal questions for thesis defenses and proposal seminars.
+- **Trade-off**: Requires internet connectivity for web search to verify citations and regulatory circulars.

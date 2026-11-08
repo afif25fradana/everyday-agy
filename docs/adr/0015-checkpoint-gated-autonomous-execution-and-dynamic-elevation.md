@@ -1,60 +1,54 @@
-# ADR-0015: Checkpoint-Gated Autonomous Execution, AST Safety Fortification, and Dynamic Subagent Elevation
+# ADR-0015: Checkpoint-Gated Autonomous Execution for Tiers 0 and 1
 
 ## Status
-Accepted
+Partially Superseded by ADR-0019 (for orchestration flow) and ADR-0024 (for rollback and command safety)
 
 ## Date
 2026-10-31
 
 ## Context
-Under the previous workflow regime governed by `GEMINI.md#L42` and `audit-dev-workflow` (ADR-0007, ADR-0009), all repository file mutations strictly required prior explicit human operator approval in chat ("Gate 1"), even for trivial documentation fixes or contained single-module enhancements. This policy originated from rational fears of generative model hallucination, boundary violations, and context-window attention degradation ("fatigue") on long-running multi-turn sessions.
+Under the earlier workflow rules in `audit-dev-workflow` (ADR-0007, ADR-0009), all repository file modifications required explicit human operator approval in chat ("Gate 1") before editing, even for small documentation fixes or contained single-module enhancements. This created review friction, requiring developers to approve a speculative text proposal before seeing the actual diff.
 
-However, forensic multi-perspective Council deliberation (5 Specialist Seats) and adversarial peer review identified that this "pre-mutation speculative text approval" created severe review friction (requiring the operator to review a text promise rather than an actual code diff) while leaving critical security gaps open:
-1. **Porous AST Shell Sandbox**: `Test-PowerShellCommandSafety.ps1` exhibited 13 distinct bypass vectors (module-qualified cmdlet invocations, `.exe` suffixes, parameter splatting `@var`, secondary subshells `cmd /c` and `powershell -Command`, and displaced git global path flags).
-2. **Ghost Artifact Trap & Rollback Catch-22**: `New-AuditCheckpoint.ps1` suppressed git errors via `2>$null | Out-Null`, while `Restore-AuditCheckpoint.ps1` ran `git reset --hard` which left task-created untracked files behind. Because `Test-PowerShellCommandSafety.ps1` strictly blocked `git clean -f`, the agent was trapped in an unresolvable dirty-tree deadlock.
-3. **Subagent Cognitive Downgrade Hazard**: Proposing to hardcode `model: pro` in subagent manifests (`spec-verifier`, `database-reviewer`) violated ADR-0004 and ADR-0012, forcing subagents to downgrade to Gemini 3.1 Pro whenever the parent session ran on top-tier frontier models such as Claude Sonnet 4.6 (Thinking) or Gemini 4 Argon.
-4. **False Green Exit Code 0 Fallacy**: Automated test runners could exit with status code 0 when test filters matched zero tests, falsely certifying broken implementations.
-5. **Write Boundary Self-Lockout**: Naive restrictions on writing outside the workspace root threatened to break Antigravity UserFacing Artifacts (`~/.gemini/antigravity/brain/...`), session scratch backups, and Twin-Repo `<Project>-AI-Context` synchronization.
+At the same time, several security and execution gaps required attention:
+1. **Command Safety Interception Gaps**:
+   `Test-PowerShellCommandSafety.ps1` needed checks for module-qualified cmdlets (e.g. `Microsoft.PowerShell.Management\Remove-Item`), `.exe` suffixes, parameter splatting (`@var`), secondary shell launches (`cmd /c`), and global git path flags.
+2. **Untracked Files Remaining After Rollback**:
+   `New-AuditCheckpoint.ps1` suppressed errors with `2>$null`, while `Restore-AuditCheckpoint.ps1` ran `git reset --hard`, leaving newly created untracked files in the workspace. Because `git clean -f` was strictly blocked, cleaning up after a failed task was difficult.
+3. **Subagent Model Configuration**:
+   Hardcoding specific model tiers in agent definitions prevented subagents from scaling naturally with higher-capability parent sessions.
+4. **Empty Test Suite False Passes**:
+   Test runners could exit with code 0 if filters matched zero tests, creating a false impression of success.
+5. **Write Boundaries and Artifact Storage**:
+   Path limits needed to allow writing to session artifacts (`brain/<conversation-id>`), scratch folders, and sibling `<Project>-AI-Context` repositories.
 
 ## Decision
-
-1. **Adopt Checkpoint-Gated Autonomous Execution (Tier 0 & Tier 1)**:
-   - For Tier 0 (`trivial`: $\le 2$ files, $\le 3$ exec or $\le 5$ doc lines, zero logic mutation): Autonomous execution immediately following verified checkpoint creation $\rightarrow$ static verification $\rightarrow$ pause at `[TRIVIAL REVIEW]` before commit. Subagent spawning is bypassed.
-   - For Tier 1 (`small`: single-module bugfix/feature): Autonomous execution post-checkpoint $\rightarrow$ Failure-First TDD (RED $\rightarrow$ GREEN) $\rightarrow$ 5-Axis verification $\rightarrow$ pause at Gate 2 (`gate2_handoff.md`) before commit.
-   - For Tier 2/3 (`standard`/`large`) & Package Installations: Retain mandatory pre-execution human Gate 1 approval (`gate1_proposal.md`).
-
-2. **Fortify PowerShell AST Command Safety Sandbox (`Test-PowerShellCommandSafety.ps1`)**:
-   - Normalize command names by stripping module paths (`Microsoft.PowerShell.Management\Remove-Item` $\rightarrow$ `Remove-Item`) and `.exe` suffixes (`git.exe` $\rightarrow$ `git`).
+1. **Allow Autonomous Execution for Small Tasks (Tiers 0 and 1)**:
+   - For Tier 0 (`trivial`: <= 2 files, <= 3 code lines or <= 5 doc lines): execute autonomously after establishing a verified checkpoint, verify statically, and present the final diff for review before commit.
+   - For Tier 1 (`small`: single-module bugfix or enhancement): execute autonomously after establishing a checkpoint, follow TDD (RED -> GREEN), verify, and present the diff at Gate 2 before commit.
+   - For Tier 2/3 (`standard`/`large`) and package installations: retain mandatory human proposal approval (Gate 1) before modifying files.
+2. **Harden PowerShell AST Command Safety Sandbox (`Test-PowerShellCommandSafety.ps1`)**:
+   - Normalize command names by stripping module paths (`Microsoft.PowerShell.Management\Remove-Item` -> `Remove-Item`) and `.exe` suffixes.
    - Intercept parameter splatting (`@var`) on destructive cmdlets and git commands.
-   - Block secondary command interpreters (`cmd`, `wsl`, `bash`, `sh`) and inline subshell evaluation (`powershell`/`pwsh` with `-Command`/`-c`/`-EncodedCommand`), while explicitly permitting legitimate script execution (`pwsh -File`).
-   - Filter git global configuration and path flags (`-C`, `-c`, `--work-tree`, `--git-dir`, `--namespace`) before evaluating subcommands.
-   - Block destructive working tree discards (`git checkout -f`, `git restore .`, and force push refspecs `+ref:ref`).
-   - Preserve the ADR-0012 exemption for read-only commands, test runners, and routine `rtk git status/diff/add/commit`.
+   - Block secondary command interpreters (`cmd`, `bash`, `sh`) and inline evaluation (`pwsh -Command`), while permitting script file execution (`pwsh -File`).
+   - Filter git global configuration flags (`-C`, `-c`, `--work-tree`) before evaluating subcommands.
+   - Block destructive working tree discards (`git checkout -f`, `git restore .`).
+   - Retain exemptions for read-only commands, test runners, and routine `rtk git` commands.
+3. **Track and Clean Untracked Files on Rollback**:
+   - In `New-AuditCheckpoint.ps1`, verify that the working tree is clean and record an untracked file snapshot (`untracked_baseline.txt`).
+   - In `Restore-AuditCheckpoint.ps1`, run `git reset --hard`, compare against the snapshot, and delete only the new untracked files created during the task rather than calling `git clean -f`.
+4. **Dynamic Model Elevation for Complex Subagents**:
+   - Keep `model: inherit` on analytical agents (`spec-verifier`, `database-reviewer`, `system-architect`, `code-auditor`, `silent-failure-hunter`) so they inherit the parent session model.
+   - Allow dynamically elevating subagents to `model: pro` when invoked from `flash` sessions for complex documentation checks or schema reviews.
+5. **Enforce Assertion Counts and Explicit Write Boundaries**:
+   - Require test runs to exit with code 0 AND verify positive passed assertion counts (> 0 passed, 0 failed). Weakening test assertions to force passes is prohibited.
+   - Allow file writes exclusively within the repository, sibling `<Project>-AI-Context` repositories, and Antigravity `brain`/`scratch` directories.
 
-3. **Eliminate Ghost Artifacts & Fail-Closed Checkpoints**:
-   - `New-AuditCheckpoint.ps1`: Validate that the tracked working tree is clean (`git status --porcelain -uno`), eliminate `2>$null`, verify `$LASTEXITCODE == 0`, and snapshot untracked files into scratch (`untracked_baseline.txt`).
-   - `Restore-AuditCheckpoint.ps1`: Verify `$LASTEXITCODE == 0` upon `git reset --hard`, compare against `untracked_baseline.txt`, and selectively remove only task-created untracked artifacts (`Remove-Item -LiteralPath $cleanRel -Recurse -Force`) without invoking blind `git clean -f`.
-
-4. **Codify Dynamic Flash-to-Pro Elevation over Hardcoding**:
-   - Preserve `model: inherit` across all agent manifests (`spec-verifier`, `database-reviewer`, `system-architect`, `code-auditor`, `silent-failure-hunter`) per ADR-0004 & ADR-0012 to inherit Claude Sonnet 4.6 (Thinking) or Gemini 4 Argon parent sessions without downgrade.
-   - Enforce **Dynamic Flash-to-Pro Elevation** in `subagent-patterns.md`: when the parent session runs on `Gemini 3.8 Flash`, pass `Model: "pro"` dynamically at invocation time for `spec-verifier` (bound to mandatory Context7 MCP live documentation retrieval) and `database-reviewer`.
-
-5. **Enforce Semantic Test Integrity & Write Boundaries**:
-   - Redefine Definition of Done: test verification requires exit code 0 AND positive assertion count ($>0$ passed, $0$ failed/skipped). Mutating or weakening test assertions during the GREEN phase is prohibited.
-   - Codify explicit Write Path Boundaries in `GEMINI.md`: allow mutations exclusively within the active repository root, sibling `<Project>-AI-Context` repository, and Antigravity `brain`/`scratch` directories, acknowledging both Parent (`edit_file`/`write_file`) and Subagent (`replace_file_content`/`write_to_file`) tool dualism.
-
-6. **Deployment & Clean Synchronization**:
-   - Add `.agents/` internal teamwork scratch directories to `.gitignore`.
-   - Maintain full deployment parity via `restore.ps1`.
+## Alternatives Considered & Rejected
+- **Requiring Gate 1 on all changes**: Rejected because reviewing actual code diffs on small, contained changes is faster and more reliable than reviewing speculative text proposals.
+- **Using `git clean -fdx` during rollback**: Rejected because blind directory cleaning risks deleting untracked developer files unrelated to the active task.
 
 ## Consequences
-
-- **Positive**:
-  - Dramatically reduces developer review fatigue: routine Tier 0 and Tier 1 tasks are verified on actual code diffs and test evidence at Gate 2, eliminating the speculative pre-execution Gate 1 approval.
-  - Hardens the execution perimeter against 13 known shell bypass vectors while preserving necessary build and script executions.
-  - Prevents untracked ghost files from poisoning test suites after rollback.
-  - Avoids artificial model downgrades when operating under frontier partner models.
-  - Protects Antigravity UserFacing Artifact generation and Twin-Repo context tracking.
-- **Negative / Neutral**:
-  - Checkpoint creation strictly fails if the tracked working tree is dirty; developers must commit or stash prior uncommitted work before initiating autonomous tasks.
-  - Requires developers to maintain test suites that output positive assertion counts.
+- **Positive**: Reduces review friction for small bug fixes and documentation updates while keeping checkpoints for safety.
+- **Positive**: Prevents untracked task files from lingering in the workspace after rollback.
+- **Positive**: Catches shell bypasses using parameter splatting, secondary shells, and module prefixes.
+- **Trade-off**: Checkpoint creation requires a clean tracked working tree before starting autonomous tasks.

@@ -1,48 +1,42 @@
-# ADR-0014: Superpowers Heuristics Distillation and Platform Adaptation
+# ADR-0014: Adopt TDD Discipline, Failure-First Checks, and Anti-Sycophancy
 
 ## Status
-Accepted
+Partially Superseded by ADR-0022 (for test creation order relative to git checkpoints)
 
 ## Date
 2026-10-30
 
 ## Context
-Following an exhaustive Council Review deliberation of `obra/superpowers` (v7.0.1) documented in `council_evaluation_report.md`, direct monolithic installation of the external plugin was strictly vetoed. Superpowers relies on POSIX shell scripts (`.sh`), physical git worktrees (prone to `EPERM` file-locking crashes and disk exhaustion on Windows PowerShell hosts), greedy "1% chance" bootstrap directives that bloat context by ~160KB (~40,000 tokens), and unapproved autonomous execution loops that violate mandatory human safety gates (`<RULE[user_global]>` Rule 2).
+When evaluating the external `superpowers` plugin, several platform mismatches made direct installation unsuitable: it relied on POSIX shell scripts (`.sh`), physical git worktrees (which encounter file-locking issues on Windows hosts), large bootstrap instructions that added significant token overhead, and autonomous loops that bypassed human review gates.
 
-However, Superpowers incorporates industry-leading behavioral heuristics that substantially reduce LLM rationalization, confirmation bias, and superficial verification shortcuts. Rather than discarding these insights or importing runtime bloat, this decision surgically distills its highest-value heuristics into the user's existing, spec-compliant Antigravity skills.
+However, the plugin contained practical testing rules and review habits: requiring a failing test before writing implementation code, verifying that tests fail for the intended reason, and removing conversational filler from code review discussions. Rather than installing the full plugin, these useful practices were adopted directly into existing skills.
 
 ## Decision
-1. **Harden TDD & Test Integrity (`tdd-guide`)**:
-   - Embed the Iron Law of TDD ("Delete means delete"): if production code is written before observing a failing test, delete the implementation immediately.
-   - Embed a compact 5-point Anti-Rationalization Guardrails matrix to prevent shortcut rationalizations.
-   - Add the Mutation Check heuristic under the De-Sloppify pass (mentally or temporarily mutating code to ensure at least one test fails per mutation).
-   - Retain `model: flash` strictly to preserve cognitive tiering and token efficiency (ADR-0004, ADR-0012).
+1. **Strengthen Test-Driven Development Discipline (`tdd-guide`)**:
+   - Require observing a failing test before writing implementation code. If code is authored without a failing test, revert it and establish the test first.
+   - Include a concise checklist of rationalizations to avoid when testing.
+   - Verify that tests fail specifically due to missing functionality rather than syntax errors, typos, or import mistakes.
+   - Retain `model: flash` for `tdd-guide` to keep routine test authoring fast (ADR-0004, ADR-0012).
+2. **Update Development Workflow Guidance (`audit-dev-workflow`)**:
+   - Trace caller call-stacks and log boundary inputs when investigating bugs.
+   - Replace legacy subagent names with current custom specialist roles (`system-architect`, `code-auditor`, `tdd-guide`) and atomic Git Checkpoints (`New-AuditCheckpoint.ps1`).
+   - Remove performative praise (`"You're absolutely right!"`, `"Great point!"`) from code reviews; evaluate feedback on technical merits and minimal diff size.
+   - Run project-wide test suites (`rtk npm test`, `rtk python -m pytest`) to catch regressions, preserving the static check fallback (`[TEST HARNESS: NONE]`) when no test runner is configured.
+   - Apply a 2-attempt limit before pausing to request operator guidance when fixing automated check failures.
+3. **Enhance Planning and Specification Guidance (`spec-kit`)**:
+   - In `/speckit.specify`, focus scoping questions on concrete requirements and constraints without restating prompts.
+   - In `/speckit.plan`, map identified edge cases directly to specific test tasks.
+4. **Refine Coding and Documentation Standards (`clean-docs`, `coding-standards`)**:
+   - In `clean-docs`, discourage performative praise and conversational filler in review dialogs and commit messages.
+   - In `coding-standards`, prefer deterministic polling helpers (`waitFor`) over hardcoded sleep timeouts in asynchronous tests.
+   - In `documentation-and-adrs`, format guidelines with clear structural requirements and explicit negative rules.
 
-2. **Upgrade Audit-Dev-Workflow (`audit-dev-workflow`)**:
-   - In Phase 1: Incorporate multi-layer boundary logging, backward call-stack tracing, and Failure-First Verification (RED) ensuring tests fail for the intended assertion, not syntax/import errors.
-   - Clean legacy subagent references: Replace `TypeName: "research"`, `TypeName: "self"`, and `Workspace: branch` with custom specialist subagents (`system-architect`, `code-auditor`, `tdd-guide`) and atomic Git Checkpoints (`New-AuditCheckpoint.ps1` -> `checkpoint-<task>`). Reserve `teamwork` strictly for Tier 3 deliberative Council.
-   - In Review Return Loop: Codify an Anti-Sycophancy rule banning performative praise (`"You're absolutely right!"`, `"Great point!"`) and requiring technical verification against caller topology and Ponytail YAGNI.
-   - In Phase 4: Enforce project-wide test runner execution (`rtk npm test`, `rtk python -m pytest`) to catch regressions, while strictly preserving the static verification fallback (`[TEST HARNESS: NONE — STATIC/BUILD EVIDENCE PROVIDED]`) for testless repositories (ADR-0007).
-   - Codify the 2-attempt architectural circuit breaker harmonized with `GEMINI.md#L45`.
-
-3. **Enhance Specification & Planning (`spec-kit`)**:
-   - In Phase 1 (`/speckit.specify`): Enforce Socratic 1-question discipline, 1–3 line scope and constraint discovery (strictly zero prompt restating per `GEMINI.md#L35`), and the Design Gate.
-   - In Phase 2 (`/speckit.plan`): Add Section 5 "Review Focus" requiring the top 5 implied edge cases to be mapped directly to atomic test tasks.
-
-4. **Refine Standards & Documentation (`clean-docs`, `coding-standards`, `documentation-and-adrs`)**:
-   - In `clean-docs`: Ban performative review praise across commit messages and review dialogs.
-   - In `coding-standards`: Add the canonical deterministic `waitFor` polling helper to eliminate flaky `setTimeout` / `sleep` in async tests.
-   - In `documentation-and-adrs`: Codify the "Match Form to Failure" prompt engineering principle (structural positive recipes for output shaping, prohibitions + rationalization tables for discipline failures, uppercase schema slots for required fields, zero nuance clauses).
-
-5. **Enforce Deployment Parity**:
-   - Apply all modifications within `D:\Github\everyday-agy\` repository working tree.
-   - Run `restore.ps1` to deploy clean changes into `~/.gemini/config/`.
+## Alternatives Considered & Rejected
+- **Installing the complete superpowers plugin**: Rejected due to Windows file-locking issues with git worktrees and shell script incompatibilities.
+- **Relying on prompt text alone for TDD discipline**: Rejected because explicit rules in the testing subagent definition produce more reliable test coverage.
 
 ## Consequences
-- **Positive**:
-  - Eliminates confirmation bias and LLM shortcuts without increasing system prompt token bloat.
-  - 100% native compatibility with Windows PowerShell 5.1 / pwsh 7.6; zero file-locking crashes.
-  - Cleans legacy references to `research` and physical worktrees across workflow documentation.
-  - Retains human oversight and blast-radius tiering intact.
-- **Negative / Neutral**:
-  - Slightly more rigorous test requirements for complex changes, requiring full suite runs when automated test harnesses are present.
+- **Positive**: Adopts practical testing rules without adding third-party plugin bloat.
+- **Positive**: Maintains full compatibility with Windows PowerShell 5.1 and pwsh 7.6 without worktree file locks.
+- **Positive**: Removes performative filler from code reviews and commit messages.
+- **Trade-off**: Requires running full test suites when automated test harnesses exist in the repository.

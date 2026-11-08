@@ -10,6 +10,7 @@
 # Environment & Tooling
 - Verified tools: rtk, git, gh (authed), node, npm, python, pip, java (JBR 25), code, opencode, rg, ast-grep, fzf, ffmpeg, adb.
 - Shells: Windows PowerShell 5.1 & PowerShell 7.6 (pwsh). Prefer pwsh. The harness runner defaults to PowerShell 5.1, where `&&`/`||` are parser errors; use `;` or `if`.
+- Linux / WSL: Arch Linux is available via WSL2 (`wsl` or `wsl -d archlinux`).
 - Missing: pnpm, yarn, bun, uv, go, cargo, docker, kubectl, terraform, aws, az, gcloud, jq, make. Do not assume or install without asking.
 - Execution: Prefix external tools (git, npm, npx, pip, rg) with `rtk` if available. Do not prefix `gh` or PowerShell cmdlets. Fallback: run raw or `rtk proxy <cmd>` if output is truncated or if `rtk` is not installed.
 - Search: Prefer `rtk rg` or `ast-grep` (batch independent searches in parallel within the same turn); explicitly ignore `node_modules`, `dist`, `build`, `.next`, and `vendor`.

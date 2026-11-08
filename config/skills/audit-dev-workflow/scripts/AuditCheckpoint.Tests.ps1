@@ -5,6 +5,7 @@
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $newScript = Join-Path $scriptDir "New-AuditCheckpoint.ps1"
 $restoreScript = Join-Path $scriptDir "Restore-AuditCheckpoint.ps1"
+$updateScript = Join-Path $scriptDir "Update-Gate2Diff.ps1"
 
 $testsRun = 0
 $testsPassed = 0
@@ -206,6 +207,97 @@ try {
         $baselineStillExists = Test-Path -Path $baselineFile
         $baselineRestoredContent = if ($baselineStillExists) { (Get-Content -Path $baselineFile -Raw).Trim() } else { "" }
         Assert-Test -Name "Restore-AuditCheckpoint preserves staged pre-existing untracked files during rollback" -Condition ($baselineStillExists -and ($baselineRestoredContent -eq $baselineContent)) -Details "exists=$baselineStillExists, contentMatch=$($baselineRestoredContent -eq $baselineContent)"
+
+        # Test 9: Update-Gate2Diff programmatic diff injection with untracked files, encoding, backrefs, and sanitization
+        $diffRepoDir = Join-Path $testDir "git_diff_repo"
+        New-Item -ItemType Directory -Path $diffRepoDir -Force | Out-Null
+        Set-Location -LiteralPath $diffRepoDir
+        git init --quiet
+        git config user.name "TestRunner"
+        git config user.email "test@example.com"
+        git config core.autocrlf false
+
+        $diffTrackedFile = Join-Path $diffRepoDir "tracked.txt"
+        Set-Content -Path $diffTrackedFile -Value "initial tracked line 1" -Encoding utf8
+        git add tracked.txt
+        git commit -m "initial commit" --quiet
+
+        # Modify tracked file
+        Add-Content -Path $diffTrackedFile -Value "`nmodified tracked line 2" -Encoding utf8
+
+        # Add newly created untracked file with multibyte chars, PS/regex patterns, tokens, and SHAs
+        $untrackedFile = Join-Path $diffRepoDir "untracked_test.txt"
+        $enDash = [char]0x2013
+        $rightArrow = [char]0x2192
+        $mojibake = "$([char]0x00E2)$([char]0x20AC)"
+        $mockGhp = "ghp_" + ("mocktoken1234567890" * 2)
+        $mockBearer = "Bearer " + "secret_mock_val_12345"
+        $mockJwt = "eyJ" + "mockheader.eyJmockpayload.mocksignature12345"
+        $untrackedLines = @(
+            "Multibyte: Phases 1$($enDash)3 and A $($rightArrow) B",
+            'Regex and PS: $Matches[1] and $& and $_',
+            "GitHub Token: $mockGhp",
+            "Bearer Token: $mockBearer",
+            "JWT Token: $mockJwt",
+            'Valid Git SHA: da39a3ee5e6b4b0d3255bfef95601890afd80709',
+            'Valid SHA256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+        )
+        $untrackedContent = $untrackedLines -join "`r`n"
+        [System.IO.File]::WriteAllText($untrackedFile, $untrackedContent, [System.Text.UTF8Encoding]::new($false))
+
+        $testArtifact = Join-Path $testDir "test_gate2_handoff.md"
+        $artifactLines = @(
+            '# Review Request: Gate 2',
+            '',
+            '## Diff & Impact',
+            '### Diffstat',
+            '{{VERBATIM_GIT_DIFFSTAT}}',
+            '',
+            '### Unified Diff',
+            '```diff',
+            '{{VERBATIM_GIT_DIFF}}',
+            '```'
+        )
+        $artifactInitial = $artifactLines -join "`r`n"
+        [System.IO.File]::WriteAllText($testArtifact, $artifactInitial, [System.Text.UTF8Encoding]::new($false))
+
+        $updateFailed = $false
+        try {
+            & $updateScript -ArtifactPath $testArtifact -RepoPath $diffRepoDir
+        } catch {
+            $updateFailed = $true
+        }
+
+        # Query git status to verify untracked file was un-staged (index idempotency)
+        $gitStatus = git -c core.quotePath=false status --porcelain
+        $untrackedStatus = @($gitStatus | Where-Object { $_ -match "^\?\?\s+untracked_test\.txt" })
+        $indexIdempotent = ($untrackedStatus.Count -eq 1)
+
+        $updatedArtifact = if (Test-Path -Path $testArtifact) {
+            [System.IO.File]::ReadAllText($testArtifact, [System.Text.Encoding]::UTF8)
+        } else {
+            ""
+        }
+
+        $untrackedInDiff = $updatedArtifact.Contains("untracked_test.txt")
+        $placeholdersReplaced = (-not $updatedArtifact.Contains("{{VERBATIM_GIT_DIFFSTAT}}")) -and (-not $updatedArtifact.Contains("{{VERBATIM_GIT_DIFF}}"))
+        $multibytePreserved = $updatedArtifact.Contains("Phases 1$($enDash)3") -and $updatedArtifact.Contains("A $($rightArrow) B") -and (-not $updatedArtifact.Contains($mojibake))
+        $backrefsPreserved = $updatedArtifact.Contains('$Matches[1]') -and $updatedArtifact.Contains('$&') -and $updatedArtifact.Contains('$_')
+        $secretsSanitized = (-not $updatedArtifact.Contains($mockGhp)) -and `
+                            (-not $updatedArtifact.Contains($mockBearer)) -and `
+                            (-not $updatedArtifact.Contains($mockJwt)) -and `
+                            $updatedArtifact.Contains("<TEST_HASH_SANITIZED>")
+        $hashesIntact = $updatedArtifact.Contains("da39a3ee5e6b4b0d3255bfef95601890afd80709") -and `
+                        $updatedArtifact.Contains("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+
+        Assert-Test -Name "Update-Gate2Diff executes successfully" -Condition (-not $updateFailed)
+        Assert-Test -Name "Untracked file is present in diff output" -Condition $untrackedInDiff
+        Assert-Test -Name "Untracked file returns to ?? status after execution (index idempotency)" -Condition $indexIdempotent
+        Assert-Test -Name "Diffstat and unified diff placeholders are replaced" -Condition $placeholdersReplaced
+        Assert-Test -Name "Multibyte UTF-8 characters are preserved without mojibake" -Condition $multibytePreserved
+        Assert-Test -Name "PowerShell variables and regex backreferences are preserved verbatim" -Condition $backrefsPreserved
+        Assert-Test -Name "Secret tokens are sanitized to <TEST_HASH_SANITIZED>" -Condition $secretsSanitized
+        Assert-Test -Name "Legitimate Git SHA and SHA256 hashes are not sanitized" -Condition $hashesIntact
     } finally {
         Set-Location -LiteralPath $origPwd
         $gitScratchDir = Join-Path $userHome ".gemini/antigravity/scratch/git-fail-closed-$testId"

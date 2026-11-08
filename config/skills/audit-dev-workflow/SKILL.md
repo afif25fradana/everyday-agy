@@ -96,7 +96,10 @@ Failure to load these references prior to generating Gate 1 or processing Gate 2
 1. **Gate Packaging & Reviewer Payloads**:
    - **Tier 0 (`[TRIVIAL REVIEW]`)**: Inline in chat (for diffs $\le 5$ lines per `config/GEMINI.md#L36`) or artifact, containing diffstat and full unified diff (`+`/`-`).
    - **Gate 2 (`# Review Request: Gate 2 (Post-Execution Handoff & Diff)`)**: Written exclusively as an Antigravity UserFacing Artifact (`<appDataDir>\brain\<conversation-id>/gate2_handoff.md` with `UserFacing: true`) per [`handoff-spec.md`](./references/handoff-spec.md). Chat response must remain 1–3 lines linking to the artifact.
-   - **Programmatic Diff Injection**: To eliminate autoregressive paraphrasing and hallucination, unified diffs must NEVER be manually typed. Implementers draft `gate2_handoff.md` with `{{VERBATIM_GIT_DIFFSTAT}}` and `{{VERBATIM_GIT_DIFF}}`, run `git add -N .`, and programmatically inject the raw, unparaphrased outputs of `git --no-pager diff --stat=140,80 HEAD` and `git --no-pager diff HEAD` into the artifact file.
+   - **Programmatic Diff Injection**: To eliminate autoregressive paraphrasing and hallucination, unified diffs must NEVER be manually typed. Implementers draft `gate2_handoff.md` with `{{VERBATIM_GIT_DIFFSTAT}}` and `{{VERBATIM_GIT_DIFF}}` placeholders, then execute `Update-Gate2Diff.ps1` to automatically handle untracked files, secret scrubbing, and verbatim diff replacement:
+     ```powershell
+     powershell -ExecutionPolicy Bypass -File "$HOME\.gemini\config\skills\audit-dev-workflow\scripts\Update-Gate2Diff.ps1" -ArtifactPath "<artifact_path>"
+     ```
 2. **Reviewer Return Loop Handling (Gate 2)**:
    - Evaluate operator chat confirmation (Mode A) or structured review verdict (Mode B) per [`references/handoff-spec.md`](./references/handoff-spec.md):
      - On `APPROVE`: Proceed to commit discipline.

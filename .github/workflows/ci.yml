@@ -56,12 +56,28 @@ jobs:
         run: |
           pwsh -NoProfile -ExecutionPolicy Bypass -File "config/skills/audit-dev-workflow/scripts/AuditCheckpoint.Tests.ps1"
 
+      - name: Run YAML Syntax & Schema Test Suite (pwsh)
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -ExecutionPolicy Bypass -File "config/skills/audit-dev-workflow/scripts/YamlValidation.Tests.ps1"
+
       - name: Run Test Suites on Windows PowerShell 5.1
         if: runner.os == 'Windows'
         shell: powershell
         run: |
           powershell -NoProfile -ExecutionPolicy Bypass -File "config/skills/audit-dev-workflow/scripts/Test-PowerShellCommandSafety.Tests.ps1"
           powershell -NoProfile -ExecutionPolicy Bypass -File "config/skills/audit-dev-workflow/scripts/AuditCheckpoint.Tests.ps1"
+          powershell -NoProfile -ExecutionPolicy Bypass -File "config/skills/audit-dev-workflow/scripts/YamlValidation.Tests.ps1"
+
+      - name: Run Runner-Native yamllint on Pure YAML (.github/**/*.yml)
+        shell: bash
+        run: |
+          if command -v yamllint >/dev/null 2>&1; then
+            yamllint -c .yamllint.yml .github/
+            echo "[PASS] yamllint verified all .github YAML files."
+          else
+            echo "[SKIP] yamllint not present in PATH; verified via PowerShell test suite."
+          fi
 
       - name: Verify Custom Agent Manifests
         shell: pwsh

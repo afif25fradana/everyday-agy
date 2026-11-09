@@ -7,20 +7,20 @@ Accepted
 2026-11-09
 
 ## Context
-Following a comprehensive multi-agent evaluation and forensic cross-check across everyday-agy (`tier3_council_evaluation_report.md` and `subagent_crosscheck_report.md`), several operational reliability, AST command safety, rollback integrity, and manifest schema vulnerabilities were identified across repository components:
+During testing of the orchestration harness and safety scripts (documented in `tier3_council_evaluation_report.md` and `subagent_crosscheck_report.md`), several command safety, rollback integrity, and manifest schema issues were identified across repository components:
 
-1. **AST Command Safety Bypasses & Execution Hijacking**:
+1. **PowerShell Command Safety Parser Bypasses**:
    - In `Test-PowerShellCommandSafety.ps1`, git flag `-m` unconditionally consumed the next token as a payload across all git subcommands. For subcommands where `-m` does not accept a payload (such as `git checkout -m` or `git branch -m`), subsequent destructive flags (such as `-f` or `--force`) were skipped during inspection, allowing destructive discard and branch overwrites to pass undetected.
    - Destructive robocopy flags prefixed with POSIX hyphens (`robocopy -mir`, `robocopy -purge`, `robocopy -mov`) bypassed regexes that only inspected forward-slash switches (`/mir`, `/purge`).
    - Sensitive credential path checks required leading home roots (`~` or `$HOME`), permitting relative deletion targets (e.g., `Remove-Item .ssh\id_rsa`) to bypass interception.
-   - The command safety validator lacked a dedicated block for `git config`, allowing dangerous execution hijacking configurations (`core.sshCommand`, `core.hooksPath`, `core.editor`, `clean.requireForce`, `alias.*`) to execute without safety interception.
+   - The command safety validator lacked a dedicated check for `git config`, allowing sensitive configuration overrides (`core.sshCommand`, `core.hooksPath`, `core.editor`, `clean.requireForce`, `alias.*`) to run without interception.
 
 2. **Rollback Integrity and Exit Code Omissions**:
    - In `Restore-AuditCheckpoint.ps1`, file-mode restore executed `Copy-Item` directly from scratch without verifying the backup against the SHA-256 hashes recorded in `hashes.txt`, risking silent restoration of corrupted or tampered backups.
    - During git rollback in `Restore-AuditCheckpoint.ps1` and checkpoint creation in `New-AuditCheckpoint.ps1`, native git commands (`git status --porcelain -uno` and `git ls-files --others --exclude-standard`) did not verify `$LASTEXITCODE`, silently continuing when git operations failed.
    - In git rollback, directory removal (`Remove-Item -LiteralPath $cleanDir -Recurse -Force`) threw unhandled terminating exceptions when directories were temporarily locked by external Windows processes.
 
-3. **Diff Sanitizer Multiline Key Exfiltration**:
+3. **Diff Sanitizer Multiline Key Redaction**:
    - `Update-Gate2Diff.ps1` sanitized only the single-line header `-----BEGIN <KEY_TYPE> PRIVATE KEY-----`, leaving the entire multiline base64 cryptographic body unredacted in review handoffs (`gate2_handoff.md`). Furthermore, truncated diff hunks with unclosed headers required a resilient fallback.
 
 4. **Subagent Manifest Schema Drifts & Runtime Hang Risks**:
@@ -72,8 +72,8 @@ Following a comprehensive multi-agent evaluation and forensic cross-check across
 
 ## Consequences
 
-- **Positive**: Complete AST protection against git option parsing bypasses, relative credential deletion, and git config execution hijacking.
-- **Positive**: Rollback operations are mathematically verified via SHA-256 checksums and protected against silent git query failures.
+- **Positive**: Strengthened AST protection against git option parsing bypasses, relative credential deletion, and git config overrides.
+- **Positive**: Rollback operations are verified via SHA-256 checksums and protected against silent git query failures.
 - **Positive**: Diff handoffs sanitize full multiline cryptographic private keys and unclosed key headers without leaking payloads.
 - **Positive**: Background subagents operate without interactive hang risks, with properly declared MCP tool access and validated YAML schemas.
 - **Positive**: Synchronized bidirectional ADR traceability and complete workflow orchestration state transitions.

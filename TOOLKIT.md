@@ -1,6 +1,6 @@
 # Everyday-AGY Toolkit: Tools, MCP & Skills Catalog
 
-A comprehensive standalone catalog of all CLI tools, Model Context Protocol (MCP) servers, custom skills, and recommended official plugins configured in this environment. Contains verified official repository links, one-liner installation commands, and ready-to-use configuration snippets.
+Reference catalog for CLI tools, MCP servers, workflow skills, and custom agents configured in this environment.
 
 ---
 
@@ -37,6 +37,8 @@ winget install --id Gyan.FFmpeg -e --silent
 winget install --id Google.PlatformTools -e --silent
 winget install --id OpenJS.NodeJS.LTS -e --silent
 winget install --id Python.Python.3.12 -e --silent
+# Refresh process PATH to pick up newly installed Node and Python binaries:
+$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 npm install -g @ast-grep/cli
 ```
 
@@ -71,12 +73,12 @@ npm install -g @ast-grep/cli
 ### A. Spec-Driven & Development Workflows
 | Skill Name | Trigger / Command | Description | Upstream / Origin |
 |---|---|---|---|
-| **orchestrator** | `/orchestrator` | Meta-orchestrator protocol for Parent Agent: task decomposition, context insulation, and subagent fleet governance. | **Original Work (@afif25fradana)** /<br>Inspired by Anthropic Lead Agent & [obra/superpowers](https://github.com/obra/superpowers) |
+| **orchestrator** | `/orchestrator` | Lead orchestrator protocol: sizes task blast radius, insulates parent context, and coordinates subagent handoffs. | **Original Work (@afif25fradana)** /<br>Inspired by Anthropic Lead Agent & [obra/superpowers](https://github.com/obra/superpowers) |
 | **council-review** | `/council`<br>`/council-review` | Deliberative multi-agent council review panel: fact grounding, socratic alignment, and adversarial peer review. | **Original Work (@afif25fradana)** /<br>Inspired by Anthropic & Karpathy |
 | **academic-council** | `/academic-council`<br>`/thesis-council` | Multi-agent council for empirical capital market, accounting, and BEI thesis proposal defense. | **Original Work (@afif25fradana)** |
 | **spec-kit** | `/speckit.specify`<br>`/speckit.plan`<br>`/speckit.tasks` | Spec-Driven Development (SDD) framework to specify, architect, and generate task lists before coding. | [github/spec-kit](https://github.com/github/spec-kit) |
 | **gh-workflow** | `/gh-workflow` | GitHub CLI automation for PR creation, non-interactive CI monitoring, and PR review comments. | Antigravity Native / [cli/cli](https://github.com/cli/cli) |
-| **audit-dev** | `/audit-dev`<br>`/audit-first` | Defensive developer audit standard: caller tracing, pre-flight hazard analysis, and Five-Axis verification. | **Original Work (@afif25fradana)** /<br>Heuristics adapted from [obra/superpowers](https://github.com/obra/superpowers) |
+| **audit-dev** | `/audit-dev` | Defensive developer audit standard: caller tracing, pre-flight hazard analysis, and Five-Axis verification. | **Original Work (@afif25fradana)** /<br>Heuristics adapted from [obra/superpowers](https://github.com/obra/superpowers) |
 | **sync-task-state** | `/sync-task-state` | Lightweight active AI context management (`task_state.md`) in Twin-Repo workflows. | **Original Work (@afif25fradana)** |
 
 ### B. Security, Standards & Architecture

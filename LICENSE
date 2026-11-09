@@ -42,6 +42,7 @@ respective upstream licenses:
    - config/skills/audit-dev/
    - config/skills/clean-docs/
    - config/skills/council-review/
+   - config/skills/deep-web-research/
    - config/skills/orchestrator/
    - config/skills/sync-task-state/
    Licensed under the primary repository MIT License.

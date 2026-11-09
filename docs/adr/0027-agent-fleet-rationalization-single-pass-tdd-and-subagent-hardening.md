@@ -7,19 +7,19 @@ Accepted
 2026-11-09
 
 ## Context
-As the `everyday-agy` configuration and orchestration framework evolved across ADR-0004 through ADR-0026, several operational frictions, token redundancies, and specification drifts emerged:
+As the `everyday-agy` configuration and orchestration framework evolved across ADR-0004 through ADR-0026, several operational issues, token redundancies, and specification drift emerged:
 
 1. **Fleet Bloat and Skill Overlap**: The fleet expanded to 11 custom subagents. `database-reviewer` existed as a standalone agent with a narrow scope (database schema and migrations) invoked in `<5%` of local-first development workflows, yet requiring dedicated maintenance, CI assertions, and documentation. Concurrently, database migrations and SQL schema changes are first-class source-controlled code, naturally aligning with repository health and attack surface auditing in `code-auditor`.
 2. **ADR Ownership Ambiguity**: Both `system-architect` and `docs-architect` claimed authoring authority over `docs/adr/` in their manifests and bound `documentation-and-adrs` and `sync-task-state`. This dual-ownership blurred the separation between pre-execution architectural planning and long-term documentation persistence.
 3. **Model Tiering Drift on `tdd-guide`**: While `config/agents/tdd-guide/agent.md` declared `model: inherit` in its frontmatter, its prompt body, `README.md`, `TOOLKIT.md`, and `subagent-patterns.md` described it as `model: flash`. In practice, Tier 2 Test-Driven Development requires multi-file context retention, invariant verification, and complex mock boundary reasoning that exceeds `flash` capabilities.
 4. **Subagent Persona Selector Clutter (`mainAgent: false`)**: Official Google Antigravity specifications (`https://antigravity.google/docs/subagents/`) establish that subagents default to `mainAgent: true` when omitted, causing dedicated execution specialists to appear in top-level chat persona selectors. Furthermore, all 11 subagent manifests carried 12–16 lines of `Primary Interactive Mode (ROLE_TYPE Absent)` prompt instructions that were dead weight (~150 tokens per turn) since subagents are never invoked as interactive primary agents.
 5. **Phantom Tool Calls (`ask_question`)**: Five subagent manifests instructed the agent to call `ask_question`, despite not possessing the tool in their frontmatter allowlists.
-6. **Double Cold-Start Penalty in TDD Orchestration**: `orchestrator/SKILL.md` and `subagent-patterns.md` mandated a serial two-stage subagent workflow for code changes: S2 (`tdd-guide` writing a failing RED test) followed by S3 (a fresh `tdd-guide` or implementer writing the GREEN fix). Spawning two consecutive subagents burned 40k–60k redundant tokens re-reading the exact same codebase files and doubled turn latency.
+6. **Context Waste in Serial TDD**: `config/skills/orchestrator/SKILL.md` and `subagent-patterns.md` mandated a serial two-stage subagent workflow for code changes: S2 (`tdd-guide` writing a failing RED test) followed by S3 (a fresh `tdd-guide` or implementer writing the GREEN fix). Spawning two consecutive subagents spent 40k–60k redundant tokens re-reading identical files and doubled turn latency.
 7. **L10n & Humanizer Capabilities**: While `l10n-humanizer` was introduced in ADR-0018 for Indonesian UI localization, public repository documentation and developer-facing prose frequently suffered from machine-generated writing tells, inflation, and corporate theater.
 
 ## Decision
 
-We execute a comprehensive architectural consolidation across the agent fleet, orchestration runbooks, and subagent schemas:
+We consolidate the agent fleet, orchestration runbooks, and subagent schemas:
 
 ### 1. Fleet Rationalization (11 -> 10 Agents) & Role Boundaries
 - **Retire `database-reviewer`**: Delete `config/agents/database-reviewer/`. Absorb database schema review, foreign key indexing invariants, transactional DDL safety, and zero-downtime expand/contract migration analysis into `code-auditor` via task-conditional binding of `database-migrations/SKILL.md`.
@@ -29,7 +29,7 @@ We execute a comprehensive architectural consolidation across the agent fleet, o
   - `docs-architect` is designated as the sole authorized owner for authoring, serializing, and indexing Architecture Decision Records (`docs/adr/NNNN-*.md`, `docs/adr/README.md`), `architecture.md`, companion context (`task_state.md`), and public repository docs.
 - **Formalize `tdd-guide` as `model: inherit` (Balanced 5/5 Fleet Split)**:
   - Harmonize all manifests, runbooks, and documentation to record `tdd-guide` as `model: inherit`.
-  - Establish a symmetrical fleet architecture:
+  - Split the fleet evenly between model tiers:
     - **5 Cognitive / Analytical Specialists (`model: inherit`)**: `system-architect`, `code-auditor`, `silent-failure-hunter`, `spec-verifier`, `tdd-guide`.
     - **5 Tactical Mutating Specialists (`model: flash`)**: `build-error-resolver`, `docs-architect`, `l10n-humanizer`, `maintenance-bot`, `ui-crafter`.
 
@@ -67,12 +67,12 @@ We execute a comprehensive architectural consolidation across the agent fleet, o
 ## Consequences
 
 - **Positive**:
-  - Balanced 10-agent fleet (5 cognitive `inherit` / 5 tactical `flash`) with zero orphaned or low-utility agents.
+  - Balanced 10-agent fleet (5 cognitive `inherit` / 5 tactical `flash`) without orphaned or low-utility agents.
   - Eliminated 40k–60k redundant tokens per TDD cycle via single-pass dispatch.
   - Clean UI in Antigravity persona selectors by hiding pure subagents via `mainAgent: false`.
   - Saved ~150–200 prompt tokens per subagent invocation through prompt pruning.
   - Clear separation of concerns: `system-architect` designs; `docs-architect` documents.
-  - Elevated prose quality across repository docs and localization resources via `l10n-humanizer` anti-AI heuristics with zero risk to code or architectural truth.
+  - Improved prose quality across repository docs and localization resources via `l10n-humanizer` anti-AI heuristics without modifying application source code or decision records.
 - **Negative / Operational Requirements**:
   - `code-auditor` must conditionally activate `database-migrations` on schema tasks.
   - Reviewers must verify dual RED and GREEN test receipts in `tdd-guide` single-pass handoffs.

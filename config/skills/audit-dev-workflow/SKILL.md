@@ -18,7 +18,7 @@ A defensive, evidence-backed operational runbook ensuring safe, well-investigate
 Classify the incoming task using the **Zero-Read Triage Gate** in [`orchestrator/SKILL.md#12-zero-read-triage-gate-step-0-blast-radius-sizing--ssot`](../orchestrator/SKILL.md):
 - **`trivial` (Tier 0)**: $\le 2$ files, $\le 3$ exec or $\le 5$ doc/comment lines, zero logic/state/schema mutation. Checkpoint $\rightarrow$ patch $\rightarrow$ verify $\rightarrow$ pause at `[TRIVIAL REVIEW]` before commit.
 - **`small` (Tier 1)**: Contained single-module bugfix/enhancement. Investigation $\rightarrow$ Checkpoint (`New-AuditCheckpoint.ps1`) $\rightarrow$ Failure-First TDD (RED $\rightarrow$ GREEN) $\rightarrow$ 5-Axis verification $\rightarrow$ pause at Gate 2 (`gate2_handoff.md`) before commit.
-- **`standard` (Tier 2)**: Multi-file refactor or multi-component change (2–5 files). Enforce [`orchestrator`](../orchestrator/SKILL.md) Parent Context Insulation: read-only explorer (`system-architect` / `code-auditor`) $\rightarrow$ Gate 1 approval (`gate1_proposal.md`) $\rightarrow$ Checkpoint (`New-AuditCheckpoint.ps1`) $\rightarrow$ `tdd-guide` RED test $\rightarrow$ implementer GREEN fix $\rightarrow$ `code-auditor` diff review $\rightarrow$ Gate 2 (`gate2_handoff.md`).
+- **`standard` (Tier 2)**: Multi-file refactor or multi-component change (2–5 files). Enforce [`orchestrator`](../orchestrator/SKILL.md) Parent Context Insulation: read-only explorer (`system-architect` / `code-auditor`) $\rightarrow$ Gate 1 approval (`gate1_proposal.md`) $\rightarrow$ Checkpoint (`New-AuditCheckpoint.ps1`) $\rightarrow$ Single-Pass `tdd-guide` (RED test $\rightarrow$ GREEN fix $\rightarrow$ Refactor) or domain specialist $\rightarrow$ `code-auditor` diff review $\rightarrow$ Gate 2 (`gate2_handoff.md`).
 - **`large` (Tier 3)**: Cross-cutting architecture/schema overhaul ($>5$ files). Convene [`council-review`](../council-review/SKILL.md) via single `teamwork` dispatch $\rightarrow$ Gate 1 approval $\rightarrow$ sequential Tier 2 work packages.
 - **Mid-Execution Escalation**: If scope exceeds initial tier boundaries, immediately halt mutations, retain active checkpoint, author `gate1_proposal.md`, and obtain explicit approval before resuming edits per [`orchestrator`](../orchestrator/SKILL.md#12-zero-read-triage-gate-step-0-blast-radius-sizing--ssot).
 
@@ -64,12 +64,13 @@ Before each development phase, Parent Agent loads the authoritative operational 
      ```
 
 ### Phase 3: Repro-First RED Test & Pragmatic Implementation (Post-Checkpoint)
-1. **Repro-First Failing Test (Failure-First Verification / RED)**:
+1. **Single-Pass TDD & Repro-First Failing Test (Failure-First Verification / RED)**:
    - Immediately after establishing `checkpoint-<task>`, author or update a minimal reproducible failing test (RED) before writing production fix code.
-   - On Tier 1, Parent authors and verifies the failing test directly. On Tier 2/3, Parent delegates RED test authoring to `tdd-guide` (Sequential Mutator 1) and verifies the failing CLI test receipt (`run_command`, exit code $\ne 0$ for the expected assertion failure, not a syntax/import error).
-2. **Minimal Implementation (GREEN)**:
+   - On Tier 1, Parent authors and verifies the failing test directly before writing the minimal fix.
+   - On Tier 2/3, Parent delegates to `tdd-guide` for Single-Pass TDD execution: `tdd-guide` authors the minimal failing test (RED), executes the test runner to witness the failure, implements the minimal fix (GREEN), runs the fast syntax gate, verifies all tests pass (`> 0 passed, 0 failed`), refactors, and returns a unified receipt with dual RED and GREEN verification traces.
+2. **Specialist & Declarative Implementations**:
    - **Tier 0 & Tier 1**: Parent applies changes directly (`edit_file` / `write_file`). Shortest working diff wins.
-   - **Tier 2 & Tier 3**: Parent delegates implementation to serialized specialists (`tdd-guide`, `ui-crafter`, `build-error-resolver`, `docs-architect`, `l10n-humanizer`, or `maintenance-bot`) via the 4-Slot Delegation Contract in [`orchestrator`](../orchestrator/SKILL.md).
+   - **Tier 2 & Tier 3**: For declarative, UI, doc, or maintenance tasks, Parent delegates implementation to serialized domain specialists (`ui-crafter`, `build-error-resolver`, `docs-architect`, `l10n-humanizer`, or `maintenance-bot`) via the 4-Slot Delegation Contract in [`orchestrator`](../orchestrator/SKILL.md). When test authoring and implementation require distinct specialists, use the split S2 -> S3 handoff (`tdd-guide` writes contract tests, domain specialist implements).
 3. **Clean Code & Fast Syntax Gate**:
    - Zero unneeded abstractions, zero generic AI comments, strict preservation of existing defensive logic (timeouts, retries, null checks, calibrated thresholds), and bracketed `<...>` placeholders for secret scanner hygiene.
    - Run the **Pre-Mutation Syntax Interception Gate** (`orchestrator/SKILL.md#17-pre-mutation-syntax-interception-swe-agent-fast-syntax-gate--ssot`) before running full test suites so syntax typos are fixed in-turn without burning `global_attempt_counter` ($\le 2$).
@@ -121,4 +122,4 @@ Before each development phase, Parent Agent loads the authoritative operational 
 - [Clean Docs Standard](../clean-docs/SKILL.md): Plain-spoken repo prose, zero process leaks, public repo hygiene, and humanized commit messages.
 - [Engineering Pitfalls](./references/pitfalls.md): Agentic traps and Five-Axis logic pitfalls to double-check.
 - [Handoff Specification & Guidelines](./references/handoff-spec.md): Normative schemas for Gate 1, Gate 2, and dispute resolution.
-- [Subagent Execution Patterns](./references/subagent-patterns.md): 11-agent fleet responsibilities, dynamic model elevation, and 4-slot templates.
+- [Subagent Execution Patterns](./references/subagent-patterns.md): 10-agent fleet responsibilities, dynamic model elevation, and 4-slot templates.

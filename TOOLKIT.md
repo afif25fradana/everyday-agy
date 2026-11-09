@@ -116,14 +116,13 @@ Specialized agents available for delegation in Antigravity:
 
 | Agent Name | Model Tier | Tools Boundary | Core Responsibility |
 |---|:---:|---|---|
-| **system-architect** | `model: inherit` | Read, Spec/ADR/Artifact Write, Run, Ask | Contract-first API design, Socratic planning, and Nygard ADR documentation. |
-| **code-auditor** | `model: inherit` | Read, Artifact Write, Run *(Read-Only)* | Repository health audits, security vulnerability analysis, and test integrity. |
-| **database-reviewer** | `model: inherit` | Read, Artifact Write, Run *(Read-Only)* | SQL schema design, zero-downtime migrations, and N+1 query optimization. |
+| **system-architect** | `model: inherit` | Read, Spec/Artifact Write, Run | Contract-first API design, Socratic planning, and specification modeling (`spec-kit`). |
+| **code-auditor** | `model: inherit` | Read, Artifact Write, Run *(Read-Only)* | Whole-repo health, security attack surface, database schema & migration safety, and test integrity. |
 | **silent-failure-hunter** | `model: inherit` | Read, Artifact Write, Run *(Read-Only)* | Hunts silent failures, swallowed exceptions, and empty error handling blocks. |
 | **spec-verifier** | `model: inherit` | Read, Artifact Write, Search, Read URL, Run *(Read-Only)* | Cross-checks proposed fixes and API contracts against Context7 MCP and official vendor docs. |
+| **tdd-guide** | `model: inherit` | Read, Write, Replace, Run | Guides Single-Pass Test-Driven Development (Red-Green-Refactor cycles; Iron Law adapted from [obra/superpowers](https://github.com/obra/superpowers)). |
 | **build-error-resolver** | `model: flash` | Read, Replace, Run *(No write)* | Resolves compiler, typecheck, and build errors with shortest working diffs. |
-| **tdd-guide** | `model: flash` | Read, Write, Replace, Run | Guides Test-Driven Development workflows (Red-Green-Refactor cycles; Iron Law adapted from [obra/superpowers](https://github.com/obra/superpowers)). |
-| **docs-architect** | `model: flash` | Read, Write, Replace, Run, Ask | Modernizes technical documentation, Nygard ADRs, public repository docs, and synchronizes AI-Context repositories (ADR-0017). |
-| **maintenance-bot** | `model: flash` | Read, Write, Replace, Run, Ask | Dependabot PR triage, CI failure diagnosis, and CVE remediation. |
-| **ui-crafter** | `model: flash` | Read, Write, Replace, Run, Ask | Modern web UI widget creation, WCAG AA accessibility, and Generative UI design. |
-| **l10n-humanizer** | `model: flash` | Read, Write, Replace, Run, Ask | Software UI/UX localization, natural humanized translation, and Microsoft Indonesian style guide consistency. |
+| **docs-architect** | `model: flash` | Read, Write, Replace, Run | Modernizes technical documentation, sole owner of Nygard ADRs, public repository docs, and synchronizes AI-Context repositories (ADR-0017, ADR-0027). |
+| **maintenance-bot** | `model: flash` | Read, Write, Replace, Run | Dependabot PR triage, CI failure diagnosis, and CVE remediation. |
+| **ui-crafter** | `model: flash` | Read, Write, Replace, Run | Modern web UI widget creation, WCAG AA accessibility, and Generative UI design. |
+| **l10n-humanizer** | `model: flash` | Read, Write, Replace, Run | Dual-Scope UI/UX localization (Microsoft Indonesian style guide) and second-pass bilingual prose humanization (anti-AI rules, fact lock). |

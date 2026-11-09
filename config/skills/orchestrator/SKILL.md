@@ -48,8 +48,9 @@ Before opening any source file, the Parent Agent classifies task blast radius us
 - **Abnormal Termination**: If a mutating subagent crashes, times out, or leaves a dirty tree, Parent immediately executes `Restore-AuditCheckpoint.ps1` before secondary actions.
 - **Failed Reviewer Accounting (`Status: not run` vs 0 Findings)**: Any delegated reviewer or subagent that times out, encounters an unhandled tool exception, or fails to complete execution MUST be accounted as `Status: not run`. It is strictly prohibited to treat a failed or aborted reviewer run as "0 findings" or an implicit pass. Any required reviewer with `not run` status invalidates approval.
 
-### 1.5 Anti-Mock Cheating & Repro-First RED Verification
-- **Rule**: For bug fixes in Tier 2/3, after Gate 1 approval and verified `New-AuditCheckpoint.ps1`, Parent dispatches `tdd-guide` to author a failing test on unmodified production code (RED state) and witnesses the failing CLI test receipt (`run_command`) before delegating the fix.
+### 1.5 Anti-Mock Cheating & Single-Pass TDD Verification
+- **Single-Pass TDD Protocol**: When `tdd-guide` is the implementer for bug fixes and features in Tier 2/3, Parent dispatches `tdd-guide` once post-checkpoint. In a single continuous execution pass, `tdd-guide`: (1) authors the minimal failing test (RED) on unmodified production code, (2) runs the test runner to witness the expected failure, (3) writes the minimal production fix (GREEN), (4) runs the Pre-Mutation Syntax Interception Gate, (5) verifies the test suite passes (`exit code 0`, `> 0 passed, 0 failed`), (6) refactors under `ponytail`/`antislop-code`, and (7) returns a unified receipt with dual RED and GREEN verification traces. This eliminates the 40k–60k token double cold-start penalty between separate test-authoring and fix-implementation turns.
+- **Cross-Specialist Split Handoff**: The separate two-stage dispatch (S2 test authoring -> S3 implementation) is reserved exclusively for cross-specialist tasks (e.g. `tdd-guide` writes contract tests, `ui-crafter` implements the frontend component).
 - **Diff Audit**: Before presenting Gate 2, Parent delegates line-by-line diff review to `code-auditor` or `silent-failure-hunter` to audit for mock-cheating, weakened assertions, or test deletion against the [Five-Axis rubric](../audit-dev-workflow/SKILL.md#phase-4-local-verification--review).
 - **Settled Findings Immunity**: Review findings that have been formally settled (contested with verified code coordinates or accepted as documented operator trade-offs) are immune to re-litigation by subsequent review passes or subagent dispatches. Parent must pass settled items under `Settled Findings:` in `<SCOPE_AND_BOUNDARIES>` to prevent endless review churn.
 
@@ -82,15 +83,15 @@ flowchart TD
     Gate1TC --> T3Exec["Decompose into Sequential Tier 2 Work Packages"]
     T3Exec --> Ckpt
     
-    Ckpt -->|"Code Mutation"| S2["Sequential Mutator 1: tdd-guide<br/>Repro-First RED Test"]
-    Ckpt -->|"Declarative / Docs Task"| S3["Sequential Mutator 2: Implementer<br/>tdd-guide / ui-crafter / build-error-resolver /<br/>docs-architect / l10n-humanizer / maintenance-bot<br/>Green Implementation"]
-    S2 --> S3
-    S3 --> S4["Diff Audit: code-auditor<br/>Anti-Mock & Five-Axis Check"]
-    S4 --> Gate2["Parent Gate 2 Handoff"]
+    Ckpt -->|"Code Feature / Bugfix (Single-Pass TDD)"| S2["Single-Pass Mutator: tdd-guide<br/>RED Test -> GREEN Fix -> Refactor"]
+    Ckpt -->|"Specialist Mutator / Cross-Specialist"| S3["Domain Specialist: ui-crafter / build-error-resolver /<br/>docs-architect / l10n-humanizer / maintenance-bot"]
+    S2 --> S4["Diff Audit: code-auditor<br/>Anti-Mock & Five-Axis Check"]
+    S3 --> S4
     
     Gate2 -->|"Approved"| CommitDone["Commit & Complete"]
-    Gate2 -->|"Changes Requested"| S3
+    Gate2 -->|"Changes Requested"| S2
     Gate2 -->|"Aborted / 2x Failures"| Rollback["Auto-Rollback<br/>Restore-AuditCheckpoint.ps1"]
+    S4 --> Gate2["Parent Gate 2 Handoff"]
 ```
 
 ### Pathway A: Deliberative Multi-Seat Council (Tier 3)
@@ -99,13 +100,13 @@ Dispatch exactly ONE call to `teamwork` with `Role: "Council Review Panel"` per 
 ### Pathway B: Focused Domain Specialists (Tier 1 On-Demand / Tier 2 Execution)
 Parent dispatches targeted custom subagents directly via `invoke_subagent`:
 - Greenfield Spec & Planning: `system-architect` applying [`spec-kit`](../spec-kit/SKILL.md) (`/speckit.specify` $\rightarrow$ `/speckit.plan` $\rightarrow$ `/speckit.tasks`) and [`contract-first`](../contract-first/SKILL.md).
-- Discovery: `system-architect` (contracts/topology), `code-auditor` (hygiene/security), `database-reviewer` (schema/index review).
-- Test Authoring (Post-Gate 1 & Post-Checkpoint): `tdd-guide` (Red-Green-Refactor, boundary assertions).
-- Fix / Feature Implementation: `tdd-guide` (logic/feature code), `ui-crafter` (frontend UI/accessibility), `build-error-resolver` (type/compiler errors via `replace_file_content`), `docs-architect` (ADRs/docs/`task_state.md`), `l10n-humanizer` (localization resources), `maintenance-bot` (CI/Dependabot).
+- Discovery: `system-architect` (contracts/topology), `code-auditor` (hygiene/security/database schema & migrations).
+- Test & Feature Implementation (Post-Gate 1 & Post-Checkpoint): `tdd-guide` (Single-Pass Red-Green-Refactor, boundary assertions).
+- Focused Mutators: `ui-crafter` (frontend UI/accessibility), `build-error-resolver` (type/compiler errors via `replace_file_content`), `docs-architect` (ADRs/docs/`task_state.md`), `l10n-humanizer` (localization resources & bilingual prose), `maintenance-bot` (CI/Dependabot).
 - Quality Gate: `code-auditor` or `silent-failure-hunter` (diff review), `spec-verifier` (Context7 & [`deep-web-research`](../deep-web-research/SKILL.md) API checks).
 
 > [!NOTE]
-> **Dynamic Model Elevation (ADR-0015)**: When Parent Orchestrator runs on `flash` for cost/speed efficiency, specialized verification dispatches involving high-stakes schema migrations (`database-reviewer`) or deep third-party API contract verification (`spec-verifier`) may dynamically elevate subagent invocation to `Model: pro` or `Model: inherit` per `subagent-patterns.md` to prevent subtle logical drift.
+> **Dynamic Model Elevation (ADR-0015)**: When Parent Orchestrator runs on `flash` for cost/speed efficiency, specialized verification dispatches involving high-stakes architecture/schema synthesis or deep third-party API contract verification (`spec-verifier`) may dynamically elevate subagent invocation to `Model: pro` or `Model: inherit` per `subagent-patterns.md` to prevent subtle logical drift.
 
 ---
 
@@ -143,7 +144,11 @@ In your final chat message, return ONLY this compact receipt (<= 15 lines):
 - CLI Test Command: <command executed or N/A>
 - Exit Code: <0 or non-zero>
 - Assertions: <N passed, 0 failed>
-- Deliverable Path: <scratch path or N/A (in-place edit only)>
+- Deliverable Path: <appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md or N/A (in-place edit)
+
+<!-- For Single-Pass TDD (tdd-guide), substitute CLI Test Command/Exit Code/Assertions with dual receipts: -->
+- RED Verification Receipt: <command> | Exit Code: <non-zero> | Assertions: <0 passed, 1 failed>
+- GREEN Verification Receipt: <command> | Exit Code: 0 | Assertions: <N passed, 0 failed>
 </RETURN_CONTRACT>
 ```
 

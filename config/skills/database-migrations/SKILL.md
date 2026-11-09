@@ -151,5 +151,5 @@ export async function down(db: Kysely<any>): Promise<void> {
 
 ## Related Agents & Skills
 
-- [`database-reviewer`](../../agents/database-reviewer/agent.md) - Specializes in foreign keys, index optimization, and zero-downtime migrations.
+- [`code-auditor`](../../agents/code-auditor/agent.md) - Specializes in repository health, security surface, foreign keys, index optimization, and zero-downtime database migrations.
 - [`audit-dev-workflow`](../audit-dev-workflow/SKILL.md) - Pre-investigation, checkpoints, and Gate 1 proposals.

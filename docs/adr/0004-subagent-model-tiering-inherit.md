@@ -1,7 +1,7 @@
 # ADR-0004: Model Inheritance for Planners and Flash for Routine Tasks
 
 ## Status
-Accepted
+Partially Superseded by ADR-0027 (tdd-guide elevated to model: inherit; database-reviewer retired into code-auditor)
 
 ## Date
 2026-10-22

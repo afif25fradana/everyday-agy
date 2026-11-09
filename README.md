@@ -63,7 +63,7 @@ everyday-agy/
 ├── TOOLKIT.md           # Catalog of CLI tools, MCP snippets, and skill upstream links
 ├── config/
 │   ├── GEMINI.md        # Tracked global operational rules deployed to ~/.gemini/GEMINI.md
-│   ├── agents/          # 11 specialized subagents with hybrid model tiering (ADR-0004, ADR-0017, ADR-0018)
+│   ├── agents/          # 10 specialized subagents with hybrid model tiering (ADR-0004, ADR-0017, ADR-0027)
 │   └── skills/          # 15 bespoke and engine-adapted workflow skills
 ├── docs/
 │   └── adr/             # Architectural Decision Records (Nygard format)
@@ -81,9 +81,9 @@ The global rules file stays compact by defining only active behavioral boundarie
 
 ### Specialized Agent Roles (`config/agents/`)
 
-Eleven custom subagents handle delegated tasks under a two-tier cognitive model architecture:
-- **Analytical & Architecture Roles** (`model: inherit`): Run with full primary model reasoning capacity and read-only/spec boundaries (`system-architect`, `code-auditor`, `database-reviewer`, `silent-failure-hunter`, `spec-verifier`).
-- **Focused Execution Roles** (`model: flash`): Optimized for fast, cost-effective diffs and tight scoping (`tdd-guide`, `build-error-resolver`, `ui-crafter`, `docs-architect`, `maintenance-bot`, `l10n-humanizer`).
+Ten custom subagents handle delegated tasks under a balanced two-tier cognitive model architecture (ADR-0027):
+- **Analytical & Architecture Roles** (`model: inherit`): Run with full primary model reasoning capacity and read-only/spec boundaries (`system-architect`, `code-auditor`, `silent-failure-hunter`, `spec-verifier`, `tdd-guide`).
+- **Focused Execution Roles** (`model: flash`): Optimized for fast, cost-effective diffs and tight scoping (`build-error-resolver`, `ui-crafter`, `docs-architect`, `maintenance-bot`, `l10n-humanizer`).
 
 For the full agent directory, tool boundaries, and delegation parameters, see **[Custom Subagents Fleet in TOOLKIT.md](./TOOLKIT.md#5-custom-subagents)**.
 

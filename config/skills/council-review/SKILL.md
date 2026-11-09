@@ -88,15 +88,14 @@ Engage the operator interactively using `ask_question` (one question at a time) 
 
 1. **Council Seat Selection**: Present 3-5 specialized seats tailored to the problem from the [Seat Catalog](./references/seat-catalog.md):
    - Architecture & Contracts (`system-architect`)
-   - Security & Hygiene (`code-auditor`)
+   - Security, Hygiene & Database Safety (`code-auditor`)
    - Reliability & Silent Failures (`silent-failure-hunter`)
    - Test Integrity & TDD (`tdd-guide`)
-   - Persistence & Database (`database-reviewer`)
+   - Official Spec & Remediation Verifier (`spec-verifier`)
    - Frontend UX & Accessibility (`ui-crafter`)
    - Documentation & ADRs (`docs-architect`)
    - Compiler & Typing (`build-error-resolver`)
    - Infrastructure & CI (`maintenance-bot`)
-   - Official Spec & Remediation Verifier (`spec-verifier`)
    - Software Localization & Humanizer (`l10n-humanizer`)
 2. **Evaluation Depth & Focus**: Select primary dimensions:
    - Antigravity Spec Alignment

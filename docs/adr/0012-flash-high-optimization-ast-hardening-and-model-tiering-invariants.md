@@ -1,7 +1,7 @@
 # ADR-0012: Retain Flash for Tactical Agents and Strip Commit Message Flags
 
 ## Status
-Partially Superseded by ADR-0015 (for autonomous execution) and ADR-0024 (for AST command validation)
+Partially Superseded by ADR-0015, ADR-0024, and ADR-0027 (tdd-guide elevated to model: inherit)
 
 ## Date
 2026-10-28

@@ -83,8 +83,8 @@ jobs:
         shell: pwsh
         run: |
           $agents = Get-ChildItem -Path "config/agents" -Directory
-          if ($agents.Count -ne 11) {
-            Write-Error "Expected exactly 11 agents, found $($agents.Count)"
+          if ($agents.Count -ne 10) {
+            Write-Error "Expected exactly 10 agents, found $($agents.Count)"
             exit 1
           }
           foreach ($a in $agents) {
@@ -94,7 +94,7 @@ jobs:
               exit 1
             }
             $content = Get-Content $agentFile -Raw
-            if ($content -notmatch '(?m)^name:\s+' -or $content -notmatch '(?m)^description:\s+' -or $content -notmatch '(?m)^model:\s+(inherit|flash)\s*$' -or $content -notmatch '(?m)^tools:\s+') {
+            if ($content -notmatch '(?m)^name:\s+' -or $content -notmatch '(?m)^description:\s+' -or $content -notmatch '(?m)^model:\s+(inherit|flash)\s*$' -or $content -notmatch '(?m)^subagent:\s+true\s*$' -or $content -notmatch '(?m)^mainAgent:\s+false\s*$' -or $content -notmatch '(?m)^tools:\s+') {
               Write-Error "Invalid frontmatter in $agentFile"
               exit 1
             }

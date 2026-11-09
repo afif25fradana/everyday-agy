@@ -1,7 +1,7 @@
 # ADR-0018: Track 11th Agent (l10n-humanizer) and Align ADR Directory Paths
 
 ## Status
-Partially Superseded by ADR-0021 (for l10n skill bindings)
+Partially Superseded by ADR-0021 and ADR-0027 (fleet consolidated to 10 agents, database-reviewer retired)
 
 ## Date
 2026-11-02

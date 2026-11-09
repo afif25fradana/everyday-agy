@@ -1,7 +1,7 @@
 # ADR-0019: Lead Orchestrator Protocol: Insulate Parent Context via Subagents
 
 ## Status
-Partially Superseded by ADR-0020 (for Tier 2 Gate 1 restoration) and ADR-0021 (for Tier 2 implementer options)
+Partially Superseded by ADR-0020, ADR-0021, and ADR-0027 (Single-Pass TDD orchestration and subagent schema hardening)
 
 ## Date
 2026-11-03

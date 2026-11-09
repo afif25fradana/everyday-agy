@@ -1,7 +1,7 @@
 # ADR-0022: Register Deep Web Research, Fix RED Test Sequencing, Unify Scratch Paths
 
 ## Status
-Accepted (Supersedes ADR-0007 in part, ADR-0014 in part, ADR-0020 in part, and ADR-0021 in part)
+Partially Superseded by ADR-0027 (for Single-Pass TDD sequencing and subagent prompt pruning; supersedes ADR-0007, ADR-0014, ADR-0020, and ADR-0021 in part)
 
 ## Date
 2026-11-05

@@ -7,6 +7,8 @@ $newScript = Join-Path $scriptDir "New-AuditCheckpoint.ps1"
 $restoreScript = Join-Path $scriptDir "Restore-AuditCheckpoint.ps1"
 $updateScript = Join-Path $scriptDir "Update-Gate2Diff.ps1"
 
+$ErrorActionPreference = "Stop"
+
 $testsRun = 0
 $testsPassed = 0
 $testsFailed = 0
@@ -269,8 +271,11 @@ try {
         } catch {
             $statusCheckFailed = $true
         }
+        $prevEAP = $ErrorActionPreference
+        $ErrorActionPreference = "Continue"
         git rev-parse --verify "refs/heads/checkpoint-status-fail-$testId" 2>$null | Out-Null
         $branchWasNotCreated = ($LASTEXITCODE -ne 0)
+        $ErrorActionPreference = $prevEAP
         Assert-Test -Name "New-AuditCheckpoint checks exit code on git status failure" -Condition ($statusCheckFailed -and $branchWasNotCreated)
 
         # Test 8c: Restore-AuditCheckpoint fails when git ls-files returns non-zero exit code (GAP-R3-01)
@@ -413,10 +418,83 @@ try {
         }
     }
 
+    # Test 10: Multi-checkpoint update on same file restores latest backup (REL-01)
+    $multiFile = Join-Path $testDir "multi_checkpoint.txt"
+    Set-Content -LiteralPath $multiFile -Value "initial version 1" -Encoding utf8
+    $multiTask = "multi-$taskName"
+    & $newScript -Task $multiTask -FilePath $multiFile | Out-Null
+
+    # Second checkpoint for same file with updated content
+    Set-Content -LiteralPath $multiFile -Value "updated version 2" -Encoding utf8
+    & $newScript -Task $multiTask -FilePath $multiFile | Out-Null
+
+    # Tamper file on disk
+    Set-Content -LiteralPath $multiFile -Value "tampered corrupted version 3" -Encoding utf8
+
+    # Restore should restore the latest backup (version 2)
+    try {
+        & $restoreScript -Task $multiTask -FilePath $multiFile | Out-Null
+    } catch {
+        # Recorded restore failure
+    }
+    $restoredMulti = if (Test-Path -LiteralPath $multiFile) { (Get-Content -LiteralPath $multiFile -Raw).Trim() } else { "" }
+    Assert-Test -Name "Multi-checkpoint update on same file restores latest backup" -Condition ($restoredMulti -eq "updated version 2")
+
+    # Test 11: Untracked multibyte UTF-8 baseline reading in PS 5.1 (REL-02)
+    $mbRepoDir = Join-Path $testDir "git_mb_repo"
+    New-Item -ItemType Directory -Path $mbRepoDir -Force | Out-Null
+    $mbOrigPwd = Get-Location
+    $mbTask = "mb-untracked-$testId"
+    $mbScratchDir = Join-Path $userHome ".gemini/antigravity/scratch/$mbTask"
+    try {
+        Set-Location -LiteralPath $mbRepoDir
+        git init --quiet
+        git config user.name "TestRunner"
+        git config user.email "test@example.com"
+        git config core.quotepath false
+
+        $mbTracked = Join-Path $mbRepoDir "tracked.txt"
+        Set-Content -Path $mbTracked -Value "base" -Encoding utf8
+        git add tracked.txt
+        git commit -m "base" --quiet
+
+        # Create multibyte untracked file
+        $mbUntracked = Join-Path $mbRepoDir "café_測試.txt"
+        Set-Content -LiteralPath $mbUntracked -Value "precious multibyte data" -Encoding utf8
+
+        # Create scratch baseline directly with UTF-8 No-BOM to test reader decoding
+        New-Item -ItemType Directory -Path $mbScratchDir -Force | Out-Null
+        $mbBaseline = Join-Path $mbScratchDir "untracked_baseline.txt"
+        [System.IO.File]::WriteAllLines($mbBaseline, [string[]]@("café_測試.txt"), [System.Text.UTF8Encoding]::new($false))
+        git branch "checkpoint-$mbTask" HEAD
+
+        # Run restore in Windows PowerShell 5.1 to verify PS 5.1 encoding handling
+        $isWin = $IsWindows -or (-not (Get-Variable -Name IsWindows -ErrorAction SilentlyContinue))
+        if ($isWin) {
+            $ps5Cmd = "& '$restoreScript' -Task '$mbTask' -RepoPath '$mbRepoDir'"
+            powershell.exe -NoProfile -ExecutionPolicy Bypass -Command $ps5Cmd 2>&1 | Out-Null
+            $mbPreserved = Test-Path -LiteralPath $mbUntracked
+            Assert-Test -Name "Untracked multibyte UTF-8 baseline reading in PS 5.1 preserves file" -Condition $mbPreserved
+        } else {
+            & $restoreScript -Task $mbTask -RepoPath $mbRepoDir | Out-Null
+            $mbPreserved = Test-Path -LiteralPath $mbUntracked
+            Assert-Test -Name "Untracked multibyte UTF-8 baseline reading preserves file" -Condition $mbPreserved
+        }
+    } finally {
+        Set-Location -LiteralPath $mbOrigPwd
+        if (Test-Path -LiteralPath $mbScratchDir) {
+            Remove-Item -LiteralPath $mbScratchDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
 } finally {
     # Cleanup temporary directories and test-created scratch locations
     if (Test-Path -Path $scratchDir) {
         Remove-Item -Path $scratchDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    $multiScratchDir = Join-Path $userHome ".gemini/antigravity/scratch/multi-$taskName"
+    if (Test-Path -LiteralPath $multiScratchDir) {
+        Remove-Item -LiteralPath $multiScratchDir -Recurse -Force -ErrorAction SilentlyContinue
     }
     $corruptScratchDir = Join-Path $userHome ".gemini/antigravity/scratch/corrupt-$taskName"
     if (Test-Path -Path $corruptScratchDir) {

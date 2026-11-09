@@ -72,7 +72,7 @@ try {
             }
             $hashesFile = Join-Path $scratchDir "hashes.txt"
             if (Test-Path -LiteralPath $hashesFile) {
-                $expectedLine = Get-Content -LiteralPath $hashesFile | Where-Object { $_ -match [regex]::Escape($backupPath) } | Select-Object -First 1
+                $expectedLine = Get-Content -LiteralPath $hashesFile -Encoding utf8 | Where-Object { $_ -match [regex]::Escape($backupPath) } | Select-Object -Last 1
                 if ($expectedLine) {
                     $expectedHash = ($expectedLine -split '\s+')[0]
                     $sha = [System.Security.Cryptography.SHA256]::Create()
@@ -106,7 +106,7 @@ try {
                 $untrackedBaseline = Join-Path $scratchDir "untracked_baseline.txt"
                 if (Test-Path -LiteralPath $untrackedBaseline) {
                     $baselineSet = @{}
-                    foreach ($line in (Get-Content -LiteralPath $untrackedBaseline)) {
+                    foreach ($line in (Get-Content -LiteralPath $untrackedBaseline -Encoding utf8)) {
                         $cleanLine = $line.Trim().TrimStart([char]0xFEFF)
                         if (-not [string]::IsNullOrWhiteSpace($cleanLine)) { $baselineSet[$cleanLine] = $true }
                     }

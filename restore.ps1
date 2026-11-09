@@ -156,8 +156,13 @@ if (Test-Path $srcSkills) {
             Get-ChildItem -Path $targetDir -Recurse -File | ForEach-Object {
                 $rel = $_.FullName.Substring($targetDir.Length)
                 if ($rel -notin $srcFiles) {
-                    Remove-Item -Path $_.FullName -Force
+                    Remove-Item -LiteralPath $_.FullName -Force
                     Write-Host "[CLEANUP] Pruned orphan skill file: $($sDir.Name)$rel" -ForegroundColor DarkGray
+                }
+            }
+            Get-ChildItem -LiteralPath $targetDir -Recurse -Directory | Sort-Object -Property FullName -Descending | ForEach-Object {
+                if (@(Get-ChildItem -LiteralPath $_.FullName -Force).Count -eq 0) {
+                    Remove-Item -LiteralPath $_.FullName -Force
                 }
             }
         } else {
@@ -176,6 +181,14 @@ if (Test-Path $srcPlugins) {
     if ($customPluginList.Count -gt 0) {
         $dstPlugins = Join-Path $configHome "plugins"
         New-Item -ItemType Directory -Force -Path $dstPlugins | Out-Null
+        $officialPlugins = @("antislop", "devtools")
+        $srcPluginNames = @($customPluginList | ForEach-Object { $_.Name })
+        Get-ChildItem -Path $dstPlugins -Directory | ForEach-Object {
+            if ($_.Name -notin $srcPluginNames -and $_.Name -notin $officialPlugins) {
+                Remove-Item -LiteralPath $_.FullName -Recurse -Force
+                Write-Host "[CLEANUP] Pruned stale plugin: $($_.Name)" -ForegroundColor DarkGray
+            }
+        }
         Copy-Item -Path (Join-Path $srcPlugins "*") -Destination $dstPlugins -Recurse -Force
         $pluginCount = (Get-ChildItem -Path $dstPlugins -Directory).Count
         Write-Host "[OK] Restored $pluginCount Custom Plugins" -ForegroundColor Green

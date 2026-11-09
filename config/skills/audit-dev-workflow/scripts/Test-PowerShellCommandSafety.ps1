@@ -192,6 +192,7 @@ foreach ($cmdAst in $commandElements) {
             if ($pathVal -match '^[/\\]+(\*.*)?$' -or
                 $pathVal -match '^[a-zA-Z]:[/\\]*(\*.*)?$' -or
                 $pathVal -match '^~[/\\]*(\*.*)?$' -or
+                $pathVal -match '(?i)^(\.?[\/\\])?\*$' -or
                 $pathVal -match '^\$(HOME|env:(USERPROFILE|SystemDrive))([/\\]+(\*.*)?)?$' -or
                 $pathVal -in @('$env:SystemDrive', '$HOME', '$env:USERPROFILE')) {
                 $targetRoot = $true
@@ -347,8 +348,26 @@ foreach ($cmdAst in $commandElements) {
                 }
             }
             if ($subCmd -eq 'checkout') {
-                # Permit branch checkouts (git checkout -b <branch> .), block destructive force/discard
-                if ($subArgs -match '(^|\s)(-f\b|--force\b)' -or ($subArgs -match '(\s|^)(--\s+)?(\.|\*)(?=\s|$)' -and $subArgs -notmatch '(?i)(^|\s)-b\b')) {
+                # Permit branch checkouts (git checkout <branch>, git checkout -b <branch> .), block destructive force/discard
+                $isBranchCreate = $subArgs -match '(?i)(^|\s)(-[bB]|--orphan)\b'
+                $hasForce = $subArgs -match '(^|\s)(-f\b|--force\b)'
+                $hasDoubleDash = $subArgs -match '(^|\s)--\s+'
+                $hasDotOrWildcard = ($subArgs -match '(\s|^)(\.|\*)(?=\s|$)') -and -not $isBranchCreate
+                $positional = @()
+                $afterCheckout = $false
+                for ($k = 0; $k -lt $argTokens.Count; $k++) {
+                    if ($argTokens[$k] -eq 'checkout' -and -not $afterCheckout) { $afterCheckout = $true; continue }
+                    if ($afterCheckout -and $argTokens[$k] -ne '--' -and $argTokens[$k] -notmatch '^-') { $positional += $argTokens[$k] }
+                }
+                $hasMultiPositional = ($positional.Count -ge 2) -and -not $isBranchCreate
+                $hasFileTarget = $false
+                if ($positional.Count -ge 1 -and -not $isBranchCreate) {
+                    $target = $positional[-1]
+                    if ($target -match '^\.[/\\]' -or $target -match '\.(txt|md|json|js|ts|tsx|jsx|py|go|rs|c|cpp|h|cs|java|rb|php|html|css|scss|yml|yaml|xml|sh|ps1|bat|cmd|toml|ini|cfg|lock)$') {
+                        $hasFileTarget = $true
+                    }
+                }
+                if ($hasForce -or $hasDoubleDash -or $hasDotOrWildcard -or $hasMultiPositional -or $hasFileTarget) {
                     Write-Error "Safety Violation: Prohibited destructive git 'checkout' discard detected. Use Restore-AuditCheckpoint.ps1 instead."
                     exit 1
                 }
@@ -397,6 +416,10 @@ foreach ($cmdAst in $commandElements) {
                 Write-Error "Safety Violation: New-Object COM object creation is prohibited."
                 exit 1
             }
+            if ($t -match '(?i)(^|\[\s*)(System\.)?Diagnostics\.Process(\s*\]|$)') {
+                Write-Error "Safety Violation: Prohibited .NET process object instantiation '$t' detected."
+                exit 1
+            }
         }
     }
 
@@ -413,8 +436,20 @@ foreach ($mem in $memberExpressions) {
     $exprText = $mem.Expression.Extent.Text
     $memberVal = Get-NormalizedTokenText $mem.Member.Extent.Text
 
-    # Intercept direct process execution via .NET Process::Start (GAP-CRIT-04)
-    if ($memberVal -eq 'Start' -and $exprText -match '(?i)(^|\[\s*)(System\.)?Diagnostics\.Process(\s*\]|:|$)') {
+    # Intercept direct process execution via .NET Process::Start and constructor instantiation (GAP-CRIT-04)
+    $isProcessType = $exprText -match '(?i)(^|[\[\(]\s*)(System\.)?Diagnostics\.Process(\s*[\]\)]|:|$)'
+    $isProcessVar = $false
+    if ($mem.Expression -is [System.Management.Automation.Language.VariableExpressionAst]) {
+        $varName = $mem.Expression.VariablePath.UserPath
+        $matchingAssign = $ast.FindAll({
+            $args[0] -is [System.Management.Automation.Language.AssignmentStatementAst] -and
+            $args[0].Left -is [System.Management.Automation.Language.VariableExpressionAst] -and
+            $args[0].Left.VariablePath.UserPath -eq $varName -and
+            $args[0].Right.Extent.Text -match '(?i)Diagnostics\.Process'
+        }, $true)
+        if ($matchingAssign.Count -gt 0) { $isProcessVar = $true }
+    }
+    if (($memberVal -in @('Start', 'new') -and $isProcessType) -or ($memberVal -eq 'Start' -and $isProcessVar)) {
         Write-Error "Safety Violation: Prohibited direct .NET process execution '$($mem.Extent.Text)' detected."
         exit 1
     }

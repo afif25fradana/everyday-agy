@@ -122,6 +122,26 @@ $testCases = @(
     @{ Expected = "BLOCK"; Cmd = 'Remove-Item ~/.ssh/id_rsa -Force'; Reason = "Remove-Item sensitive ~/.ssh target" },
     @{ Expected = "BLOCK"; Cmd = 'Remove-Item $HOME/.aws/credentials -Force'; Reason = "Remove-Item sensitive ~/.aws target" },
 
+    # Blocked: Process instantiation & instance execution (SEC-01)
+    @{ Expected = "BLOCK"; Cmd = '[System.Diagnostics.Process]::new().Start()'; Reason = "Direct constructor [Process]::new().Start()" },
+    @{ Expected = "BLOCK"; Cmd = '([System.Diagnostics.Process]::new()).Start()'; Reason = "Direct parenthesized [Process]::new().Start()" },
+    @{ Expected = "BLOCK"; Cmd = '$p = [System.Diagnostics.Process]::new(); $p.Start()'; Reason = "Variable assigned [Process]::new() .Start()" },
+    @{ Expected = "BLOCK"; Cmd = '(New-Object System.Diagnostics.Process).Start()'; Reason = "(New-Object Process).Start()" },
+    @{ Expected = "BLOCK"; Cmd = '$p = New-Object System.Diagnostics.Process; $p.Start()'; Reason = "Variable assigned New-Object Process .Start()" },
+    @{ Expected = "BLOCK"; Cmd = 'New-Object System.Diagnostics.Process'; Reason = "New-Object System.Diagnostics.Process" },
+
+    # Blocked: Destructive git checkout file/pathspec discard (SEC-02)
+    @{ Expected = "BLOCK"; Cmd = 'git checkout file.txt'; Reason = "git checkout file worktree discard" },
+    @{ Expected = "BLOCK"; Cmd = 'git checkout -- file.txt'; Reason = "git checkout double-dash file discard" },
+    @{ Expected = "BLOCK"; Cmd = 'git checkout src/app.ts'; Reason = "git checkout relative path discard" },
+    @{ Expected = "BLOCK"; Cmd = 'git checkout .\file.txt'; Reason = "git checkout local prefix discard" },
+    @{ Expected = "BLOCK"; Cmd = 'git checkout HEAD file.txt'; Reason = "git checkout multi-positional file discard" },
+
+    # Blocked: Relative directory naked wildcard wipes (SEC-03)
+    @{ Expected = "BLOCK"; Cmd = 'Remove-Item *'; Reason = "Remove-Item naked wildcard wipe" },
+    @{ Expected = "BLOCK"; Cmd = 'del *'; Reason = "del naked wildcard wipe" },
+    @{ Expected = "BLOCK"; Cmd = 'Remove-Item .\*'; Reason = "Remove-Item relative naked wildcard wipe" },
+
     # Blocked: Wrapper flags, backtick escapes, two-statement scriptblock variables, git switch/stash, robocopy /MIR (ADR-0022)
     @{ Expected = "BLOCK"; Cmd = 'rtk -v git push --force'; Reason = "rtk flag before git force push" },
     @{ Expected = "BLOCK"; Cmd = 'sudo -E rm -rf ./dir'; Reason = "sudo -E flag before recursive rm" },
@@ -224,7 +244,22 @@ $testCases = @(
     @{ Expected = "ALLOW"; Cmd = '[System.Activator]::CreateInstance([System.Text.StringBuilder])'; Reason = "[System.Activator]::CreateInstance safe type" },
     @{ Expected = "ALLOW"; Cmd = 'git branch -m old-branch new-branch'; Reason = "git branch -m benign branch rename" },
     @{ Expected = "ALLOW"; Cmd = 'git config user.name "John Doe"'; Reason = "git config user.name benign config" },
-    @{ Expected = "ALLOW"; Cmd = 'robocopy src dst *.txt'; Reason = "robocopy benign copy without mirror or purge" }
+    @{ Expected = "ALLOW"; Cmd = 'robocopy src dst *.txt'; Reason = "robocopy benign copy without mirror or purge" },
+
+    # Allowed: Benign Process inspection and non-Process .Start() (SEC-01)
+    @{ Expected = "ALLOW"; Cmd = '[System.Diagnostics.Process]::GetCurrentProcess().Id'; Reason = "Benign Process::GetCurrentProcess inspection" },
+    @{ Expected = "ALLOW"; Cmd = '$sw = New-Object System.Diagnostics.Stopwatch; $sw.Start()'; Reason = "Benign Stopwatch.Start invocation" },
+
+    # Allowed: Benign Git branch checkouts (SEC-02)
+    @{ Expected = "ALLOW"; Cmd = 'git checkout main'; Reason = "git checkout branch switch" },
+    @{ Expected = "ALLOW"; Cmd = 'git checkout dev'; Reason = "git checkout dev branch switch" },
+    @{ Expected = "ALLOW"; Cmd = 'git checkout feat/auth'; Reason = "git checkout slash branch switch" },
+    @{ Expected = "ALLOW"; Cmd = 'git checkout -B feat/branch'; Reason = "git checkout -B branch creation" },
+    @{ Expected = "ALLOW"; Cmd = 'git checkout --detach HEAD'; Reason = "git checkout --detach" },
+    @{ Expected = "ALLOW"; Cmd = 'git checkout --orphan new-branch'; Reason = "git checkout --orphan branch" },
+
+    # Allowed: Filtered wildcard cleanup (SEC-03)
+    @{ Expected = "ALLOW"; Cmd = 'Remove-Item *.log'; Reason = "Remove-Item filtered wildcard cleanup" }
 )
 
 $passed = 0

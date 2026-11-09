@@ -71,7 +71,7 @@ try {
             try { $fullHash = ([BitConverter]::ToString($sha.ComputeHash([System.IO.File]::ReadAllBytes($backupPath)))).Replace('-', '').ToLower() }
             finally { $sha.Dispose() }
             $shortHash = $fullHash.Substring(0, 12)
-            "$fullHash  $backupPath  $resolvedPath" | Add-Content -LiteralPath (Join-Path $scratchDir "hashes.txt")
+            "$fullHash  $backupPath  $resolvedPath" | Add-Content -LiteralPath (Join-Path $scratchDir "hashes.txt") -Encoding utf8
             Write-Output "Checkpoint created: $backupPath (sha $shortHash)"
         }
     } else {

@@ -57,7 +57,7 @@ function Test-YamlBlockSyntax {
         $line = $lines[$i]
 
         # 1. Reject Tabs in indentation
-        if ($line -match '^\t+') {
+        if ($line -match '^[ ]*\t') {
             return @{ Success = $false; Error = "Line ${lineNum} contains tab indentation (\t). YAML strictly forbids tabs." }
         }
 
@@ -243,6 +243,10 @@ Write-Host "`n[4] Running Parser Unit Tests..." -ForegroundColor White
 $inlineCommentYaml = 'title: "[BUG]: " # issue prefix'
 $inlineCommentResult = Test-YamlBlockSyntax -Content $inlineCommentYaml -FilePath "inline-comment-test.yml"
 Assert-Test -Name "Quoted scalar with inline comment syntax" -Condition ($inlineCommentResult.Success) -Details ($inlineCommentResult.Error)
+
+$tabAfterSpaceYaml = "key:`n  `tvalue"
+$tabAfterSpaceResult = Test-YamlBlockSyntax -Content $tabAfterSpaceYaml -FilePath "tab-after-space-test.yml"
+Assert-Test -Name "Tab following spaces in indentation is rejected" -Condition (-not $tabAfterSpaceResult.Success) -Details ($tabAfterSpaceResult.Error)
 
 # ---------------------------------------------------------
 # Final Summary

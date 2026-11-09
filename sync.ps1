@@ -151,8 +151,13 @@ if (Test-Path $srcSkills) {
             Get-ChildItem -Path $targetDir -Recurse -File | ForEach-Object {
                 $rel = $_.FullName.Substring($targetDir.Length)
                 if ($rel -notin $srcFiles) {
-                    Remove-Item -Path $_.FullName -Force
+                    Remove-Item -LiteralPath $_.FullName -Force
                     Write-Host "[CLEANUP] Pruned orphan skill file from repo: $($cs.Name)$rel" -ForegroundColor DarkGray
+                }
+            }
+            Get-ChildItem -LiteralPath $targetDir -Recurse -Directory | Sort-Object -Property FullName -Descending | ForEach-Object {
+                if (@(Get-ChildItem -LiteralPath $_.FullName -Force).Count -eq 0) {
+                    Remove-Item -LiteralPath $_.FullName -Force
                 }
             }
         } else {
@@ -178,8 +183,8 @@ if (Test-Path $pluginsDir) {
         # Remove nested .git if any (scoped strictly to target plugin directories)
         $resolvedDst = (Resolve-Path $dstPlugins).Path
         Get-ChildItem -Path $dstPlugins -Filter ".git" -Recurse -Directory -Hidden -Force | ForEach-Object {
-            if ($_.FullName.StartsWith($resolvedDst)) {
-                Remove-Item -Path $_.FullName -Recurse -Force
+            if ($_.FullName.StartsWith($resolvedDst, [System.StringComparison]::OrdinalIgnoreCase)) {
+                Remove-Item -LiteralPath $_.FullName -Recurse -Force
             }
         }
         $pluginCount = (Get-ChildItem -Path $dstPlugins -Directory).Count

@@ -89,7 +89,7 @@ try {
         if ($LASTEXITCODE -ne 0) {
             throw "git diff failed with exit code $LASTEXITCODE"
         }
-        git --no-pager diff --stat=140,80 --output=$tempStat HEAD
+        git --no-pager -c core.quotePath=false diff --stat=140,80 --output=$tempStat HEAD
         if ($LASTEXITCODE -ne 0) {
             throw "git diff --stat failed with exit code $LASTEXITCODE"
         }

@@ -49,25 +49,25 @@ jobs:
       - name: Run PowerShell AST Command Safety Test Suite (pwsh)
         shell: pwsh
         run: |
-          pwsh -NoProfile -ExecutionPolicy Bypass -File "config/skills/audit-dev-workflow/scripts/Test-PowerShellCommandSafety.Tests.ps1"
+          pwsh -NoProfile -ExecutionPolicy Bypass -File "config/skills/orchestrator/scripts/Test-PowerShellCommandSafety.Tests.ps1"
 
       - name: Run Audit Checkpoint & Rollback Test Suite (pwsh)
         shell: pwsh
         run: |
-          pwsh -NoProfile -ExecutionPolicy Bypass -File "config/skills/audit-dev-workflow/scripts/AuditCheckpoint.Tests.ps1"
+          pwsh -NoProfile -ExecutionPolicy Bypass -File "config/skills/orchestrator/scripts/AuditCheckpoint.Tests.ps1"
 
       - name: Run YAML Syntax & Schema Test Suite (pwsh)
         shell: pwsh
         run: |
-          pwsh -NoProfile -ExecutionPolicy Bypass -File "config/skills/audit-dev-workflow/scripts/YamlValidation.Tests.ps1"
+          pwsh -NoProfile -ExecutionPolicy Bypass -File "config/skills/orchestrator/scripts/YamlValidation.Tests.ps1"
 
       - name: Run Test Suites on Windows PowerShell 5.1
         if: runner.os == 'Windows'
         shell: powershell
         run: |
-          powershell -NoProfile -ExecutionPolicy Bypass -File "config/skills/audit-dev-workflow/scripts/Test-PowerShellCommandSafety.Tests.ps1"
-          powershell -NoProfile -ExecutionPolicy Bypass -File "config/skills/audit-dev-workflow/scripts/AuditCheckpoint.Tests.ps1"
-          powershell -NoProfile -ExecutionPolicy Bypass -File "config/skills/audit-dev-workflow/scripts/YamlValidation.Tests.ps1"
+          powershell -NoProfile -ExecutionPolicy Bypass -File "config/skills/orchestrator/scripts/Test-PowerShellCommandSafety.Tests.ps1"
+          powershell -NoProfile -ExecutionPolicy Bypass -File "config/skills/orchestrator/scripts/AuditCheckpoint.Tests.ps1"
+          powershell -NoProfile -ExecutionPolicy Bypass -File "config/skills/orchestrator/scripts/YamlValidation.Tests.ps1"
 
       - name: Run Runner-Native yamllint on Pure YAML (.github/**/*.yml)
         shell: bash

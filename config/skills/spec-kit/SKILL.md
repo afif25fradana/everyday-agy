@@ -5,7 +5,7 @@ description: "Spec-Driven Development (/speckit.specify, .plan, .tasks) for gree
 
 # Spec-Kit (Spec-Driven Development)
 
-A structured specification framework for designing and delivering new features. Complements `audit-dev-workflow` and `orchestrator` by providing a deliberate, test-first specification phase before any application code is generated.
+A structured specification framework for designing and delivering new features. Complements `orchestrator` and `audit-dev` by providing a deliberate, test-first specification phase before any application code is generated.
 
 Governed by the minimalist principles of `config/GEMINI.md` (`~/.gemini/GEMINI.md`) and Ponytail (anti-slop, YAGNI, shortest working diff).
 
@@ -20,7 +20,7 @@ Requirements & ACs       Technical Contracts     Atomic Checklist        Red-Gre
 ```
 
 - **Antigravity UserFacing Artifacts Exclusively**: Phases 1–3 (`/speckit.specify`, `/speckit.plan`, `/speckit.tasks`) draft outputs exclusively as Antigravity UserFacing Artifacts in the conversation artifact directory (`<appDataDir>\brain\<conversation-id>/`). Zero workspace files are written before the Phase 2 audit checkpoint (`New-AuditCheckpoint.ps1`).
-- **Gate 1 Satisfaction**: An approved spec-kit artifact trilogy (`spec.md` + `plan.md` + `tasks.md`) formally satisfies Gate 1 of `audit-dev-workflow` (no redundant `gate1_proposal.md` is drafted).
+- **Gate 1 Satisfaction**: An approved spec-kit artifact trilogy (`spec.md` + `plan.md` + `tasks.md`) formally satisfies Gate 1 of `orchestrator` (no redundant `gate1_proposal.md` is drafted).
 - **Post-Checkpoint Workspace Persistence**: Workspace file creation (`specs/<feature_name>/*.md`) occurs post-checkpoint in Phase 3 alongside or immediately preceding the RED repro test.
 
 ---
@@ -115,8 +115,8 @@ Draft artifact `<appDataDir>\brain\<conversation-id>/tasks.md`:
 ## Execution Guardrails & Stop Condition
 
 1. **Zero Workspace Writes Before Checkpoint**: Phases 1–3 draft outputs exclusively as session artifacts (`<appDataDir>\brain\<conversation-id>/`). Never write workspace files (`specs/<feature_name>/*.md`) or application code prior to Gate 1 approval and `New-AuditCheckpoint.ps1`.
-2. **Gate 1 Equivalence**: An approved spec-kit artifact trilogy (`spec.md` + `plan.md` + `tasks.md`) formally satisfies Gate 1 of `audit-dev-workflow`; no redundant `gate1_proposal.md` is drafted.
+2. **Gate 1 Equivalence**: An approved spec-kit artifact trilogy (`spec.md` + `plan.md` + `tasks.md`) formally satisfies Gate 1 of `orchestrator`; no redundant `gate1_proposal.md` is drafted.
 3. **Post-Checkpoint Persistence**: Workspace file creation (`specs/<feature_name>/*.md`) occurs post-checkpoint in Phase 3 alongside or immediately preceding the RED repro test.
 4. **Minimalist Requirements**: Only specify what the user actually cares about. Avoid over-constraining the agent with unnecessary abstractions.
 5. **Trace Back to Acceptance Criteria**: Every task in `tasks.md` must link back to at least one acceptance criterion in `spec.md`.
-6. **Stop Condition**: Pause after presenting each phase artifact (`spec.md` $\rightarrow$ `plan.md` $\rightarrow$ `tasks.md`) and await user confirmation before advancing to implementation via `orchestrator` / `audit-dev-workflow`.
+6. **Stop Condition**: Pause after presenting each phase artifact (`spec.md` $\rightarrow$ `plan.md` $\rightarrow$ `tasks.md`) and await user confirmation before advancing to implementation via `orchestrator`.

@@ -39,7 +39,7 @@ respective upstream licenses:
 
 2. Bespoke Workflow Skills (MIT License):
    - config/skills/academic-council/
-   - config/skills/audit-dev-workflow/
+   - config/skills/audit-dev/
    - config/skills/clean-docs/
    - config/skills/council-review/
    - config/skills/orchestrator/

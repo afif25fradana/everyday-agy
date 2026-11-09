@@ -93,7 +93,7 @@ Fifteen modular skills are maintained directly within `config/skills/`. Third-pa
 
 | Category | Count | Included Skills | Origin / Licensing |
 |---|:---:|---|---|
-| **Bespoke Architectures** | 7 | `orchestrator`, `council-review`, `academic-council`, `audit-dev-workflow`, `sync-task-state`, `clean-docs`, `deep-web-research` | Original works authored for Antigravity (MIT) |
+| **Bespoke Architectures** | 7 | `orchestrator`, `council-review`, `academic-council`, `audit-dev`, `sync-task-state`, `clean-docs`, `deep-web-research` | Original works authored for Antigravity (MIT) |
 | **Engine-Adapted Ports** | 8 | `spec-kit`, `gh-workflow`, `audit-context-building`, `differential-review`, `contract-first`, `database-migrations`, `coding-standards`, `documentation-and-adrs` | Adapted from community tools, ECC, and Trail of Bits (MIT & CC BY-SA 4.0) |
 
 Third-party upstream suites (`ponytail`, `taste-skill`, `anti-slop`, and Chrome DevTools) are decoupled from Git tracking per ADR-0016 to prevent vendor bloat.
@@ -117,6 +117,6 @@ All active and historical architectural decision records—covering cognitive mo
 ## License
 
 Dual-licensed under MIT and CC BY-SA 4.0:
-- Repository scripts, custom subagents, and bespoke skills (`orchestrator`, `council-review`, `academic-council`, `audit-dev-workflow`, `sync-task-state`, `clean-docs`, `deep-web-research`) are licensed under the [MIT License](./LICENSE).
+- Repository scripts, custom subagents, and bespoke skills (`orchestrator`, `council-review`, `academic-council`, `audit-dev`, `sync-task-state`, `clean-docs`, `deep-web-research`) are licensed under the [MIT License](./LICENSE).
 - Adapted Trail of Bits security skills (`audit-context-building`, `differential-review`) are licensed under [Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](./config/skills/audit-context-building/LICENSE).
 - Decoupled upstream community skills (`ponytail`, `taste-skill`, `anti-slop`) are referenced under their respective upstream MIT licenses.

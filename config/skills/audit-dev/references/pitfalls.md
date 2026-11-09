@@ -1,7 +1,7 @@
 # Engineering Pitfalls & Edge-Case Traps
 **Operational Checklist for Five-Axis Pre-Flight & Review Alignment**
 
-Consult this checklist when evaluating plans, diffs, test logs, and audit reports. High-level rubric definitions are maintained in [`SKILL.md`](../SKILL.md#phase-4-local-verification--review).
+Consult this checklist when evaluating plans, diffs, test logs, and audit reports. High-level rubric definitions are maintained in [`SKILL.md`](../SKILL.md#2-the-five-axis-skeptical-audit-rubric).
 
 ---
 

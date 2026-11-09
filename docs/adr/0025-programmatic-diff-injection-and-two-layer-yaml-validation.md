@@ -1,7 +1,7 @@
 # ADR-0025: Programmatic Diff Injection and Two-Layer YAML Validation
 
 ## Status
-Accepted
+Accepted (Partially Superseded by ADR-0028 for relocation of Update-Gate2Diff.ps1 and YamlValidation.Tests.ps1 to orchestrator/scripts/)
 
 ## Date
 2026-11-08

@@ -1,7 +1,7 @@
 # ADR-0019: Lead Orchestrator Protocol: Insulate Parent Context via Subagents
 
 ## Status
-Partially Superseded by ADR-0020, ADR-0021, and ADR-0027 (Single-Pass TDD orchestration and subagent schema hardening)
+Partially Superseded by ADR-0020, ADR-0021, ADR-0027, and ADR-0028 (for orchestrator script consolidation, end-to-end lifecycle runbook, and dual-subagent verification pipeline)
 
 ## Date
 2026-11-03

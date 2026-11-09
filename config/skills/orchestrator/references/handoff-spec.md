@@ -41,13 +41,13 @@ This specification defines the communication contracts, trigger headers, quantit
 ### 2.3 Gate 2 (Post-Execution Handoff & Diff Review)
 - **Trigger Header**: `# Review Request: Gate 2 (Post-Execution Handoff & Diff)`
 - **Packaging Protocol**: Gate 2 handoff payloads MUST be written exclusively as an Antigravity UserFacing Artifact (`<appDataDir>\brain\<conversation-id>/gate2_handoff.md`) with `ArtifactMetadata` (`UserFacing: true`, `RequestFeedback: false`).
-- **Programmatic Diff Injection (Anti-Hallucination Invariant)**: Unified diffs and diffstats must NEVER be typed or reconstructed from memory by the LLM inside `write_file`. Instead, the implementer writes `gate2_handoff.md` containing `{{VERBATIM_GIT_DIFFSTAT}}` and `{{VERBATIM_GIT_DIFF}}` placeholders, and executes `Update-Gate2Diff.ps1` (`powershell -ExecutionPolicy Bypass -File "$HOME\.gemini\config\skills\audit-dev-workflow\scripts\Update-Gate2Diff.ps1" -ArtifactPath "<artifact_path>"`). The script automatically includes untracked files (`git add -N`), scrubs secrets to `<TEST_HASH_SANITIZED>`, injects byte-exact diffs and diffstats, and un-stages untracked files to maintain index idempotency.
+- **Programmatic Diff Injection (Anti-Hallucination Invariant)**: Unified diffs and diffstats must NEVER be typed or reconstructed from memory by the LLM inside `write_file`. Instead, the implementer writes `gate2_handoff.md` containing `{{VERBATIM_GIT_DIFFSTAT}}` and `{{VERBATIM_GIT_DIFF}}` placeholders, and executes `Update-Gate2Diff.ps1` (`powershell -ExecutionPolicy Bypass -File "$HOME\.gemini\config\skills\orchestrator\scripts\Update-Gate2Diff.ps1" -ArtifactPath "<artifact_path>"`). The script automatically includes untracked files (`git add -N`), scrubs secrets to `<TEST_HASH_SANITIZED>`, injects byte-exact diffs and diffstats, and un-stages untracked files to maintain index idempotency.
 - **Chat Response Standard**: Chat responses must strictly be 1–3 lines linking directly to `gate2_handoff.md`, never dumping full diffs directly into chat.
 - **Lifecycle Timing**: Generated AFTER Phase 3 (RED Test & GREEN Patch Execution) and Phase 4 (Local Verification), strictly BEFORE `git commit` or `git push`.
 - **Required Payload**:
   1. High-level summary of outcome and root cause resolution.
   2. High-level diffstat (untruncated paths via `git diff --stat=140,80 HEAD`) and full unified diff (`+`/`-`).
-  3. Five-Axis Pre-Flight self-audit confirmation per [`SKILL.md`](../SKILL.md#phase-4-local-verification--review).
+  3. Five-Axis Pre-Flight self-audit confirmation per [`audit-dev/SKILL.md`](../../audit-dev/SKILL.md).
   4. Mandatory Real Test Evidence (or Static Verification):
      - Repos with test harnesses: (a) Exact CLI command, (b) Terminal exit code `0`, (c) Verbatim snippet of `stdout`/`stderr` showing passed assertions.
      - Testless repos: Annotated as `[TEST HARNESS: NONE]` with static/build/linter evidence.
@@ -117,7 +117,7 @@ The required structure for each gate payload is:
 - **Verbatim Output**: `<stdout/stderr snippet>` (or `[TEST HARNESS: NONE]` with static evidence)
 
 ## Five-Axis Pre-Flight Self-Audit
-- All 5 axes verified per SKILL.md (Correctness, Security, Ponytail, Edge Cases, Test Integrity).
+- All 5 axes verified per [audit-dev SKILL.md](../../audit-dev/SKILL.md) (Correctness, Security, Ponytail, Edge Cases, Test Integrity).
 ```
 
 ---

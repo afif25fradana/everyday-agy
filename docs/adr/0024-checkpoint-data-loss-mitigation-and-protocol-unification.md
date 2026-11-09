@@ -1,7 +1,7 @@
 # ADR-0024: Checkpoint Data-Loss Mitigation, AST Hardening, and Protocol Unification
 
 ## Status
-Accepted (Supersedes ADR-0005, ADR-0009, ADR-0011, ADR-0012, ADR-0015, and ADR-0017 in part; Partially Superseded by ADR-0026 for AST git config interception, rollback checksums, and exit code handling)
+Accepted (Supersedes ADR-0005, ADR-0009, ADR-0011, ADR-0012, ADR-0015, and ADR-0017 in part; Partially Superseded by ADR-0026 for AST git config interception, rollback checksums, and exit code handling; Partially Superseded by ADR-0028 for script relocation and audit-dev streamlining)
 
 ## Date
 2026-11-08

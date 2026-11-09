@@ -1,6 +1,6 @@
 # Subagent Execution Patterns for Audit-First Workflow
 
-The multi-tiered architecture allows the **Parent Agent** to orchestrate specialized **Subagents** across the 10-agent fleet. This keeps parent context clean, eliminates token bloat during deep audits, and enables safe, disciplined execution. Governed by [`orchestrator`](../../orchestrator/SKILL.md) and [`ADR-0027`](../../../../docs/adr/0027-agent-fleet-rationalization-single-pass-tdd-and-subagent-hardening.md).
+The multi-tiered architecture allows the **Parent Agent** to orchestrate specialized **Subagents** across the 10-agent fleet. This keeps parent context clean, eliminates token bloat during deep audits, and enables safe, disciplined execution. Governed by [`orchestrator`](../SKILL.md) and [`ADR-0027`](../../../../docs/adr/0027-agent-fleet-rationalization-single-pass-tdd-and-subagent-hardening.md).
 
 ---
 
@@ -8,7 +8,7 @@ The multi-tiered architecture allows the **Parent Agent** to orchestrate special
 
 | Role / Domain | Agent (`TypeName`) | Default Model | Workspace | Key Responsibilities |
 | :--- | :--- | :--- | :--- | :--- |
-| **Lead Orchestrator** | Parent Agent | Primary | Host CWD | Directs zero-read triage, manages checkpoints, implements fixes directly on Tier 0/1; on Tier 2/3 governs fleet under [`orchestrator`](../../orchestrator/SKILL.md) with Context Insulation, runs CLI verification tests, and handles user approval gates. |
+| **Lead Orchestrator** | Parent Agent | Primary | Host CWD | Directs zero-read triage, manages checkpoints, implements fixes directly on Tier 0/1; on Tier 2/3 governs fleet under [`orchestrator`](../SKILL.md) with Context Insulation, runs CLI verification tests, and handles user approval gates. |
 | **Architecture & Topology** | `system-architect` | `inherit` | `inherit` | Contract-first API design, module boundaries, acyclic DAG graphs, zero-downtime refactors, and specification modeling (`spec-kit`). Read-only explorer prior to Gate 1. |
 | **Security & Code Health** | `code-auditor` | `inherit` | `inherit` | Whole-repo health, security attack surface, injection/auth boundaries, database schema & migration safety, secret scanner hygiene, and anti-slop code hygiene. Read-only explorer or diff verifier. |
 | **Reliability & Silent Failures** | `silent-failure-hunter` | `inherit` | `inherit` | Audits swallowed exceptions, masking fallbacks (`.catch(() => [])`), resource leaks, unhandled edge cases, and timeout drops. Read-only auditor. |
@@ -35,9 +35,9 @@ The multi-tiered architecture allows the **Parent Agent** to orchestrate special
   - For high-stakes multi-system ADR synthesis on `docs-architect`, the Parent Agent may dynamically elevate invocation via `Model: "inherit"` (or `Model: "pro"`).
 
 ### 2.3 Core Execution & Verification Invariants
-1. **4-Slot Delegation Contract & Compact Receipts**: Follow the normative 4-slot structure in [`orchestrator/SKILL.md#3-the-4-slot-delegation-contract-ssot`](../../orchestrator/SKILL.md). Subagents write detailed forensic reports to `<appDataDir>\brain\<conversation-id>\scratch\<task>\` (except `build-error-resolver`, which performs in-place `replace_file_content` edits only) and return ONLY a compact $\le 15$-line receipt to chat.
+1. **4-Slot Delegation Contract & Compact Receipts**: Follow the normative 4-slot structure in [`orchestrator/SKILL.md#4-the-4-slot-delegation-contract-ssot`](../SKILL.md#4-the-4-slot-delegation-contract-ssot). Subagents write detailed forensic reports to `<appDataDir>\brain\<conversation-id>\scratch\<task>\` (except `build-error-resolver`, which performs in-place `replace_file_content` edits only) and return ONLY a compact $\le 15$-line receipt to chat.
 2. **Sequential Execution & Single-Writer Mutual Exclusion**: Mutating subagents execute strictly serialized (at most 1 active mutating agent at any time). Read-only explorers may execute in parallel.
-3. **Pre-Mutation Syntax Interception**: Mutating subagents run fast syntax checks (`orchestrator/SKILL.md#17-pre-mutation-syntax-interception-swe-agent-fast-syntax-gate--ssot`) immediately upon editing files to fix syntax typos in-turn without incrementing `global_attempt_counter`.
+3. **Pre-Mutation Syntax Interception**: Mutating subagents run fast syntax checks ([`orchestrator/SKILL.md#17-pre-mutation-syntax-interception-swe-agent-fast-syntax-gate--ssot`](../SKILL.md#17-pre-mutation-syntax-interception-swe-agent-fast-syntax-gate--ssot)) immediately upon editing files to fix syntax typos in-turn without incrementing `global_attempt_counter`.
 4. **Independent VCS Receipt Check (`verification-before-completion`)**: Parent never relies on subagent text claims alone; Parent independently verifies `rtk git status --short`, `rtk git diff --stat`, and fresh CLI test runs before Gate 2.
 5. **Two-Stage Spec-First Review & "Skip Style" Directive**: Review subagents (`code-auditor` or `silent-failure-hunter`) evaluate (1) line-by-line spec compliance, then (2) correctness, security, and edge cases, skipping purely stylistic formatting preferences.
 

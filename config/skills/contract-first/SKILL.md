@@ -10,7 +10,7 @@ machine-checkable contract. Consumers state what they need, providers implement
 that shape, and both sides verify against the same artifact before integration.
 
 This skill governs how systems evolve across boundaries, complementing `system-architect`
-and `audit-dev-workflow`.
+and `audit-dev`.
 
 ## When to Activate
 
@@ -222,5 +222,5 @@ than silently repurposing an existing field.
 ## Related Skills & Agents
 
 - [`system-architect`](../../agents/system-architect/agent.md) - Contract and architectural boundary design.
-- [`audit-dev-workflow`](../audit-dev-workflow/SKILL.md) - Verification and testing gates.
+- [`audit-dev`](../audit-dev/SKILL.md) - Five-Axis verification and testing gates.
 - [`ponytail`](https://github.com/DietrichGebert/ponytail) - Minimalist, non-speculative schema design.

@@ -1,7 +1,7 @@
 # ADR-0021: Enable Mutator Implementers in Tier 2 and Clarify Checkpoint Timing
 
 ## Status
-Partially Superseded by ADR-0022 (for checkpoint and test authoring order)
+Partially Superseded by ADR-0022 and ADR-0028 (for orchestrator artifact ownership and handoff-spec relocation)
 
 ## Date
 2026-11-04

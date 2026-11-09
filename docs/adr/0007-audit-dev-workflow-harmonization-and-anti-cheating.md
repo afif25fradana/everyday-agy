@@ -1,7 +1,7 @@
 # ADR-0007: Development Workflow Tooling and Reproducer-First Tests
 
 ## Status
-Superseded by ADR-0014, ADR-0015, and ADR-0022
+Superseded by ADR-0014, ADR-0015, ADR-0022, and ADR-0028
 
 ## Date
 2026-10-22

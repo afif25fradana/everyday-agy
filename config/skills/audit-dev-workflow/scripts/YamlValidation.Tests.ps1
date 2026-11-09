@@ -186,10 +186,12 @@ foreach ($a in $agents) {
         $hasSubagent = ($frontmatter -match '(?m)^subagent:\s+true\s*$')
         $hasMainAgentFalse = ($frontmatter -match '(?m)^mainAgent:\s+false\s*$')
         $hasAskQuestion = ($frontmatter -match '(?m)^\s*-\s*ask_question\b')
+        $hasCallMcpTool = ($frontmatter -match '(?m)^\s*-\s*call_mcp_tool\b')
 
         Assert-Test -Name "Agent schema requirements ($($a.Name))" -Condition ($hasName -and $hasDesc -and $hasModel -and $hasTools -and $hasSubagent) -Details "Failed name/desc/model/tools/subagent validation"
         Assert-Test -Name "Pure subagent property mainAgent: false ($($a.Name))" -Condition $hasMainAgentFalse -Details "Subagents must declare mainAgent: false"
         Assert-Test -Name "Interactive tool ask_question absent ($($a.Name))" -Condition (-not $hasAskQuestion) -Details "Subagents must not declare interactive tool ask_question"
+        Assert-Test -Name "Invalid subagent tool call_mcp_tool absent ($($a.Name))" -Condition (-not $hasCallMcpTool) -Details "Subagents must use inheritMcp: true instead of call_mcp_tool in tools"
 
         # Security Invariant: build-error-resolver must not possess write_to_file
         if ($a.Name -eq "build-error-resolver") {

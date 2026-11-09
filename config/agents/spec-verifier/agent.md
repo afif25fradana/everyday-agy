@@ -4,13 +4,13 @@ description: Specialist in cross-checking remediation plans, code patterns, and 
 model: inherit
 subagent: true
 mainAgent: false
+inheritMcp: true
 tools:
   - view_file
   - write_to_file
   - search_web
   - read_url_content
   - run_command
-  - call_mcp_tool
 skills:
   # Repository Skills (config/skills/)
   - contract-first

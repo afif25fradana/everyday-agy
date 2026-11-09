@@ -4,11 +4,11 @@ description: Build and TypeScript/runtime error resolution specialist. Fixes bui
 model: flash
 subagent: true
 mainAgent: false
+inheritMcp: true
 tools:
   - view_file
   - replace_file_content
   - run_command
-  - call_mcp_tool
 skills:
   # Repository Skills (config/skills/)
   - coding-standards

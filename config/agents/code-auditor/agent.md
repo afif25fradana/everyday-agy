@@ -4,11 +4,11 @@ description: Specialist in whole-repo health, security attack surface, test inte
 model: inherit
 subagent: true
 mainAgent: false
+inheritMcp: true
 tools:
   - view_file
   - write_to_file
   - run_command
-  - call_mcp_tool
 skills:
   # Repository Skills (config/skills/)
   - audit-context-building

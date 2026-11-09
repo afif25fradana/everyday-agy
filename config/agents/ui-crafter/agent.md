@@ -4,12 +4,12 @@ description: Frontend UI/UX specialist focused on visual craft, modern web platf
 model: flash
 subagent: true
 mainAgent: false
+inheritMcp: true
 tools:
   - view_file
   - write_to_file
   - replace_file_content
   - run_command
-  - call_mcp_tool
 skills:
   # Antigravity Built-in Skills
   - generative_ui

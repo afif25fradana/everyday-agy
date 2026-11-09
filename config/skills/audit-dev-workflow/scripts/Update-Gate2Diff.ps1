@@ -33,7 +33,8 @@ function Sanitize-DiffContent {
     # GitHub tokens
     $Content = [System.Text.RegularExpressions.Regex]::Replace($Content, '\b(ghp|github_pat|gho|ghu|ghs|ghr)_[A-Za-z0-9_]{20,}', '<TEST_HASH_SANITIZED>')
 
-    # Private keys
+    # Private keys (two-stage sanitization: multiline block first, then unclosed header fallback)
+    $Content = [System.Text.RegularExpressions.Regex]::Replace($Content, '(?ms)-----BEGIN\s+([A-Z0-9_-]+\s+)?PRIVATE\s+KEY-----.*?-----END\s+([A-Z0-9_-]+\s+)?PRIVATE\s+KEY-----', '-----BEGIN PRIVATE KEY <TEST_HASH_SANITIZED>-----`n[SANITIZED PRIVATE KEY BLOCK]`n-----END PRIVATE KEY-----')
     $Content = [System.Text.RegularExpressions.Regex]::Replace($Content, '(?i)-----BEGIN\s+([A-Z0-9_-]+\s+)?PRIVATE\s+KEY-----', '-----BEGIN PRIVATE KEY <TEST_HASH_SANITIZED>-----')
 
     # Cloud API keys

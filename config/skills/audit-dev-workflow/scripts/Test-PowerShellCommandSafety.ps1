@@ -155,7 +155,7 @@ foreach ($cmdAst in $commandElements) {
     if ($cmdName -eq 'robocopy') {
         foreach ($el in $targetElements) {
             $t = Get-NormalizedTokenText $el.Extent.Text
-            if ($t -match '(?i)^/(mir|purge|mov|move)$') {
+            if ($t -match '(?i)^[/-](mir|purge|mov|move)$') {
                 Write-Error "Safety Violation: Prohibited destructive robocopy flag '$t' detected."
                 exit 1
             }
@@ -183,7 +183,7 @@ foreach ($cmdAst in $commandElements) {
             
             # Check sensitive credential directory deletions (~/.ssh, ~/.aws, ~/.gnupg)
             $pathVal = $text -replace '^-(?i)(path|literalpath|lp):', ''
-            if ($pathVal -match '(?i)^(~|\$HOME|\$env:USERPROFILE)[/\\]+(\.ssh|\.aws|\.gnupg)($|[/\\])' -or $pathVal -match '(?i)[/\\](\.ssh|\.aws|\.gnupg)($|[/\\])') {
+            if ($pathVal -match '(?i)(^|[/\\])(\.ssh|\.aws|\.gnupg)($|[/\\])') {
                 Write-Error "Safety Violation: Prohibited deletion of credential or sensitive directory '$text' detected."
                 exit 1
             }
@@ -218,6 +218,7 @@ foreach ($cmdAst in $commandElements) {
     if ($cmdName -eq 'git') {
         $argTokens = @()
         $skipNext = $false
+        $subCmd = $null
         for ($i = 1; $i -lt $targetElements.Count; $i++) {
             if ($targetElements[$i] -is [System.Management.Automation.Language.VariableExpressionAst] -and $targetElements[$i].Splatted) {
                 Write-Error "Safety Violation: Prohibited parameter splatting '$($targetElements[$i].Extent.Text)' on git command."
@@ -228,13 +229,18 @@ foreach ($cmdAst in $commandElements) {
                 $skipNext = $false
                 continue
             }
+            # Track subcommand before evaluating argument-skipping flags
+            if ($null -eq $subCmd -and $t -notmatch '^-') {
+                $subCmd = $t
+            }
             # Filter Git global boolean flags (do not take arguments) including -P (pager disable)
             $gitGlobalBools = @('--no-pager', '-p', '-P', '--paginate', '--bare', '--no-replace-objects', '--literal-pathspecs')
             if ($t -in $gitGlobalBools) {
                 continue
             }
-            # Skip commit/tag message payload tokens and global git directory/worktree flags before subcommand
-            if ($t -in @('-m', '--message', '--git-dir', '--work-tree', '--namespace') -or $t -ceq '-C') {
+            # Skip commit/tag/merge message payload tokens and global git directory/worktree flags before subcommand
+            $isMessagePayloadFlag = ($t -in @('-m', '--message')) -and ($subCmd -in @('commit', 'tag', 'merge'))
+            if ($isMessagePayloadFlag -or $t -in @('--git-dir', '--work-tree', '--namespace') -or $t -ceq '-C') {
                 $skipNext = $true
                 continue
             }
@@ -258,7 +264,8 @@ foreach ($cmdAst in $commandElements) {
                 }
                 continue
             }
-            if ($t -match '^(-m|--message=|--git-dir=|--work-tree=|--namespace=)' -or $t -cmatch '^-C') {
+            $isInlineMessagePayload = ($t -match '^--message=' -or ($t -cmatch '^-m.+' -and $t -cnotmatch '^-m$')) -and ($subCmd -in @('commit', 'tag', 'merge'))
+            if ($isInlineMessagePayload -or $t -match '^(--git-dir=|--work-tree=|--namespace=)' -or $t -cmatch '^-C') {
                 continue
             }
             $argTokens += $t
@@ -291,7 +298,7 @@ foreach ($cmdAst in $commandElements) {
                     Write-Error "Safety Violation: Prohibited destructive git branch force deletion detected."
                     exit 1
                 }
-                if ($subArgs -match '(^|\s)(-f\b|--force\b)') {
+                if ($subArgs -match '(^|\s)(-f\b|--force\b)' -or $subArgs -cmatch '(^|\s)-M\b') {
                     $branchArgs = @()
                     $afterBranch = $false
                     for ($k = 0; $k -lt $argTokens.Count; $k++) {
@@ -370,6 +377,12 @@ foreach ($cmdAst in $commandElements) {
                 $targetRef = Get-NormalizedTokenText $nonFlagArgs[0]
                 if ($targetRef -notmatch '^(refs/heads/)?checkpoint-[A-Za-z0-9_-]+$') {
                     Write-Error "Safety Violation: Prohibited uncheckpointed 'git reset --hard' detected."
+                    exit 1
+                }
+            }
+            if ($subCmd -eq 'config') {
+                if ($subArgs -match '(?i)(core\.(hookspath|fsmonitor|sshcommand|askpass|editor)|clean\.requireforce|sequence\.editor|safe\.directory|alias\.)') {
+                    Write-Error "Safety Violation: Prohibited git config security override detected."
                     exit 1
                 }
             }

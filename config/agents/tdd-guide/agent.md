@@ -1,7 +1,8 @@
 ---
 name: tdd-guide
 description: Test-Driven Development specialist enforcing write-tests-first methodology, Red-Green-Refactor cycles, and edge-case test coverage.
-model: flash
+model: inherit
+subagent: true
 tools:
   - view_file
   - write_to_file

@@ -183,8 +183,11 @@ foreach ($a in $agents) {
         $hasDesc = ($frontmatter -match '(?m)^description:\s+\S+')
         $hasModel = ($frontmatter -match '(?m)^model:\s+(inherit|flash)\s*$')
         $hasTools = ($frontmatter -match '(?m)^tools:\s*$' -and $frontmatter -match '(?m)^\s*-\s+\w+')
+        $hasSubagent = ($frontmatter -match '(?m)^subagent:\s+true\s*$')
+        $hasAskQuestion = ($frontmatter -match '(?m)^\s*-\s*ask_question\b')
 
-        Assert-Test -Name "Agent schema requirements ($($a.Name))" -Condition ($hasName -and $hasDesc -and $hasModel -and $hasTools) -Details "Failed name/desc/model/tools validation"
+        Assert-Test -Name "Agent schema requirements ($($a.Name))" -Condition ($hasName -and $hasDesc -and $hasModel -and $hasTools -and $hasSubagent) -Details "Failed name/desc/model/tools/subagent validation"
+        Assert-Test -Name "Interactive tool ask_question absent ($($a.Name))" -Condition (-not $hasAskQuestion) -Details "Subagents must not declare interactive tool ask_question"
 
         # Security Invariant: build-error-resolver must not possess write_to_file
         if ($a.Name -eq "build-error-resolver") {

@@ -2,12 +2,14 @@
 name: spec-verifier
 description: Specialist in cross-checking remediation plans, code patterns, and library APIs against authoritative documentation via Context7 and official web search (Read-Only).
 model: inherit
+subagent: true
 tools:
   - view_file
   - write_to_file
   - search_web
   - read_url_content
   - run_command
+  - call_mcp_tool
 skills:
   # Repository Skills (config/skills/)
   - contract-first

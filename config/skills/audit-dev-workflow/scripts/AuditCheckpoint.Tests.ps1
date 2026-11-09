@@ -110,6 +110,29 @@ try {
     }
     Assert-Test -Name "Restore fails when backup does not exist" -Condition $failedGracefully
 
+    # Test 4b: File mode restore rejects corrupted backup when hash does not match hashes.txt (GAP-R3-02)
+    $corruptTask = "corrupt-$taskName"
+    $corruptScratch = Join-Path $userHome ".gemini/antigravity/scratch/$corruptTask"
+    $corruptFile = Join-Path $testDir "corrupt_test.txt"
+    Set-Content -Path $corruptFile -Value "clean original content" -Encoding utf8
+    & $newScript -Task $corruptTask -FilePath $corruptFile | Out-Null
+
+    # Tamper with the backup file in scratch so its hash no longer matches hashes.txt
+    $backupFile = Get-ChildItem -Path $corruptScratch -Filter "*.bak" | Select-Object -First 1
+    Set-Content -LiteralPath $backupFile.FullName -Value "corrupted malicious payload" -Encoding utf8
+
+    $global:LASTEXITCODE = 0
+    $corruptFailed = $false
+    try {
+        & $restoreScript -Task $corruptTask -FilePath $corruptFile 2>&1 | Out-Null
+        if ($LASTEXITCODE -ne 0) { $corruptFailed = $true }
+    } catch {
+        $corruptFailed = $true
+    }
+    $restoredCorrupt = (Get-Content -Path $corruptFile -Raw).Trim()
+    $corruptRejected = $corruptFailed -and ($restoredCorrupt -eq "clean original content")
+    Assert-Test -Name "File mode restore rejects corrupted backup against hashes.txt" -Condition $corruptRejected
+
     # Test 5: Git mode fail-closed when untracked_baseline.txt is missing (GAP-REL-03)
     # Initialize a temporary git repository
     $gitRepoDir = Join-Path $testDir "git_repo"
@@ -226,6 +249,55 @@ try {
         $baselineRestoredContent = if ($baselineStillExists) { (Get-Content -Path $baselineFile -Raw).Trim() } else { "" }
         Assert-Test -Name "Restore-AuditCheckpoint preserves staged pre-existing untracked files during rollback" -Condition ($baselineStillExists -and ($baselineRestoredContent -eq $baselineContent)) -Details "exists=$baselineStillExists, contentMatch=$($baselineRestoredContent -eq $baselineContent)"
 
+        # Test 8b: New-AuditCheckpoint fails when git status returns non-zero exit code (GAP-R3-03)
+        $statusFailRepo = Join-Path $testDir "git_status_fail"
+        New-Item -ItemType Directory -Path $statusFailRepo -Force | Out-Null
+        Set-Location -LiteralPath $statusFailRepo
+        git init --quiet
+        git config user.name "TestRunner"
+        git config user.email "test@example.com"
+        $statusInit = Join-Path $statusFailRepo "init.txt"
+        Set-Content -Path $statusInit -Value "init" -Encoding utf8
+        git add init.txt
+        git commit -m "init" --quiet
+        # Corrupt git index so git status fails with exit code != 0
+        Set-Content -Path (Join-Path $statusFailRepo ".git/index") -Value "corrupted_index" -Encoding utf8
+        $statusCheckFailed = $false
+        try {
+            & $newScript -Task "status-fail-$testId" -RepoPath $statusFailRepo 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) { $statusCheckFailed = $true }
+        } catch {
+            $statusCheckFailed = $true
+        }
+        git rev-parse --verify "refs/heads/checkpoint-status-fail-$testId" 2>$null | Out-Null
+        $branchWasNotCreated = ($LASTEXITCODE -ne 0)
+        Assert-Test -Name "New-AuditCheckpoint checks exit code on git status failure" -Condition ($statusCheckFailed -and $branchWasNotCreated)
+
+        # Test 8c: Restore-AuditCheckpoint fails when git ls-files returns non-zero exit code (GAP-R3-01)
+        $lsFailRepo = Join-Path $testDir "git_ls_fail"
+        New-Item -ItemType Directory -Path $lsFailRepo -Force | Out-Null
+        Set-Location -LiteralPath $lsFailRepo
+        git init --quiet
+        git config user.name "TestRunner"
+        git config user.email "test@example.com"
+        $lsInit = Join-Path $lsFailRepo "init.txt"
+        Set-Content -Path $lsInit -Value "init" -Encoding utf8
+        git add init.txt
+        git commit -m "init" --quiet
+        # Create a valid checkpoint first
+        $lsTask = "ls-fail-$testId"
+        & $newScript -Task $lsTask -RepoPath $lsFailRepo | Out-Null
+        # Corrupt git index so git ls-files fails during restore
+        Set-Content -Path (Join-Path $lsFailRepo ".git/index") -Value "corrupted_index" -Encoding utf8
+        $lsCheckFailed = $false
+        try {
+            & $restoreScript -Task $lsTask -RepoPath $lsFailRepo 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) { $lsCheckFailed = $true }
+        } catch {
+            $lsCheckFailed = $true
+        }
+        Assert-Test -Name "Restore-AuditCheckpoint checks exit code on git ls-files failure" -Condition $lsCheckFailed
+
         # Test 9: Update-Gate2Diff programmatic diff injection with untracked files, encoding, backrefs, and sanitization
         $diffRepoDir = Join-Path $testDir "git_diff_repo"
         New-Item -ItemType Directory -Path $diffRepoDir -Force | Out-Null
@@ -251,12 +323,17 @@ try {
         $mockGhp = "ghp_" + ("mocktoken1234567890" * 2)
         $mockBearer = "Bearer " + "secret_mock_val_12345"
         $mockJwt = "eyJ" + "mockheader.eyJmockpayload.mocksignature12345"
+        $mockPrivateKeyPayload = "MIIEowIBAAKCAQEA0mockprivkeysecretpayload123456789"
+        $mockClosedKey = "-----BEGIN RSA PRIVATE KEY-----`r`n$mockPrivateKeyPayload`r`n-----END RSA PRIVATE KEY-----"
+        $mockUnclosedKeyHeader = "-----BEGIN OPENSSH PRIVATE KEY-----"
         $untrackedLines = @(
             "Multibyte: Phases 1$($enDash)3 and A $($rightArrow) B",
             'Regex and PS: $Matches[1] and $& and $_',
             "GitHub Token: $mockGhp",
             "Bearer Token: $mockBearer",
             "JWT Token: $mockJwt",
+            "Closed Key: $mockClosedKey",
+            "Unclosed Key: $mockUnclosedKeyHeader",
             'Valid Git SHA: da39a3ee5e6b4b0d3255bfef95601890afd80709',
             'Valid SHA256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
         )
@@ -305,6 +382,8 @@ try {
                             (-not $updatedArtifact.Contains($mockBearer)) -and `
                             (-not $updatedArtifact.Contains($mockJwt)) -and `
                             $updatedArtifact.Contains("<TEST_HASH_SANITIZED>")
+        $privateKeyRedacted = (-not $updatedArtifact.Contains($mockPrivateKeyPayload)) -and $updatedArtifact.Contains("[SANITIZED PRIVATE KEY BLOCK]")
+        $unclosedHeaderRedacted = (-not $updatedArtifact.Contains($mockUnclosedKeyHeader)) -and $updatedArtifact.Contains("-----BEGIN PRIVATE KEY <TEST_HASH_SANITIZED>-----")
         $hashesIntact = $updatedArtifact.Contains("da39a3ee5e6b4b0d3255bfef95601890afd80709") -and `
                         $updatedArtifact.Contains("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
 
@@ -315,6 +394,8 @@ try {
         Assert-Test -Name "Multibyte UTF-8 characters are preserved without mojibake" -Condition $multibytePreserved
         Assert-Test -Name "PowerShell variables and regex backreferences are preserved verbatim" -Condition $backrefsPreserved
         Assert-Test -Name "Secret tokens are sanitized to <TEST_HASH_SANITIZED>" -Condition $secretsSanitized
+        Assert-Test -Name "Multiline private key payload is completely redacted" -Condition $privateKeyRedacted
+        Assert-Test -Name "Unclosed private key header fallback is sanitized" -Condition $unclosedHeaderRedacted
         Assert-Test -Name "Legitimate Git SHA and SHA256 hashes are not sanitized" -Condition $hashesIntact
     } finally {
         Set-Location -LiteralPath $origPwd
@@ -336,6 +417,18 @@ try {
     # Cleanup temporary directories and test-created scratch locations
     if (Test-Path -Path $scratchDir) {
         Remove-Item -Path $scratchDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    $corruptScratchDir = Join-Path $userHome ".gemini/antigravity/scratch/corrupt-$taskName"
+    if (Test-Path -Path $corruptScratchDir) {
+        Remove-Item -Path $corruptScratchDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    $statusFailScratch = Join-Path $userHome ".gemini/antigravity/scratch/status-fail-$testId"
+    if (Test-Path -Path $statusFailScratch) {
+        Remove-Item -Path $statusFailScratch -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    $lsFailScratch = Join-Path $userHome ".gemini/antigravity/scratch/ls-fail-$testId"
+    if (Test-Path -Path $lsFailScratch) {
+        Remove-Item -Path $lsFailScratch -Recurse -Force -ErrorAction SilentlyContinue
     }
     $nestedScratchDir = Join-Path $userHome ".gemini/antigravity/scratch/nested-$taskName"
     if (Test-Path -Path $nestedScratchDir) {

@@ -112,12 +112,10 @@ if (Test-Path $srcAgents) {
     New-Item -ItemType Directory -Force -Path $dstAgents | Out-Null
     # Prune stale agents in ~/.gemini/config/agents/ that no longer exist in repo
     $srcAgentNames = @(Get-ChildItem -Path $srcAgents -Directory | ForEach-Object { $_.Name })
-    if ($srcAgentNames.Count -gt 0) {
-        Get-ChildItem -Path $dstAgents -Directory | ForEach-Object {
-            if ($_.Name -notin $srcAgentNames) {
-                Remove-Item -Path $_.FullName -Recurse -Force
-                Write-Host "[CLEANUP] Pruned stale agent: $($_.Name)" -ForegroundColor DarkGray
-            }
+    Get-ChildItem -Path $dstAgents -Directory | ForEach-Object {
+        if ($_.Name -notin $srcAgentNames) {
+            Remove-Item -Path $_.FullName -Recurse -Force
+            Write-Host "[CLEANUP] Pruned stale agent: $($_.Name)" -ForegroundColor DarkGray
         }
     }
     Copy-Item -Path (Join-Path $srcAgents "*") -Destination $dstAgents -Recurse -Force
@@ -142,12 +140,10 @@ if (Test-Path $srcSkills) {
     )
     $srcSkillDirs = @(Get-ChildItem -Path $srcSkills -Directory)
     $srcSkillNames = @($srcSkillDirs | ForEach-Object { $_.Name })
-    if ($srcSkillNames.Count -gt 0) {
-        Get-ChildItem -Path $dstSkills -Directory | ForEach-Object {
-            if ($_.Name -notin $srcSkillNames -and $_.Name -notin $externalSkills) {
-                Remove-Item -Path $_.FullName -Recurse -Force
-                Write-Host "[CLEANUP] Pruned stale skill: $($_.Name)" -ForegroundColor DarkGray
-            }
+    Get-ChildItem -Path $dstSkills -Directory | ForEach-Object {
+        if ($_.Name -notin $srcSkillNames -and $_.Name -notin $externalSkills) {
+            Remove-Item -Path $_.FullName -Recurse -Force
+            Write-Host "[CLEANUP] Pruned stale skill: $($_.Name)" -ForegroundColor DarkGray
         }
     }
     foreach ($sDir in $srcSkillDirs) {

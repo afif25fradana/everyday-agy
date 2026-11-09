@@ -1,7 +1,7 @@
 # ADR-0016: Decouple Vendored Community Skills to External Upstream Links
 
 ## Status
-Accepted
+Accepted (Supersedes ADR-0002, ADR-0003, and ADR-0006)
 
 ## Date
 2026-10-31

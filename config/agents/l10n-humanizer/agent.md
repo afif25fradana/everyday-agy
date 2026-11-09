@@ -2,12 +2,12 @@
 name: l10n-humanizer
 description: Specialist in software UI/UX localization, natural humanized translation, and Microsoft Indonesian style guide consistency.
 model: flash
+subagent: true
 tools:
   - view_file
   - write_to_file
   - replace_file_content
   - run_command
-  - ask_question
 skills:
   - clean-docs
 ---

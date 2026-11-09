@@ -2,10 +2,12 @@
 name: code-auditor
 description: Specialist in whole-repo health, security attack surface, test integrity, anti-slop, and over-engineering audits (Read-Only).
 model: inherit
+subagent: true
 tools:
   - view_file
   - write_to_file
   - run_command
+  - call_mcp_tool
 skills:
   # Repository Skills (config/skills/)
   - audit-context-building

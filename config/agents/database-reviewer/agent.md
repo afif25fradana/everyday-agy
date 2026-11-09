@@ -2,10 +2,12 @@
 name: database-reviewer
 description: Database, SQL, schema migration, and query optimization specialist. Enforces foreign key indexing, N+1 detection, and zero-downtime expand/contract migrations (Read-Only).
 model: inherit
+subagent: true
 tools:
   - view_file
   - write_to_file
   - run_command
+  - call_mcp_tool
 skills:
   # Repository Skills (config/skills/)
   - database-migrations

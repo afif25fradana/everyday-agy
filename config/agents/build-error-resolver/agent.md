@@ -2,10 +2,12 @@
 name: build-error-resolver
 description: Build and TypeScript/runtime error resolution specialist. Fixes build, type, and compiler errors with the shortest working diff, no architectural redesign.
 model: flash
+subagent: true
 tools:
   - view_file
   - replace_file_content
   - run_command
+  - call_mcp_tool
 skills:
   # Repository Skills (config/skills/)
   - coding-standards

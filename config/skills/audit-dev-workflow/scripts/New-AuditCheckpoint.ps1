@@ -82,6 +82,10 @@ try {
                 Set-Location -LiteralPath $repoRoot
             }
             $dirtyPreexisting = ((Invoke-GitCmd @("status", "--porcelain", "-uno")) | Out-String).Trim()
+            if ($LASTEXITCODE -ne 0) {
+                Write-Error "Failed to query git status before creating checkpoint (exit code $LASTEXITCODE)."
+                exit 1
+            }
             if (-not [string]::IsNullOrWhiteSpace($dirtyPreexisting)) {
                 Write-Error "Working tree has uncommitted tracked changes. Commit or stash changes before creating an autonomous checkpoint so rollback does not wipe prior work."
                 exit 1

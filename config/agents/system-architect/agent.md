@@ -2,11 +2,12 @@
 name: system-architect
 description: Specialist in contract-first API design, Socratic architecture planning, zero-downtime refactoring, and Nygard ADR documentation.
 model: inherit
+subagent: true
 tools:
   - view_file
   - write_to_file
   - run_command
-  - ask_question
+  - call_mcp_tool
 skills:
   # Repository Skills (config/skills/)
   - contract-first

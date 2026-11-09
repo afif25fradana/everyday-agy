@@ -2,12 +2,12 @@
 name: maintenance-bot
 description: Automated maintenance specialist for triage of Dependabot PRs, weekly CI failure diagnosis, and CVE vulnerability mitigation.
 model: flash
+subagent: true
 tools:
   - view_file
   - write_to_file
   - replace_file_content
   - run_command
-  - ask_question
 skills:
   - gh-workflow
   - differential-review

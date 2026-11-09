@@ -2,12 +2,12 @@
 name: docs-architect
 description: Specialist in documentation modernization, Nygard ADR authoring, public repository documentation, anti-slop technical copywriting, and AI-Context synchronization.
 model: flash
+subagent: true
 tools:
   - view_file
   - write_to_file
   - replace_file_content
   - run_command
-  - ask_question
 skills:
   # Repository Skills (config/skills/)
   - clean-docs

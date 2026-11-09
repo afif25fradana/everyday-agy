@@ -1,7 +1,7 @@
 # ADR-0015: Checkpoint-Gated Autonomous Execution for Tiers 0 and 1
 
 ## Status
-Partially Superseded by ADR-0019 (for orchestration flow) and ADR-0024 (for rollback and command safety)
+Partially Superseded by ADR-0019 (for orchestration flow), ADR-0024 (for rollback and command safety), and ADR-0026 (for rollback checksum verification and exit code checking)
 
 ## Date
 2026-10-31

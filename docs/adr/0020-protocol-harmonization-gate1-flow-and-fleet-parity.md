@@ -1,7 +1,7 @@
 # ADR-0020: Restore Gate 1 Human Approval in Tier 2 and Add Pre-Test Syntax Checks
 
 ## Status
-Partially Superseded by ADR-0021 (for Tier 2 implementer options) and ADR-0022 (for skill count CI parity)
+Partially Superseded by ADR-0021 (for Tier 2 implementer options), ADR-0022 (for skill count CI parity), and ADR-0026 (for subagent manifest schema grounding and orchestration DAG loops)
 
 ## Date
 2026-11-04

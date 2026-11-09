@@ -1,7 +1,7 @@
 # ADR-0022: Register Deep Web Research, Fix RED Test Sequencing, Unify Scratch Paths
 
 ## Status
-Accepted
+Accepted (Supersedes ADR-0007 in part, ADR-0014 in part, ADR-0020 in part, and ADR-0021 in part)
 
 ## Date
 2026-11-05

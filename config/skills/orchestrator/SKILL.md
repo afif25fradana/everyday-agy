@@ -76,14 +76,21 @@ flowchart TD
     DirectSpecialists --> S1["1-2 Parallel Read-Only Explorers<br/>system-architect / code-auditor"]
     S1 --> Gate1["Parent Gate 1 Proposal Artifact & Approval"]
     Gate1 --> Ckpt["Parent Verified Checkpoint<br/>New-AuditCheckpoint.ps1"]
-    Ckpt --> S2["Sequential Mutator 1: tdd-guide<br/>Repro-First RED Test"]
-    S2 --> S3["Sequential Mutator 2: Implementer<br/>tdd-guide / ui-crafter / build-error-resolver /<br/>docs-architect / l10n-humanizer / maintenance-bot<br/>Green Implementation"]
-    S3 --> S4["Diff Audit: code-auditor<br/>Anti-Mock & Five-Axis Check"]
-    S4 --> Gate2["Parent Gate 2 Handoff"]
     
     TeamworkCouncil --> TCReport["teamwork_victory_auditor Report in scratch"]
     TCReport --> Gate1TC["Parent Gate 1 Proposal Artifact & Approval"]
     Gate1TC --> T3Exec["Decompose into Sequential Tier 2 Work Packages"]
+    T3Exec --> Ckpt
+    
+    Ckpt -->|"Code Mutation"| S2["Sequential Mutator 1: tdd-guide<br/>Repro-First RED Test"]
+    Ckpt -->|"Declarative / Docs Task"| S3["Sequential Mutator 2: Implementer<br/>tdd-guide / ui-crafter / build-error-resolver /<br/>docs-architect / l10n-humanizer / maintenance-bot<br/>Green Implementation"]
+    S2 --> S3
+    S3 --> S4["Diff Audit: code-auditor<br/>Anti-Mock & Five-Axis Check"]
+    S4 --> Gate2["Parent Gate 2 Handoff"]
+    
+    Gate2 -->|"Approved"| CommitDone["Commit & Complete"]
+    Gate2 -->|"Changes Requested"| S3
+    Gate2 -->|"Aborted / 2x Failures"| Rollback["Auto-Rollback<br/>Restore-AuditCheckpoint.ps1"]
 ```
 
 ### Pathway A: Deliberative Multi-Seat Council (Tier 3)

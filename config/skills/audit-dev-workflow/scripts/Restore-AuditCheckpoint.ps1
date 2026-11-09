@@ -70,6 +70,20 @@ try {
             if ($parentDir -and -not (Test-Path -LiteralPath $parentDir)) {
                 New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
             }
+            $hashesFile = Join-Path $scratchDir "hashes.txt"
+            if (Test-Path -LiteralPath $hashesFile) {
+                $expectedLine = Get-Content -LiteralPath $hashesFile | Where-Object { $_ -match [regex]::Escape($backupPath) } | Select-Object -First 1
+                if ($expectedLine) {
+                    $expectedHash = ($expectedLine -split '\s+')[0]
+                    $sha = [System.Security.Cryptography.SHA256]::Create()
+                    try { $actualHash = ([BitConverter]::ToString($sha.ComputeHash([System.IO.File]::ReadAllBytes($backupPath)))).Replace('-', '').ToLower() }
+                    finally { $sha.Dispose() }
+                    if ($expectedHash -ne $actualHash) {
+                        Write-Error "Integrity Failure: Checksum mismatch for '$backupPath'. Expected $expectedHash, got $actualHash."
+                        exit 1
+                    }
+                }
+            }
             Copy-Item -LiteralPath $backupPath -Destination $resolvedPath -Force
             Write-Output "Checkpoint restored: $backupPath -> $resolvedPath"
         }
@@ -97,23 +111,39 @@ try {
                         if (-not [string]::IsNullOrWhiteSpace($cleanLine)) { $baselineSet[$cleanLine] = $true }
                     }
                     $currentUntracked = Invoke-GitCmd @("-c", "core.quotePath=false", "ls-files", "--others", "--exclude-standard")
+                    if ($LASTEXITCODE -ne 0) {
+                        Write-Error "Failed to query untracked files from git during rollback (exit code $LASTEXITCODE)."
+                        exit 1
+                    }
                     foreach ($relPath in @($currentUntracked)) {
                         $cleanRel = "$relPath".Trim()
                         if (-not [string]::IsNullOrWhiteSpace($cleanRel) -and -not $baselineSet.ContainsKey($cleanRel)) {
                             if (Test-Path -LiteralPath $cleanRel) {
-                                Remove-Item -LiteralPath $cleanRel -Recurse -Force
+                                try {
+                                    Remove-Item -LiteralPath $cleanRel -Recurse -Force -ErrorAction Stop
+                                } catch {
+                                    Write-Warning "Unable to remove untracked path '$cleanRel' (file locked): $($_.Exception.Message)"
+                                }
                             }
                         }
                     }
                     # Clean up empty untracked directories created during task
                     $currentUntrackedDirs = Invoke-GitCmd @("-c", "core.quotePath=false", "ls-files", "--others", "--exclude-standard", "--directory")
+                    if ($LASTEXITCODE -ne 0) {
+                        Write-Error "Failed to query untracked directories from git during rollback (exit code $LASTEXITCODE)."
+                        exit 1
+                    }
                     foreach ($dirRel in @($currentUntrackedDirs)) {
                         $cleanDir = "$dirRel".Trim().TrimEnd('/', '\')
                         if (-not [string]::IsNullOrWhiteSpace($cleanDir) -and -not $baselineSet.ContainsKey($cleanDir) -and -not $baselineSet.ContainsKey("$cleanDir/")) {
                             if (Test-Path -LiteralPath $cleanDir -PathType Container) {
                                 $remainingFiles = @(Get-ChildItem -LiteralPath $cleanDir -Recurse -File -Force)
                                 if ($remainingFiles.Count -eq 0) {
-                                    Remove-Item -LiteralPath $cleanDir -Recurse -Force
+                                    try {
+                                        Remove-Item -LiteralPath $cleanDir -Recurse -Force -ErrorAction Stop
+                                    } catch {
+                                        Write-Warning "Unable to remove untracked directory '$cleanDir' (locked): $($_.Exception.Message)"
+                                    }
                                 }
                             }
                         }

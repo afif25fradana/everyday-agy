@@ -2,12 +2,13 @@
 name: ui-crafter
 description: Frontend UI/UX specialist focused on visual craft, modern web platform primitives, WCAG AA accessibility, and Generative UI widgets.
 model: flash
+subagent: true
 tools:
   - view_file
   - write_to_file
   - replace_file_content
   - run_command
-  - ask_question
+  - call_mcp_tool
 skills:
   # Antigravity Built-in Skills
   - generative_ui

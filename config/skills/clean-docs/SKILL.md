@@ -13,8 +13,9 @@ Plain-spoken engineering prose, humanized conventional commits, zero internal pr
 
 Never let internal AI orchestration or audit machinery leak into repository files, git history, or pull requests:
 
-- **Banned in repo files, commits & PR titles/bodies**:
+- **Banned in Client Application Repositories (repo files, commits & PR titles/bodies)**:
   - `"investigation summary"`, `"checkpoint commit"`, `"audit finding #..."`, `"Gate 1"`, `"Gate 2"`, `"batch/stage tags"`, `"handoff_artifact"`, `"subagent execution"`, `"Parent verification"`, `"Phase 2 complete"`, `"prompt instructions"`, `"per prompt directives"`.
+  - *Scope Qualification / Framework Exemption*: In meta-framework, developer tooling, or orchestration repositories (such as `everyday-agy`) where gates, checkpoints, and subagent schemas are the primary domain subject matter under design, test, or documentation, architectural references like "Gate 1", "Gate 2", and "checkpoint commit" are recognized technical domain concepts and are permitted within framework specifications, runbooks, ADRs, and test suites.
 - **Where Process Belongs**:
   - Internal AI commentary, audit gates, and execution stages belong **exclusively** in chat dialog, session scratch files (`<appDataDir>\brain\<conversation-id>\scratch\<task>\` or `$HOME/.gemini/antigravity/scratch/<task>/`), or Antigravity session artifacts.
 - **Humanized Conventional Commits**:

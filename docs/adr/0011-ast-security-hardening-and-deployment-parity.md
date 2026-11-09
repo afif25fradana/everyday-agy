@@ -1,7 +1,7 @@
 # ADR-0011: Intercept .NET Deletions and Mirror Secret Scans in Restore
 
 ## Status
-Partially Superseded by ADR-0024 (for comprehensive AST validation rules)
+Partially Superseded by ADR-0024 (for comprehensive AST validation rules) and ADR-0026 (for AST git config interception and rollback hardening)
 
 ## Date
 2026-10-24

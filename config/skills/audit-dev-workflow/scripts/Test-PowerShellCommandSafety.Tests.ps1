@@ -163,6 +163,37 @@ $testCases = @(
     @{ Expected = "BLOCK"; Cmd = '[type]::GetTypeFromProgID("Scripting.FileSystemObject")'; Reason = "[type]::GetTypeFromProgID COM activation" },
     @{ Expected = "BLOCK"; Cmd = '[System.Type]::GetTypeFromCLSID("{00000000-0000-0000-0000-000000000000}")'; Reason = "[System.Type]::GetTypeFromCLSID COM activation" },
 
+    # Blocked: Destructive checkout and branch overwrite with -m flag
+    @{ Expected = "BLOCK"; Cmd = 'git checkout -m -f'; Reason = "git checkout -m -f destructive discard with merge flag" },
+    @{ Expected = "BLOCK"; Cmd = 'git checkout -m --force'; Reason = "git checkout -m --force destructive discard with merge flag" },
+    @{ Expected = "BLOCK"; Cmd = 'git branch -m -f dev main'; Reason = "git branch -m -f destructive branch overwrite" },
+    @{ Expected = "BLOCK"; Cmd = 'git branch -M dev main'; Reason = "git branch -M uppercase force branch move" },
+    @{ Expected = "BLOCK"; Cmd = 'git branch -m --force dev main'; Reason = "git branch -m --force branch overwrite" },
+
+    # Blocked: Git config execution hijacking
+    @{ Expected = "BLOCK"; Cmd = 'git config core.sshCommand calc.exe'; Reason = "git config core.sshCommand execution hijacking" },
+    @{ Expected = "BLOCK"; Cmd = 'git config core.hooksPath /tmp'; Reason = "git config core.hooksPath hook hijacking" },
+    @{ Expected = "BLOCK"; Cmd = 'git config core.editor calc.exe'; Reason = "git config core.editor editor hijacking" },
+    @{ Expected = "BLOCK"; Cmd = 'git config alias.ci "!rm -rf /"'; Reason = "git config alias.ci command injection" },
+    @{ Expected = "BLOCK"; Cmd = 'git config --global core.sshCommand calc.exe'; Reason = "git config --global core.sshCommand hijacking" },
+
+    # Blocked: Relative sensitive directory deletion (.ssh, .aws, .gnupg)
+    @{ Expected = "BLOCK"; Cmd = 'Remove-Item .ssh\id_rsa'; Reason = "Remove-Item relative .ssh target with backslash" },
+    @{ Expected = "BLOCK"; Cmd = 'Remove-Item .aws\credentials'; Reason = "Remove-Item relative .aws target with backslash" },
+    @{ Expected = "BLOCK"; Cmd = 'Remove-Item .ssh/id_rsa'; Reason = "Remove-Item relative .ssh target with forward slash" },
+    @{ Expected = "BLOCK"; Cmd = 'Remove-Item .gnupg\secring.gpg'; Reason = "Remove-Item relative .gnupg target" },
+    @{ Expected = "BLOCK"; Cmd = 'Remove-Item -Force .ssh\id_rsa'; Reason = "Remove-Item -Force relative .ssh target" },
+    @{ Expected = "BLOCK"; Cmd = 'Remove-Item -LiteralPath .ssh\id_rsa -Force'; Reason = "Remove-Item -LiteralPath relative .ssh target" },
+    @{ Expected = "BLOCK"; Cmd = 'rm .ssh/id_rsa'; Reason = "rm relative .ssh target" },
+    @{ Expected = "BLOCK"; Cmd = 'rm .aws/credentials'; Reason = "rm relative .aws target" },
+
+    # Blocked: Robocopy POSIX-style dash flags (-mir, -purge, -mov, -move)
+    @{ Expected = "BLOCK"; Cmd = 'robocopy src dst -mir'; Reason = "robocopy -mir POSIX dash mirror flag" },
+    @{ Expected = "BLOCK"; Cmd = 'robocopy src dst -purge'; Reason = "robocopy -purge POSIX dash purge flag" },
+    @{ Expected = "BLOCK"; Cmd = 'robocopy src dst -MIR'; Reason = "robocopy -MIR uppercase POSIX dash mirror flag" },
+    @{ Expected = "BLOCK"; Cmd = 'robocopy src dst -mov'; Reason = "robocopy -mov POSIX dash move files flag" },
+    @{ Expected = "BLOCK"; Cmd = 'robocopy src dst -move'; Reason = "robocopy -move POSIX dash move files and dirs flag" },
+
     # Allowed: Standard developer commands
     @{ Expected = "ALLOW"; Cmd = 'git status'; Reason = "git status" },
     @{ Expected = "ALLOW"; Cmd = 'git push git@github.com:user/repo.git main'; Reason = "git push to SSH remote URL containing colon" },
@@ -190,7 +221,10 @@ $testCases = @(
     @{ Expected = "ALLOW"; Cmd = 'rtk git commit -m "fix(safety): block git clean -fdx and git push -f"'; Reason = "Commit message containing flag text" },
     @{ Expected = "ALLOW"; Cmd = 'git branch -f checkpoint-diff HEAD'; Reason = "git branch -f checkpoint-diff HEAD" },
     @{ Expected = "ALLOW"; Cmd = 'git branch -f checkpoint-pdf HEAD'; Reason = "git branch -f checkpoint-pdf HEAD" },
-    @{ Expected = "ALLOW"; Cmd = '[System.Activator]::CreateInstance([System.Text.StringBuilder])'; Reason = "[System.Activator]::CreateInstance safe type" }
+    @{ Expected = "ALLOW"; Cmd = '[System.Activator]::CreateInstance([System.Text.StringBuilder])'; Reason = "[System.Activator]::CreateInstance safe type" },
+    @{ Expected = "ALLOW"; Cmd = 'git branch -m old-branch new-branch'; Reason = "git branch -m benign branch rename" },
+    @{ Expected = "ALLOW"; Cmd = 'git config user.name "John Doe"'; Reason = "git config user.name benign config" },
+    @{ Expected = "ALLOW"; Cmd = 'robocopy src dst *.txt'; Reason = "robocopy benign copy without mirror or purge" }
 )
 
 $passed = 0

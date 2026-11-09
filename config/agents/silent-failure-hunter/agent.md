@@ -2,6 +2,7 @@
 name: silent-failure-hunter
 description: Specialist in hunting silent failures, swallowed exceptions, empty catch blocks, bad fallbacks, and missing error propagation (Read-Only).
 model: inherit
+subagent: true
 tools:
   - view_file
   - write_to_file

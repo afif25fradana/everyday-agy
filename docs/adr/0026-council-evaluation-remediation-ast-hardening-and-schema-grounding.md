@@ -21,7 +21,7 @@ Following a comprehensive multi-agent evaluation and forensic cross-check across
    - In git rollback, directory removal (`Remove-Item -LiteralPath $cleanDir -Recurse -Force`) threw unhandled terminating exceptions when directories were temporarily locked by external Windows processes.
 
 3. **Diff Sanitizer Multiline Key Exfiltration**:
-   - `Update-Gate2Diff.ps1` sanitized only the single-line header `-----BEGIN PRIVATE KEY-----`, leaving the entire multiline base64 cryptographic body unredacted in review handoffs (`gate2_handoff.md`). Furthermore, truncated diff hunks with unclosed headers required a resilient fallback.
+   - `Update-Gate2Diff.ps1` sanitized only the single-line header `-----BEGIN <KEY_TYPE> PRIVATE KEY-----`, leaving the entire multiline base64 cryptographic body unredacted in review handoffs (`gate2_handoff.md`). Furthermore, truncated diff hunks with unclosed headers required a resilient fallback.
 
 4. **Subagent Manifest Schema Drifts & Runtime Hang Risks**:
    - Five subagent manifests (`docs-architect`, `l10n-humanizer`, `maintenance-bot`, `system-architect`, `ui-crafter`) declared the interactive prompt tool `ask_question`, risking non-interactive execution hangs during autonomous background delegation.
@@ -53,7 +53,7 @@ Following a comprehensive multi-agent evaluation and forensic cross-check across
 
 4. **Subagent Manifest Hygiene & Schema Grounding**:
    - Removed `ask_question` from all subagents.
-   - Added `call_mcp_tool` to the tools allowlist for agents utilizing Context7 MCP or DevTools (`build-error-resolver`, `database-reviewer`, `spec-verifier`, `system-architect`, `ui-crafter`).
+   - Added `call_mcp_tool` to the tools allowlist for agents utilizing Context7 MCP or DevTools (`build-error-resolver`, `code-auditor`, `database-reviewer`, `spec-verifier`, `system-architect`, `ui-crafter`).
    - Declared `subagent: true` across all 11 subagent manifests and enforced this schema invariant in `YamlValidation.Tests.ps1`.
 
 5. **Deterministic Pruning in Sync and Restore**:
@@ -66,7 +66,7 @@ Following a comprehensive multi-agent evaluation and forensic cross-check across
 
 ## Alternatives Considered & Rejected
 
-- **Single-Stage Multiline Regex for Private Keys**: Rejected because truncated diff hunks containing only `-----BEGIN PRIVATE KEY-----` without the closing delimiter would fail to match, leaking key material.
+- **Single-Stage Multiline Regex for Private Keys**: Rejected because truncated diff hunks containing only `-----BEGIN <KEY_TYPE> PRIVATE KEY-----` without the closing delimiter would fail to match, leaking key material.
 - **Strict Error Termination on Locked Directories**: Rejected because temporary Windows file locks on ephemeral build artifacts would abort the entire rollback, leaving tracked files in an inconsistent state.
 - **Custom Native Tool Wrappers for MCP**: Rejected in favor of the standard Antigravity `call_mcp_tool` declaration.
 

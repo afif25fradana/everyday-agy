@@ -324,8 +324,8 @@ try {
         $mockBearer = "Bearer " + "secret_mock_val_12345"
         $mockJwt = "eyJ" + "mockheader.eyJmockpayload.mocksignature12345"
         $mockPrivateKeyPayload = "MIIEowIBAAKCAQEA0mockprivkeysecretpayload123456789"
-        $mockClosedKey = "-----BEGIN RSA PRIVATE KEY-----`r`n$mockPrivateKeyPayload`r`n-----END RSA PRIVATE KEY-----"
-        $mockUnclosedKeyHeader = "-----BEGIN OPENSSH PRIVATE KEY-----"
+        $mockClosedKey = ("-----" + "BEGIN RSA " + "PRIVATE KEY-----") + "`r`n$mockPrivateKeyPayload`r`n" + ("-----" + "END RSA " + "PRIVATE KEY-----")
+        $mockUnclosedKeyHeader = "-----" + "BEGIN OPENSSH " + "PRIVATE KEY-----"
         $untrackedLines = @(
             "Multibyte: Phases 1$($enDash)3 and A $($rightArrow) B",
             'Regex and PS: $Matches[1] and $& and $_',

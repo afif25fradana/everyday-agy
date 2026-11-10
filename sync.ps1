@@ -55,7 +55,6 @@ $dstHooksJson = Join-Path $repoConfigDir "hooks.json"
 $dstScripts = Join-Path $repoConfigDir "scripts"
 $dstAgents = Join-Path $repoConfigDir "agents"
 $dstSkills = Join-Path $repoConfigDir "skills"
-$dstAdr = Join-Path (Join-Path $scriptRoot "docs") "adr"
 
 $trackedAgentNames = if (Test-Path $dstAgents) { @(Get-ChildItem -Path $dstAgents -Directory | ForEach-Object { $_.Name }) } else { @() }
 $trackedSkillNames = if (Test-Path $dstSkills) { @(Get-ChildItem -Path $dstSkills -Directory | ForEach-Object { $_.Name }) } else { @() }
@@ -70,10 +69,6 @@ $srcHooksJson = Join-Path $configHome "hooks.json"
 $srcScriptsDir = Join-Path $configHome "scripts"
 $srcAgentsDir = Join-Path $configHome "agents"
 $srcSkillsDir = Join-Path $configHome "skills"
-$srcAdrsDir = Join-Path (Join-Path $geminiHome "docs") "adr"
-if (-not (Test-Path $srcAdrsDir)) {
-    $srcAdrsDir = Join-Path (Join-Path $configHome "docs") "adr"
-}
 
 # ==============================================================================
 # PHASE 1: PRE-FLIGHT CREDENTIAL SCAN AT SOURCE (~/.gemini/)
@@ -102,9 +97,6 @@ foreach ($aName in $trackedAgentNames) {
 foreach ($sName in $trackedSkillNames) {
     $p = Join-Path $srcSkillsDir $sName
     if (Test-Path -LiteralPath $p) { $trackedSourceDirs += $p }
-}
-if (Test-Path -LiteralPath $srcAdrsDir) {
-    $trackedSourceDirs += $srcAdrsDir
 }
 
 if ($trackedSourceDirs.Count -gt 0) {
@@ -200,23 +192,5 @@ foreach ($sName in $trackedSkillNames) {
     }
 }
 Write-Host "[OK] Synced $syncedSkills Tracked Custom Skills" -ForegroundColor Green
-
-# 5. Sync Architectural Decision Records (ADRs)
-if (Test-Path -LiteralPath $srcAdrsDir) {
-    $srcAdrs = @(Get-ChildItem -Path $srcAdrsDir -Filter "*.md")
-    if ($srcAdrs.Count -gt 0) {
-        New-Item -ItemType Directory -Force -Path $dstAdr | Out-Null
-        $srcAdrNames = @($srcAdrs | ForEach-Object { $_.Name })
-        Get-ChildItem -Path $dstAdr -Filter "*.md" | ForEach-Object {
-            if ($_.Name -notin $srcAdrNames) {
-                Remove-Item -Path $_.FullName -Force
-                Write-Host "[CLEANUP] Pruned stale ADR: $($_.Name)" -ForegroundColor DarkGray
-            }
-        }
-        Copy-Item -Path (Join-Path $srcAdrsDir "*") -Destination $dstAdr -Recurse -Force
-        $adrCount = (Get-ChildItem -Path $dstAdr -Filter "*.md" | Where-Object { $_.Name -ne "README.md" }).Count
-        Write-Host "[OK] Synced $adrCount Architectural Decision Records (ADRs)" -ForegroundColor Green
-    }
-}
 
 Write-Host ">>> Everyday-AGY sync completed successfully!" -ForegroundColor Green

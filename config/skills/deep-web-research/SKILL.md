@@ -31,7 +31,7 @@ Never execute generic or unpinned web searches (e.g. `pydantic model validator`)
 
 ### B. Mandatory Official Domain Targeting
 Search snippets and AI overview summaries are pointers, not authoritative contracts.
-- Always utilize the `domain` parameter in `search_web` (and `read_url_content` for full page inspection) targeting official documentation domains (e.g. `docs.python.org`, `react.dev`, `angular.dev`, `nodejs.org`, `docs.rs`, `learn.microsoft.com`, `postgresql.org`, `git-scm.com`, `antigravity.google`, `github.com`).
+- Always utilize the `domain` parameter in `search_web` targeting official documentation domains (e.g. `docs.python.org`, `react.dev`, `angular.dev`, `nodejs.org`, `docs.rs`, `learn.microsoft.com`, `postgresql.org`, `git-scm.com`, `antigravity.google`, `github.com`), and fall back to Section 2.C CLI raw fetch via `run_command` for full page or release inspection.
 - Discard or strongly downweight SEO blog aggregators (Medium, TowardsDataScience, generic tutorial re-publishers) unless official docs are demonstrably unreachable.
 
 ### C. Direct Raw Source Verification (Cross-Shell CLI Fallback)

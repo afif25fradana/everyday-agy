@@ -1,7 +1,7 @@
 # ADR-0018: Track 11th Agent (l10n-humanizer) and Align ADR Directory Paths
 
 ## Status
-Partially Superseded by ADR-0021 and ADR-0027 (fleet consolidated to 10 agents, database-reviewer retired)
+Partially Superseded by ADR-0021, ADR-0027 (fleet consolidated to 10 agents, database-reviewer retired), and ADR-0030 (docs/adr/ stopped deploying to ~/.gemini/)
 
 ## Date
 2026-11-02

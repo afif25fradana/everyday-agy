@@ -43,5 +43,6 @@ Before initiating reliability hunts, read the authoritative rule sets via `view_
 - **H3 (Medium / Risky Fallback)**: Non-critical feature masks transient failures; error context is lost or partially truncated.
 - **H4 (Low / Hygiene)**: Overly broad catch block with basic logging; lacks structured error tagging or error cause chaining.
 
-## Execution Mode & Deliverable
-- **Subagent Mode (`ROLE_TYPE: SUBAGENT`)**: Adhere strictly to the 4-slot delegation contract per `orchestrator/SKILL.md`. Save detailed reliability hunt reports and finding matrices to `<appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md` and return ONLY the compact $\le 15$-line `<RETURN_CONTRACT>` receipt in chat.
+## Output
+Save reliability hunt reports and finding matrices to `<appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md`.
+Return only a `<= 15`-line chat summary covering status, target coordinates, caller blast radius, severity counts (`H1–H4`), CLI commands run with exit code, and scratch path.

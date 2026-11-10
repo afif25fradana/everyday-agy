@@ -2,8 +2,8 @@
 .SYNOPSIS
     Antigravity PreToolUse and PostToolUse hook router.
 .DESCRIPTION
-    Enforces AST command safety, credential deny-path gates, subagent 4-slot contract
-    validation, and automatic Gate 2 diff injection while isolating stdout JSON.
+    Enforces AST command safety, credential deny-path gates, and automatic Gate 2
+    diff injection while isolating stdout JSON.
 #>
 [CmdletBinding()]
 param(
@@ -296,59 +296,6 @@ try {
                 Write-HookResponse @{ decision = "deny"; reason = "Blocked by Security Hook: Access to credential or secret path '$rawPath' is prohibited." }
                 exit 0
             }
-            Write-HookResponse @{ decision = "allow" }
-            exit 0
-        }
-
-        "invoke_subagent" {
-            $missingTagReason = "Blocked by Orchestrator Hook: Subagent prompt is missing mandatory 4-Slot Delegation Contract tags (<ROLE_AND_OBJECTIVE>, <SCOPE_AND_BOUNDARIES>, <TOOLS_AND_ABSOLUTE_SKILL_PATHS>, <RETURN_CONTRACT>). Read ~/.gemini/config/skills/orchestrator/references/subagent-patterns.md and include all 4 tags."
-            $requiredTags = @(
-                "<ROLE_AND_OBJECTIVE>",
-                "<SCOPE_AND_BOUNDARIES>",
-                "<TOOLS_AND_ABSOLUTE_SKILL_PATHS>",
-                "<RETURN_CONTRACT>"
-            )
-            $allowedModels = @("inherit", "flash", "pro")
-
-            $topModel = Get-PropValue -Object $toolArgs -Names @("Model", "model")
-            if ($null -ne $topModel -and -not [string]::IsNullOrWhiteSpace([string]$topModel)) {
-                $topModelStr = [string]$topModel
-                if ($topModelStr -cnotin $allowedModels) {
-                    Write-HookResponse @{ decision = "deny"; reason = "Blocked by Orchestrator Hook: Invalid subagent Model '$topModelStr'. Allowed values are inherit, flash, or pro." }
-                    exit 0
-                }
-            }
-
-            $subagentsVal = Get-PropValue -Object $toolArgs -Names @("Subagents", "subagents")
-            $entries = @()
-            if ($null -ne $subagentsVal) {
-                $entries = @($subagentsVal)
-                if ($entries.Count -eq 0) {
-                    Write-HookResponse @{ decision = "deny"; reason = $missingTagReason }
-                    exit 0
-                }
-            } else {
-                $entries = @($toolArgs)
-            }
-
-            foreach ($entry in $entries) {
-                $entryModel = Get-PropValue -Object $entry -Names @("Model", "model")
-                if ($null -ne $entryModel -and -not [string]::IsNullOrWhiteSpace([string]$entryModel)) {
-                    $modelStr = [string]$entryModel
-                    if ($modelStr -cnotin $allowedModels) {
-                        Write-HookResponse @{ decision = "deny"; reason = "Blocked by Orchestrator Hook: Invalid subagent Model '$modelStr'. Allowed values are inherit, flash, or pro." }
-                        exit 0
-                    }
-                }
-                $promptVal = [string](Get-PropValue -Object $entry -Names @("Prompt", "prompt"))
-                foreach ($tag in $requiredTags) {
-                    if (-not $promptVal.Contains($tag)) {
-                        Write-HookResponse @{ decision = "deny"; reason = $missingTagReason }
-                        exit 0
-                    }
-                }
-            }
-
             Write-HookResponse @{ decision = "allow" }
             exit 0
         }

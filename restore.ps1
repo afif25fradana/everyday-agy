@@ -71,9 +71,7 @@ $hooksJsonPath = Join-Path $configHome "hooks.json"
 $configScripts = Join-Path $configHome "scripts"
 $configAgents = Join-Path $configHome "agents"
 $configSkills = Join-Path $configHome "skills"
-$docsAdr = Join-Path (Join-Path $geminiHome "docs") "adr"
-$legacyAdr = Join-Path (Join-Path $configHome "docs") "adr"
-$needsBackup = (Test-Path $geminiMdPath) -or (Test-Path $hooksJsonPath) -or (Test-Path $configScripts) -or (Test-Path $configAgents) -or (Test-Path $configSkills) -or (Test-Path $docsAdr) -or (Test-Path $legacyAdr)
+$needsBackup = (Test-Path $geminiMdPath) -or (Test-Path $hooksJsonPath) -or (Test-Path $configScripts) -or (Test-Path $configAgents) -or (Test-Path $configSkills)
 
 if ($needsBackup) {
     Write-Host ">>> Existing configuration detected. Creating backup at $backupDir..." -ForegroundColor Yellow
@@ -92,12 +90,6 @@ if ($needsBackup) {
     }
     if (Test-Path $configSkills) {
         Copy-Item -Path $configSkills -Destination (Join-Path $backupDir "skills") -Recurse -Force
-    }
-    if (Test-Path $docsAdr) {
-        Copy-Item -Path $docsAdr -Destination (Join-Path $backupDir "adr") -Recurse -Force
-    }
-    if (Test-Path $legacyAdr) {
-        Copy-Item -Path $legacyAdr -Destination (Join-Path $backupDir "legacy_adr") -Recurse -Force
     }
     Write-Host "[OK] Backup created successfully." -ForegroundColor Green
 }
@@ -206,30 +198,17 @@ if (Test-Path $srcSkills) {
     Write-Host "[OK] Restored $($srcSkillDirs.Count) Custom Skills" -ForegroundColor Green
 }
 
-# 5. Restore Architectural Decision Records (ADRs)
-$srcAdr = Join-Path (Join-Path $scriptRoot "docs") "adr"
-if (Test-Path $srcAdr) {
-    $dstAdr = Join-Path (Join-Path $geminiHome "docs") "adr"
-    New-Item -ItemType Directory -Force -Path $dstAdr | Out-Null
-
-    $legacyAdr = Join-Path (Join-Path $configHome "docs") "adr"
-    if (Test-Path $legacyAdr) {
-        Remove-Item -Path $legacyAdr -Recurse -Force
-        Write-Host "[CLEANUP] Pruned legacy ADR path: $legacyAdr" -ForegroundColor DarkGray
+# 5. Prune legacy ADR deployments (ADRs stay repo-only)
+foreach ($docsParent in @((Join-Path $geminiHome "docs"), (Join-Path $configHome "docs"))) {
+    $staleAdr = Join-Path $docsParent "adr"
+    if (Test-Path -LiteralPath $staleAdr -PathType Container) {
+        Remove-Item -LiteralPath $staleAdr -Recurse -Force
+        Write-Host "[CLEANUP] Pruned legacy ADR path: $staleAdr" -ForegroundColor DarkGray
     }
-
-    $srcAdrNames = @(Get-ChildItem -Path $srcAdr -Filter "*.md" | ForEach-Object { $_.Name })
-    if ($srcAdrNames.Count -gt 0) {
-        Get-ChildItem -Path $dstAdr -Filter "*.md" | ForEach-Object {
-            if ($_.Name -notin $srcAdrNames) {
-                Remove-Item -Path $_.FullName -Force
-                Write-Host "[CLEANUP] Pruned stale ADR: $($_.Name)" -ForegroundColor DarkGray
-            }
-        }
-        Copy-Item -Path (Join-Path $srcAdr "*") -Destination $dstAdr -Recurse -Force
+    if ((Test-Path -LiteralPath $docsParent -PathType Container) -and (@(Get-ChildItem -LiteralPath $docsParent -Force).Count -eq 0)) {
+        Remove-Item -LiteralPath $docsParent -Force
+        Write-Host "[CLEANUP] Pruned empty docs directory: $docsParent" -ForegroundColor DarkGray
     }
-    $adrCount = (Get-ChildItem -Path $dstAdr -Filter "*.md" | Where-Object { $_.Name -ne "README.md" }).Count
-    Write-Host "[OK] Restored $adrCount Architectural Decision Records (ADRs)" -ForegroundColor Green
 }
 
 Write-Host ">>> Everyday-AGY restoration completed successfully!" -ForegroundColor Green

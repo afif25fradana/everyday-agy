@@ -17,7 +17,7 @@ A high-rigor governance runbook enforcing Anthropic Lead-Agent context insulatio
 ### 1.1 Role-Scoped Execution & Context Insulation Invariant
 - **Parent Lead Orchestrator (`invoke_subagent` present)**: On Tier 2 (`standard`) and Tier 3 (`large`) tasks, the Parent Agent is strictly prohibited from invoking `read_file` or `view_file` on application source code (`src/**`, `core/**`, `web/**`, `lib/**`, business logic implementations) AND strictly barred from calling `replace_file_content`, `multi_replace_file_content`, `write_to_file`, `edit_file`, or `write_file` on any workspace repository file. Parent write tools on Tier 2/3 are restricted strictly to session artifacts under `<appDataDir>\brain\<conversation-id>\*.md` and scratch files.
 - **Allowed Parent Reads**: High-level task coordination files (`task_state.md`, ADR summaries, `specs/<feature>/*.md`), intermediate subagent dossiers in scratch (`<appDataDir>\brain\<conversation-id>\scratch\<task>\` or `$HOME/.gemini/antigravity/scratch/<task>/`), git tracking receipts (`rtk git status --short`, `rtk git diff --stat`), CLI test output, and raw `git --no-pager diff HEAD` / `git --no-pager diff --stat` specifically for programmatic Gate 2 artifact injection.
-- **Execution Specialist Subagents (`ROLE_TYPE: SUBAGENT` / `invoke_subagent` absent)**: Deep code reading, syntax analysis, code editing, and test authoring belong exclusively to subagents. Mutating specialists (`tdd-guide`, `ui-crafter`, `docs-architect`, `l10n-humanizer`, `maintenance-bot`, `build-error-resolver`) are explicitly authorized to edit granted `<SCOPE_AND_BOUNDARIES>` paths within the active repository or sibling `<Project>-AI-Context` repo. Read-only specialists (`code-auditor`, `silent-failure-hunter`, `spec-verifier`, `system-architect`) write exclusively to `scratch/` dossiers.
+- **Execution Specialist Subagents (`invoke_subagent` absent)**: Deep code reading, syntax analysis, code editing, and test authoring belong exclusively to subagents. Mutating specialists (`tdd-guide`, `ui-crafter`, `docs-architect`, `l10n-humanizer`, `maintenance-bot`, `build-error-resolver`) are explicitly authorized to edit granted `<SCOPE>` paths within the active repository or sibling `<Project>-AI-Context` repo. Read-only specialists (`code-auditor`, `silent-failure-hunter`, `spec-verifier`, `system-architect`) write exclusively to `scratch/` dossiers.
 
 ### 1.2 Zero-Read Triage Gate (Step 0 Blast Radius Sizing — SSOT)
 Before opening any source file, the Parent Agent classifies task blast radius using **zero-read metadata commands only**:
@@ -52,7 +52,7 @@ Before opening any source file, the Parent Agent classifies task blast radius us
 - **Single-Pass TDD Protocol**: When `tdd-guide` is the implementer for bug fixes and features in Tier 2/3, Parent dispatches `tdd-guide` once post-checkpoint. In a single continuous execution pass, `tdd-guide`: (1) authors the minimal failing test (RED) on unmodified production code, (2) runs the test runner to witness the expected failure, (3) writes the minimal production fix (GREEN), (4) runs the Pre-Mutation Syntax Interception Gate, (5) verifies the test suite passes (`exit code 0`, `> 0 passed, 0 failed`), (6) refactors under `ponytail`/`antislop-code`, and (7) returns a unified receipt with dual RED and GREEN verification traces. This eliminates the 40k–60k token double cold-start penalty between separate test-authoring and fix-implementation turns.
 - **Cross-Specialist Split Handoff**: The separate two-stage dispatch (S2 test authoring -> S3 implementation) is reserved exclusively for cross-specialist tasks (e.g. `tdd-guide` writes contract tests, `ui-crafter` implements the frontend component).
 - **Diff Audit**: Before presenting Gate 2, Parent delegates line-by-line diff review to `code-auditor` or `silent-failure-hunter` to audit for mock-cheating, weakened assertions, or test deletion against the [Five-Axis rubric in `audit-dev`](../audit-dev/SKILL.md).
-- **Settled Findings Immunity**: Review findings that have been formally settled (contested with verified code coordinates or accepted as documented operator trade-offs) are immune to re-litigation by subsequent review passes or subagent dispatches. Parent must pass settled items under `Settled Findings:` in `<SCOPE_AND_BOUNDARIES>` to prevent endless review churn.
+- **Settled Findings Immunity**: Review findings that have been formally settled (contested with verified code coordinates or accepted as documented operator trade-offs) are immune to re-litigation by subsequent review passes or subagent dispatches. Parent must pass settled items under `Settled Findings:` in `<SCOPE>` strictly restricted to previously contested-with-evidence or operator-accepted items (never unreviewed assumptions) to prevent endless review churn.
 
 ### 1.6 Subagent Commit/Push Ban, Shell Safety & Direct Parent CLI Test Runner
 - **Subagent Commit & PR Ban**: Subagents are strictly barred from running `git commit`, `git tag`, `git push`, `gh pr create`, `gh pr merge`, or `gh release create`. Commit and PR authority belongs exclusively to the Parent Agent post-Gate 2 approval.
@@ -124,7 +124,7 @@ Parent dispatches targeted custom subagents directly via `invoke_subagent`:
 - Quality Gate: `code-auditor` or `silent-failure-hunter` (diff review against [`audit-dev`](../audit-dev/SKILL.md)).
 
 > [!NOTE]
-> **Dynamic Model Elevation (ADR-0015)**: When Parent Orchestrator runs on `flash` for cost/speed efficiency, specialized verification dispatches involving high-stakes architecture/schema synthesis or deep third-party API contract verification (`spec-verifier`) may dynamically elevate subagent invocation to `Model: pro` or `Model: inherit` per `references/subagent-patterns.md` to prevent subtle logical drift.
+> **Dynamic Model Elevation & Workspace Mode (ADR-0015 / ADR-0029)**: Across the 10-agent fleet, `build-error-resolver` and `maintenance-bot` default to `model: flash` while the other 8 specialists default to `model: inherit`. When Parent Orchestrator runs on `flash`, `Model: "inherit"` remains on `flash`; pass `Model: "pro"` dynamically in `invoke_subagent` to elevate `spec-verifier`, `system-architect`, or `docs-architect` for third-party API verification or high-stakes architectural synthesis. Default to `Workspace: inherit` to avoid Windows file locks and `node_modules` duplication, writing intermediate reports to `<appDataDir>\brain\<conversation-id>\scratch\<task>\`.
 
 ---
 
@@ -134,7 +134,7 @@ Parent dispatches targeted custom subagents directly via `invoke_subagent`:
 Classify blast radius using zero-read CLI commands (`rtk git status --short`, `rtk rg -l`, `rtk rg -c`). Establish task tier per Section 1.2.
 
 ### Phase 1: Investigation, Audit & Pre-Gate 1 Planning
-1. **Read-Only Exploration**: Parent dispatches read-only specialist subagents (`system-architect` or `code-auditor`) using the 4-slot delegation contract. Subagents inspect code coordinates and author diagnostic reports in `<appDataDir>\brain\<conversation-id>\scratch\<task>\`.
+1. **Read-Only Exploration**: Parent dispatches read-only specialist subagents (`system-architect` or `code-auditor`) using the Lean 3-Slot delegation brief (`<OBJECTIVE>`, `<SCOPE>`, `<DELIVERABLE>`). Subagents inspect code coordinates and author diagnostic reports in `<appDataDir>\brain\<conversation-id>\scratch\<task>\`.
 2. **Mandatory `code-auditor -> spec-verifier` Duet Pipeline (Pre-Gate 1 Planning)**:
    - Whenever `code-auditor` (or `system-architect`) completes a diagnostic audit or discovery pass in `scratch/` proposing fixes, library migrations, or configuration changes (**Stage 1a**), Parent MUST automatically dispatch **`spec-verifier` (Stage 1b)** before synthesizing `gate1_proposal.md` or presenting the audit report to the operator.
    - **`spec-verifier` Mandate**: Cross-checks all proposed API signatures, versions, options objects, and architectural patterns against official vendor documentation via Context7 MCP (`resolve-library-id` $\rightarrow$ `query-docs`) and version-locked web documentation (`deep-web-research`).
@@ -188,46 +188,25 @@ Upon receiving Gate 1 approval (or immediately following Step 0 for Tier 0/1):
 
 ---
 
-## 4. The 4-Slot Delegation Contract (SSOT)
+## 4. Lean 3-Slot Delegation Brief (SSOT)
 
-Every `invoke_subagent` prompt issued by the Parent Orchestrator MUST adhere to this 4-slot structure:
+Every `invoke_subagent` prompt issued by the Parent Orchestrator uses this Lean 3-Slot XML brief. Static agent identity, `<skills>` OS paths, `Deny Paths`, and full receipt recipes live natively in `agent.md`, `<skills>` injection, `GEMINI.md`, and Guard 2 (`Invoke-AntigravityHook.ps1`), eliminating per-dispatch boilerplate:
 
 ```markdown
-ROLE_TYPE: SUBAGENT (EXECUTION SPECIALIST)
+<OBJECTIVE>
+<Concrete task goal, verification bar, and conditional mode (e.g., Mode A vs Mode B) if applicable>
+</OBJECTIVE>
 
-<ROLE_AND_OBJECTIVE>
-You are <Agent Role>. Your objective is <concrete objective>.
-Zero Process Leaks: do not emit AI process tags or commit markers.
-</ROLE_AND_OBJECTIVE>
-
-<SCOPE_AND_BOUNDARIES>
-Target Coordinates: <file.ext#Lxx-Lyy>
+<SCOPE>
+Targets: <file.ext#Lxx-Lyy or target symbol/module>
 Allowed Mutation Paths: <explicit file list, directory, or NONE (Read-Only)>
-Settled Findings: <list of established baseline non-issues / accepted trade-offs immune to re-litigation, or NONE>
-Deny Paths: ~/.ssh/**, ~/.aws/**, ~/.gnupg/**, **/.env*, **/*.key, **/*.pem, mcp/**
-</SCOPE_AND_BOUNDARIES>
+Settled Findings: <previously contested-with-evidence or operator-accepted items only (never unreviewed assumptions), or NONE>
+</SCOPE>
 
-<TOOLS_AND_ABSOLUTE_SKILL_PATHS>
-Tools: Use view_file to inspect code; use replace_file_content (or write_to_file if granted in agent manifest) for edits.
-Bound Skills (resolve exact OS absolute paths from <skills> header; never pass ~ or $HOME to view_file):
-- <Absolute OS path to skill 1, e.g. C:\Users\<User>\.gemini\config\skills\<skill>\SKILL.md>
-</TOOLS_AND_ABSOLUTE_SKILL_PATHS>
-
-<RETURN_CONTRACT>
-Write detailed forensic reports to <appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md (unless using build-error-resolver without write_to_file).
-In your final chat message, return ONLY this compact receipt (<= 15 lines):
-- Status: [PASS | FAIL | BLOCKED | NOT RUN]
-- Target Coordinates: <file.ext#Lxx-Lyy>
-- Caller Blast Radius: <N callers across M files>
-- CLI Test Command: <command executed or N/A>
-- Exit Code: <0 or non-zero>
-- Assertions: <N passed, 0 failed>
-- Deliverable Path: <appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md or N/A (in-place edit)
-
-<!-- For Single-Pass TDD (tdd-guide), substitute CLI Test Command/Exit Code/Assertions with dual receipts: -->
-- RED Verification Receipt: <command> | Exit Code: <non-zero> | Assertions: <0 passed, 1 failed>
-- GREEN Verification Receipt: <command> | Exit Code: 0 | Assertions: <N passed, 0 failed>
-</RETURN_CONTRACT>
+<DELIVERABLE>
+Scratch Report: <appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md (omit for build-error-resolver)
+Return ONLY the compact <= 15-line summary defined in ## Output of your agent.md (built-in fallback: Status, Targets, Blast Radius, Verification Command/Exit Code/Assertions, Deliverable Path).
+</DELIVERABLE>
 ```
 
 ---

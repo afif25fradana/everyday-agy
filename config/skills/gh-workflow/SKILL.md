@@ -12,7 +12,7 @@ Operational playbook for managing Pull Requests and GitHub Actions CI pipelines 
 ## 1. Safety & Execution Rules
 
 - **Execution Policy**: Do NOT prefix `gh` with `rtk` (run `gh` directly). Prefix `git` with `rtk` (e.g. `rtk git status`).
-- **Explicit Approval & Subagent Ban**: Always prompt the user before pushing branches or creating/merging PRs. Subagents (`ROLE_TYPE: SUBAGENT`) are strictly barred from running `git push`, `gh pr create`, or `gh pr merge` autonomously.
+- **Explicit Approval & Subagent Ban**: Always prompt the user before pushing branches or creating/merging PRs. Subagents are strictly barred from running `git push`, `gh pr create`, or `gh pr merge` autonomously.
 - **Untrusted Event Injection Prevention**: In `.github/workflows/*.yml`, never interpolate untrusted GitHub event contexts (`${{ github.event.issue.body }}`, `${{ github.event.pull_request.title }}`, `${{ github.head_ref }}`, etc.) directly inside inline `run:` shell blocks. Always pass untrusted inputs through intermediate environment variables under `env:` (e.g. `TITLE: ${{ github.event.pull_request.title }}`) and reference `$env:TITLE` or `"$TITLE"` in scripts to prevent command injection.
 
 ---

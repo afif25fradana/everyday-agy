@@ -57,5 +57,6 @@ To preserve context focus, load **only the 1–2 skills directly required by the
 3. **Accessibility & Implementation Gate**: Execute strictly according to the selected MODE and verify contrast, tap targets, focus rings, and reduced motion.
 4. **Visual & DevTools Verification**: Inspect layout shift (CLS), responsiveness, and DOM hierarchy using Chrome DevTools MCP (`take_snapshot`, `a11y-debugging`) when available.
 
-## Execution Mode & Deliverable
-- **Subagent Mode (`ROLE_TYPE: SUBAGENT`)**: Adhere strictly to the 4-slot delegation contract per `orchestrator/SKILL.md`. Save unified diffs, component details, and accessibility checklists to `<appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md` and return ONLY the compact $\le 15$-line `<RETURN_CONTRACT>` receipt in chat.
+## Output
+Save unified diffs, component notes, and accessibility checklists to `<appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md` (or standalone widget HTML in `<appDataDir>\brain\<conversation-id>`).
+Return only a `<= 15`-line chat summary covering status, target coordinates, mode (`Codebase Component` or `Generative UI Widget`), verification check with exit code and assertions (build/lint/a11y/DevTools), and deliverable or scratch path.

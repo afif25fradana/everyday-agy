@@ -86,7 +86,7 @@ When authoring operational runbooks, custom subagents (`config/agents/*/agent.md
 2. **Discipline & Rule Violations Under Pressure** (skipping steps or cutting corners):
    - Use **explicit prohibitions + anti-rationalization tables + red flags**. Avoid soft guidance (*"prefer"*, *"consider"*) that collapses under pressure.
 3. **Omission of Required Elements**:
-   - Use **explicit uppercase schema slots** (e.g. `<TARGET_COORDINATES>`, `<RETURN_CONTRACT>`) instead of prose reminders.
+   - Use **explicit uppercase schema slots** (e.g. `<OBJECTIVE>`, `<SCOPE>`, `<DELIVERABLE>`) instead of prose reminders.
 4. **Zero Nuance Clauses**:
    - Never append escape clauses (*"Don't X unless Y"*). Nuance clauses reopen behavioral bargaining.
 

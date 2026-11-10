@@ -20,16 +20,6 @@
             "timeout": 15
           }
         ]
-      },
-      {
-        "matcher": "invoke_subagent",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File ./scripts/Invoke-AntigravityHook.ps1 -Event PreToolUse",
-            "timeout": 15
-          }
-        ]
       }
     ],
     "PostToolUse": [

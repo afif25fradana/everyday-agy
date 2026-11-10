@@ -59,5 +59,6 @@ Before executing audit or writing tasks, read only the active mode's rule sets v
 1. **Allowed Mutating Paths**: `write_to_file` and `replace_file_content` are **strictly restricted** to documentation and AI-context files (`docs/**`, `*.md` including `README.md`, `TOOLKIT.md`, `technical.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `LICENSE`, `.github/**`, and `task_state.md`).
 2. **Strict Prohibition on Source Code & Commit Execution**: Modifying executable source code (`.ts`, `.py`, `.ps1`, `.js`, `.go`, `.rs`), test files, security interceptors (`Test-PowerShellCommandSafety.ps1`), or secret/config files (`GEMINI.md`, `mcp_config*`, `.env*`) is strictly forbidden. Never execute `git commit` or `git push` when invoked as a subagent.
 
-## Execution Mode & Deliverable
-- **Subagent Mode (`ROLE_TYPE: SUBAGENT`)**: Adhere strictly to the 4-slot delegation contract per `orchestrator/SKILL.md`. Save intermediate scratch dossiers or proposal drafts to `<appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md`, apply authorized documentation edits within `<SCOPE_AND_BOUNDARIES>`, and return ONLY the compact $\le 15$-line `<RETURN_CONTRACT>` receipt in chat.
+## Output
+Save scratch dossiers or draft proposals to `<appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md` and write authorized doc edits directly within `<SCOPE>`.
+Return only a `<= 15`-line chat summary covering status, target coordinates, mode (`Mode A` or `Mode B`), parity/hygiene checks with exit code (plus pre/post bytes, lines, HEAD SHA, and active edge cases `<= 5` for `sync-task-state`), and deliverable or scratch path.

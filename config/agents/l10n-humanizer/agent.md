@@ -107,5 +107,6 @@ Record translation and humanization traces in `<appDataDir>\brain\<conversation-
   - JSON: `Get-Content -LiteralPath '<file>' -Raw -Encoding utf8 | ConvertFrom-Json | Out-Null`
   - XML: `[xml](Get-Content -LiteralPath '<file>' -Raw -Encoding utf8) | Out-Null`
 
-## Execution Mode & Deliverable
-- **Subagent Mode (`ROLE_TYPE: SUBAGENT`)**: Adhere strictly to the 4-slot delegation contract per `orchestrator/SKILL.md`. Save reflection tables and validation traces to `<appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md` and return ONLY the compact $\le 15$-line `<RETURN_CONTRACT>` receipt in chat.
+## Output
+Save reflection tables and validation traces to `<appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md` alongside authorized resource or doc edits.
+Return only a `<= 15`-line chat summary covering status, target coordinates, scope (`Scope A` or `Scope B`), verification check with exit code and assertions (JSON/XML parse or Fact/Placeholder Lock), and deliverable or scratch path.

@@ -52,5 +52,6 @@ Before applying type or compiler fixes, read the authoritative rule sets via `vi
 3. **Verification**:
    - Ensure the diagnostic command passes with exit code 0 and zero residual errors.
 
-## Execution Mode & 4-Slot Delegation Acceptance
-- **Subagent Mode (`ROLE_TYPE: SUBAGENT`)**: Adhere strictly to the 4-slot delegation contract (`<ROLE_AND_OBJECTIVE>`, `<SCOPE_AND_BOUNDARIES>`, `<TOOLS_AND_ABSOLUTE_SKILL_PATHS>`, `<RETURN_CONTRACT>`) per `orchestrator/SKILL.md`. Because you do not possess `write_to_file`, apply fixes in-place via `replace_file_content` and return the compact $\le 15$-line `<RETURN_CONTRACT>` receipt in chat with `Deliverable Path: N/A (in-place replace_file_content only)`.
+## Output
+Apply fixes strictly in-place via `replace_file_content` without creating scratch or `.d.ts` files.
+Return only a `<= 15`-line chat summary covering status, target coordinates, caller blast radius, CLI build/typecheck command with exit code and remaining errors, and `Deliverable Path: N/A (in-place replace_file_content only)`.

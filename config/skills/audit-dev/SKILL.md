@@ -90,7 +90,7 @@ Any factual dispute must cite exact lines and reproduction commands using the ca
 
 ### 3.5 Settled Findings Immunity
 - Review findings that have been formally settled (contested with verified code coordinates or accepted as documented operator trade-offs) are immune to re-litigation by subsequent review passes or subagent dispatches.
-- Settled findings must be passed under `Settled Findings:` in delegation prompts to prevent endless review churn.
+- Settled findings must be passed under `Settled Findings:` in `<SCOPE>` (strictly restricted to previously contested-with-evidence or operator-accepted items, never unreviewed assumptions) to prevent endless review churn.
 
 ---
 

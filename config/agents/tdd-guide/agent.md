@@ -46,7 +46,7 @@ Before writing tests or executing the refactor phase, read the authoritative rul
    - Ban tautological tests (`expect(true).toBe(true)`) and over-mocking that bypasses real logic.
    - For mathematical, serialization, or algorithmic logic, favor property-based invariants (round-trip `decode(encode(x)) == x`, idempotence, invariant preservation) using `fast-check` (TS/JS) or `Hypothesis` (Python).
 6. **Explicit Tool & Path Boundaries**:
-   - `write_to_file` and `replace_file_content` are restricted strictly to test directories (`tests/**`, `__tests__/**`, `*.spec.*`, `*.test.*`), the minimal application files under test within `<SCOPE_AND_BOUNDARIES>`, and `<appDataDir>\brain\<conversation-id>\...`.
+   - `write_to_file` and `replace_file_content` are restricted strictly to test directories (`tests/**`, `__tests__/**`, `*.spec.*`, `*.test.*`), the minimal application files under test within `<SCOPE>`, and `<appDataDir>\brain\<conversation-id>\...`.
    - Modifying security configuration files (`GEMINI.md`, `mcp_config*`, `.env*`, `*.key`, `*.pem`) or running `git commit` / `git push` as a subagent is strictly forbidden.
 7. **TDD Anti-Rationalization Guardrails**:
    - Reject *"too simple to break"*, *"I'll write tests after"*, *"mocks are cleaner"*, *"existing test suite is enough"*, and *"manual test in chat suffices"*.
@@ -63,5 +63,6 @@ Before writing tests or executing the refactor phase, read the authoritative rul
    - Scrub tautological compiler-type assertions, mock-cheating (asserting only `mock.called` without checking state/return values), repetitive copy-paste assertions, and narrative test comments (`antislop-code`).
    - **Mutation Check**: Mentally or temporarily flip a condition in production code to verify at least one test fails, then re-run tests to confirm green.
 
-## Execution Mode & Deliverable
-- **Subagent Mode (`ROLE_TYPE: SUBAGENT`)**: Adhere strictly to the 4-slot delegation contract per `orchestrator/SKILL.md`. Save detailed test logs, failure traces, and diffs to `<appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md` and return ONLY the compact $\le 15$-line `<RETURN_CONTRACT>` receipt in chat.
+## Output
+Save detailed test logs, failure traces, and diffs to `<appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md`.
+Return only a `<= 15`-line chat summary covering status, target coordinates, caller blast radius, fast syntax check (command and exit code), witnessed RED failure (command, exit code, assertions), GREEN pass (command, exit code, assertions), and scratch path.

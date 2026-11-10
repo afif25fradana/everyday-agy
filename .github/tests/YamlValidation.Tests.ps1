@@ -310,16 +310,15 @@ if ($hooksExist) {
 
         $expectedPre = @(
             "run_command",
-            "view_file|replace_file_content|multi_replace_file_content|write_to_file",
-            "invoke_subagent"
+            "view_file|replace_file_content|multi_replace_file_content|write_to_file"
         )
         $expectedPost = @(
             "write_to_file|replace_file_content|multi_replace_file_content"
         )
-        $hasExactPre = ($preMatchers.Count -eq 3) -and ($expectedPre[0] -in $preMatchers) -and ($expectedPre[1] -in $preMatchers) -and ($expectedPre[2] -in $preMatchers)
+        $hasExactPre = ($preMatchers.Count -eq 2) -and ($expectedPre[0] -in $preMatchers) -and ($expectedPre[1] -in $preMatchers) -and ("invoke_subagent" -notin $preMatchers)
         $hasExactPost = ($postMatchers.Count -eq 1) -and ($expectedPost[0] -in $postMatchers)
 
-        Assert-Test -Name "config/hooks.json defines exact 3 PreToolUse matchers" -Condition $hasExactPre -Details ("Found: " + ($preMatchers -join ", "))
+        Assert-Test -Name "config/hooks.json defines exact 2 PreToolUse matchers (no invoke_subagent)" -Condition $hasExactPre -Details ("Found: " + ($preMatchers -join ", "))
         Assert-Test -Name "config/hooks.json defines exact 1 PostToolUse matcher" -Condition $hasExactPost -Details ("Found: " + ($postMatchers -join ", "))
         Assert-Test -Name "config/hooks.json matcher groups define at least 1 hook handler" -Condition $allGroupsHaveHooks
         Assert-Test -Name "config/hooks.json handlers invoke ./scripts/Invoke-AntigravityHook.ps1 correctly" -Condition $allCommandsValid
@@ -336,6 +335,9 @@ if ($hookScriptExists) {
     $astValid = (-not $parseErrors) -or ($parseErrors.Count -eq 0)
     Assert-Test -Name "Invoke-AntigravityHook.ps1 passes PowerShell AST parse" -Condition $astValid -Details ("$parseErrors")
 }
+
+$retiredSubagentPatternsPath = Join-Path (Join-Path (Join-Path (Join-Path (Join-Path $repoRoot "config") "skills") "orchestrator") "references") "subagent-patterns.md"
+Assert-Test -Name "config/skills/orchestrator/references/subagent-patterns.md is absent" -Condition (-not (Test-Path -LiteralPath $retiredSubagentPatternsPath)) -Details "Retired file still exists at $retiredSubagentPatternsPath"
 
 foreach ($rootScriptName in @("sync.ps1", "restore.ps1")) {
     $rootScriptPath = Join-Path $repoRoot $rootScriptName

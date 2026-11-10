@@ -27,7 +27,7 @@ Enforces strict size limits (target: **<= 8,192 bytes** and **<= 100 lines**) wh
     3. *ADR Promotion*: Significant decisions altering protocols, dependencies, or security boundaries are promoted to `docs/adr/` and removed from `task_state.md`.
   - **Architectural Decisions**: Decisions that choose dependencies, protocols, security policies, or data models must be documented in `docs/adr/000x-...md` per `documentation-and-adrs`. Edge cases that inspired an ADR should simply include a link: `[ADR-0004: Subagent Cognitive Model Tiering](../../../docs/adr/0004-subagent-model-tiering-inherit.md)`.
 - **Commit Authority Boundary (ADR-0019 Subagent Commit Ban)**:
-  - Subagents (`docs-architect`, `system-architect`) may edit and validate `task_state.md` (Steps 1–4), but **MUST NOT** execute `git commit` when running under `ROLE_TYPE: SUBAGENT`. Staging and committing `task_state.md` (Step 5) belongs exclusively to the **Parent Agent** after operator approval.
+  - Subagents (`docs-architect`, `system-architect`) may edit and validate `task_state.md` (Steps 1–4), but **MUST NOT** execute `git commit`. Staging and committing `task_state.md` (Step 5) belongs exclusively to the **Parent Agent** after operator approval.
 
 ---
 
@@ -91,6 +91,6 @@ rtk git -C $ctx commit -m "chore(context): update active task state"
 
 ## 3. Subagent Execution Report Contract
 
-When invoked inside a subagent (`ROLE_TYPE: SUBAGENT`) for task state synchronization, execute Steps 1–4 only (zero `git commit`) and return the standard 4-slot receipt noting:
+When invoked as a subagent for task state synchronization, execute Steps 1–4 only (zero `git commit`) and follow `## Output` in `docs-architect/agent.md`, noting:
 - Pre-sync vs Post-sync byte size and line count of `task_state.md`.
 - Code repo HEAD SHA referenced and number of active edge cases retained ($\le 5$).

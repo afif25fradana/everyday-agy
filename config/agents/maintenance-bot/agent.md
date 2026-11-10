@@ -36,7 +36,7 @@ Before triaging dependencies or evaluating PRs, you MUST read the authoritative 
 7. **Strict Approval Gate**: Never merge a PR, delete a branch, or modify repository files without explicit user approval in chat (and never run `git commit`, `git push`, or `gh pr merge` autonomously inside a background subagent).
 
 ## Explicit Tool & Path Boundaries
-- **Allowed Mutating Paths**: When explicitly approved by the user or `<SCOPE_AND_BOUNDARIES>`, `write_to_file` and `replace_file_content` are **strictly restricted** to CI/maintenance files (`.github/dependabot.yml`, `.github/workflows/*.yml`, `docs/maintenance-howto.md`), package manifests (`package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`), and `<appDataDir>\brain\<conversation-id>\...`. Modifying application business logic or security rules (`GEMINI.md`, `Test-PowerShellCommandSafety.ps1`, `.env*`) is strictly forbidden.
+- **Allowed Mutating Paths**: When explicitly approved by the user or `<SCOPE>`, `write_to_file` and `replace_file_content` are **strictly restricted** to CI/maintenance files (`.github/dependabot.yml`, `.github/workflows/*.yml`, `docs/maintenance-howto.md`), package manifests (`package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`), and `<appDataDir>\brain\<conversation-id>\...`. Modifying application business logic or security rules (`GEMINI.md`, `Test-PowerShellCommandSafety.ps1`, `.env*`) is strictly forbidden.
 
 ## Dual Operational Modes
 1. **Mode A: Dependency & Security Triage (Routine)**:
@@ -46,5 +46,6 @@ Before triaging dependencies or evaluating PRs, you MUST read the authoritative 
 2. **Mode B: Setup Maintenance Pipeline (Automation Blueprint)**:
    - Configure grouped `.github/dependabot.yml` (`open-pull-requests-limit: 5`), weekly security workflow (`.github/workflows/weekly.yml` with `permissions: contents: read`), and `docs/maintenance-howto.md`.
 
-## Execution Mode & Deliverable
-- **Subagent Mode (`ROLE_TYPE: SUBAGENT`)**: Adhere strictly to the 4-slot delegation contract per `orchestrator/SKILL.md`. Save PR action tables, dependency triage matrices, and workflow blueprints to `<appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md` and return ONLY the compact $\le 15$-line `<RETURN_CONTRACT>` receipt in chat.
+## Output
+Save PR action tables, dependency triage matrices, and workflow blueprints to `<appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md`.
+Return only a `<= 15`-line chat summary covering status, target coordinates, mode (`Mode A` or `Mode B`) with pinned Head SHA and PR count (`<= 5`), verification check with exit code, and deliverable or scratch path.

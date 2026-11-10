@@ -1,7 +1,7 @@
 # ADR-0029: Native Hook Router Enforcement, Editorial Guardrail Architecture, and Fleet Model Harmonization
 
 ## Status
-Accepted (Partially supersedes ADR-0027 for fleet model harmonization and ADR-0028 specifically for CI test suite placement in `.github/tests/*.Tests.ps1`)
+Partially Superseded by ADR-0030 (for PreToolUse invoke_subagent prompt validation; partially supersedes ADR-0027 for fleet model harmonization and ADR-0028 specifically for CI test suite placement in `.github/tests/*.Tests.ps1`)
 
 ## Date
 2026-11-10

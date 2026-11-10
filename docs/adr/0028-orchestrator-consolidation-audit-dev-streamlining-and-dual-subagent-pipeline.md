@@ -1,7 +1,7 @@
 # ADR-0028: Orchestrator Script Consolidation, Audit-Dev Streamlining, and Dual-Subagent Pipeline
 
 ## Status
-Accepted (Partially Superseded by ADR-0029 for CI test suite relocation to .github/tests/*.Tests.ps1)
+Partially Superseded by ADR-0029 (for CI test suite relocation to .github/tests/*.Tests.ps1) and ADR-0030 (for orchestrator references/subagent-patterns.md)
 
 ## Date
 2026-11-09

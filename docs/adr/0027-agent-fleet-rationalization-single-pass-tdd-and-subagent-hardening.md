@@ -1,7 +1,7 @@
 # ADR-0027: Agent Fleet Rationalization, Single-Pass TDD, and Subagent Hardening
 
 ## Status
-Partially Superseded (ADR-0029)
+Partially Superseded (ADR-0029, ADR-0030)
 
 ## Date
 2026-11-09

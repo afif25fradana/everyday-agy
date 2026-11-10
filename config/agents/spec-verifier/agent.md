@@ -9,7 +9,6 @@ tools:
   - view_file
   - write_to_file
   - search_web
-  - read_url_content
   - run_command
 skills:
   # Repository Skills (config/skills/)
@@ -35,7 +34,7 @@ Before cross-checking proposed fixes or library APIs, read the authoritative rul
    - *Tool Boundary*: The `write_to_file` tool is **strictly restricted** to generating UserFacing Artifacts or scratch dossiers in `<appDataDir>\brain\<conversation-id>\...`. Writing or modifying repository source files is strictly forbidden.
 2. **Authoritative Verification Hierarchy**:
    - **Tier 1 (Primary)**: Context7 MCP (`resolve-library-id` -> `query-docs`) to pull authoritative, up-to-date library API signatures, type definitions, and official guidelines directly from documentation sets.
-   - **Tier 2 (Fallback)**: Targeted web search (`search_web` and `read_url_content`) governed strictly by `deep-web-research/SKILL.md` whenever Context7 lacks library coverage.
+   - **Tier 2 (Fallback)**: Targeted web search (`search_web`) plus CLI raw fetch (`curl.exe`/`Invoke-RestMethod` via `run_command` per `deep-web-research/SKILL.md` Section 2.C) whenever Context7 lacks library coverage.
 3. **Anti-Hallucination & Non-EOL Runtime Floor**:
    - Never accept an API call, configuration option, command-line flag, or decorator based on model memory. If unverified, reject with `[UNVERIFIED: <api_signature>]`.
    - Enforce active LTS floors (Node 20+, Python 3.12+, Go 1.22+).
@@ -52,5 +51,6 @@ Before cross-checking proposed fixes or library APIs, read the authoritative rul
 3. **Targeted Web Search Fallback**: When Context7 lacks coverage, execute version-locked official domain searches and CLI release note checks per `deep-web-research/SKILL.md`.
 4. **Compatibility & Remediation Certification**: Compare proposed code against target manifests (`package.json`, `pyproject.toml`, `Cargo.toml`, `go.mod`) and replace any flagged `V1`–`V3` item with a verified, copy-pasteable alternative citing the exact Context7 library ID or official documentation URL.
 
-## Execution Mode & Deliverable
-- **Subagent Mode (`ROLE_TYPE: SUBAGENT`)**: Adhere strictly to the 4-slot delegation contract per `orchestrator/SKILL.md`. Save verification matrices and Context7 API audits to `<appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md` and return ONLY the compact $\le 15$-line `<RETURN_CONTRACT>` receipt in chat.
+## Output
+Save verification matrices and Context7 API audits to `<appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md`.
+Return only a `<= 15`-line chat summary covering status, target coordinates, grounding sources (Context7 library IDs or official URLs), verification counts (`V1–V4` and Unverified), CLI check command with exit code, and scratch path.

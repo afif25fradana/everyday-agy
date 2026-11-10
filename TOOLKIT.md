@@ -121,7 +121,7 @@ Specialized agents available for delegation in Antigravity across an 8 `inherit`
 | **system-architect** | `model: inherit` | Read, Spec/Artifact Write, Run, MCP (inheritMcp: true) | Contract-first API design, Socratic planning, and specification modeling (`spec-kit`). |
 | **code-auditor** | `model: inherit` | Read, Artifact Write, Run, MCP (inheritMcp: true) *(Read-Only)* | Whole-repo health, security attack surface, database schema & migration safety, and test integrity. |
 | **silent-failure-hunter** | `model: inherit` | Read, Artifact Write, Run *(Read-Only)* | Hunts silent failures, swallowed exceptions, and empty error handling blocks. |
-| **spec-verifier** | `model: inherit` | Read, Artifact Write, Search, Read URL, Run, MCP (inheritMcp: true) *(Read-Only)* | Cross-checks proposed fixes and API contracts against Context7 MCP and official vendor docs. |
+| **spec-verifier** | `model: inherit` | Read, Artifact Write, Search, Run, MCP (inheritMcp: true) *(Read-Only)* | Cross-checks proposed fixes and API contracts against Context7 MCP and official vendor docs. |
 | **tdd-guide** | `model: inherit` | Read, Write, Replace, Run | Guides Single-Pass Test-Driven Development (Red-Green-Refactor cycles; Iron Law adapted from [obra/superpowers](https://github.com/obra/superpowers)). |
 | **build-error-resolver** | `model: flash` | Read, Replace, Run, MCP (inheritMcp: true) *(No write)* | Resolves compiler, typecheck, and build errors with shortest working diffs. |
 | **docs-architect** | `model: inherit` | Read, Write, Replace, Run | Modernizes technical documentation, sole owner of Nygard ADRs, public repository docs, and synchronizes AI-Context repositories (ADR-0017, ADR-0027, ADR-0029). |
@@ -133,11 +133,10 @@ Specialized agents available for delegation in Antigravity across an 8 `inherit`
 
 ## 6. Native Antigravity Runtime Hooks
 
-Native event handlers configured in `config/hooks.json` and routed via `config/scripts/Invoke-AntigravityHook.ps1` (ADR-0029):
+Native event handlers configured in `config/hooks.json` and routed via `config/scripts/Invoke-AntigravityHook.ps1` (ADR-0029, ADR-0030):
 
 | Hook Event | Matcher | Enforcement & Safety Gates |
 |---|---|---|
 | **PreToolUse** | `run_command` | Intercepts commands and validates syntax safety via PowerShell AST parser (`Test-PowerShellCommandSafety.ps1`), blocking dangerous shell operations (`rm -rf`, `git push --force`, `git clean -fdx`). |
 | **PreToolUse** | `view_file`<br>`replace_file_content`<br>`multi_replace_file_content`<br>`write_to_file` | Enforces credential and secret deny-path rules only (`Test-DenyPath`: `.env*` except `.env.example`/`.env.sample`/`.env.template`, `~/.ssh`, `~/.aws`, `~/.gnupg`, `*.key`, `*.pem`, Antigravity `mcp/**`); does not restrict workspace or role boundaries. |
-| **PreToolUse** | `invoke_subagent` | Validates 4-slot subagent prompt contracts (`ROLE_AND_OBJECTIVE`, `SCOPE_AND_BOUNDARIES`, `TOOLS_AND_ABSOLUTE_SKILL_PATHS`, `RETURN_CONTRACT`) and supported model tiers (`inherit`, `flash`, `pro`). |
 | **PostToolUse** | `write_to_file`<br>`replace_file_content`<br>`multi_replace_file_content` | Performs automatic diff injection via `Update-Gate2Diff.ps1` when `gate2_handoff.md` contains `{{VERBATIM_GIT_DIFF}}` or `{{VERBATIM_GIT_DIFFSTAT}}`. |

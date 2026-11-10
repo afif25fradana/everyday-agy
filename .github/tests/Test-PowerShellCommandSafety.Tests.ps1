@@ -464,89 +464,73 @@ try {
         Assert-HookCondition -Name "Guard 2 ($($g2.Tool)): $($g2.Label) -> $($g2.Expected)" -Condition ($res.ExitCode -eq 0 -and $res.SingleJson -and $res.Parsed.decision -eq $g2.Expected) -Details "out=$($res.StdOut)"
     }
 
-    # Guard 3: invoke_subagent 4-Slot Delegation Contract & Model Alias Gate
-    $validPrompt = "<ROLE_AND_OBJECTIVE>Audit code</ROLE_AND_OBJECTIVE>`n<SCOPE_AND_BOUNDARIES>Read-only</SCOPE_AND_BOUNDARIES>`n<TOOLS_AND_ABSOLUTE_SKILL_PATHS>view_file</TOOLS_AND_ABSOLUTE_SKILL_PATHS>`n<RETURN_CONTRACT>Status: PASS</RETURN_CONTRACT>"
-    $missingTagPrompt = "<ROLE_AND_OBJECTIVE>Audit code</ROLE_AND_OBJECTIVE>`n<SCOPE_AND_BOUNDARIES>Read-only</SCOPE_AND_BOUNDARIES>`n<TOOLS_AND_ABSOLUTE_SKILL_PATHS>view_file</TOOLS_AND_ABSOLUTE_SKILL_PATHS>"
-    $expectedMissingTagReason = "Blocked by Orchestrator Hook: Subagent prompt is missing mandatory 4-Slot Delegation Contract tags (<ROLE_AND_OBJECTIVE>, <SCOPE_AND_BOUNDARIES>, <TOOLS_AND_ABSOLUTE_SKILL_PATHS>, <RETURN_CONTRACT>). Read ~/.gemini/config/skills/orchestrator/references/subagent-patterns.md and include all 4 tags."
+    # Guard 3 removed: invoke_subagent passes through without 4-slot tag or model blocking
+    $threeSlotPrompt = "<OBJECTIVE>Inspect parser edge cases</OBJECTIVE>`n<SCOPE>config/scripts/** (read-only)</SCOPE>`n<DELIVERABLE>Compact receipt</DELIVERABLE>"
 
-    $g3ArrayAllow = Invoke-HookCli -EventName "PreToolUse" -HomeOverride $isolatedHome -JsonInput (@{
+    $subagentTeamwork = Invoke-HookCli -EventName "PreToolUse" -HomeOverride $isolatedHome -JsonInput (@{
+        toolCall = @{
+            name = "invoke_subagent"
+            args = @{
+                Subagents = @{
+                    TypeName = "teamwork"
+                    Model    = "inherit"
+                    Prompt   = "Requested team: council`nEvaluate auth boundaries."
+                }
+            }
+        }
+    } | ConvertTo-Json -Depth 6 -Compress)
+    Assert-HookCondition -Name "invoke_subagent pass-through allows TypeName=teamwork with Requested team prompt" -Condition ($subagentTeamwork.ExitCode -eq 0 -and $subagentTeamwork.SingleJson -and $subagentTeamwork.Parsed.decision -eq "allow" -and $subagentTeamwork.StdOut.Trim() -eq '{"decision":"allow"}') -Details "out=$($subagentTeamwork.StdOut)"
+
+    $subagentThreeSlot = Invoke-HookCli -EventName "PreToolUse" -HomeOverride $isolatedHome -JsonInput (@{
+        toolCall = @{
+            name = "invoke_subagent"
+            args = @{
+                Subagents = @{
+                    TypeName = "code-auditor"
+                    Model    = "inherit"
+                    Prompt   = $threeSlotPrompt
+                }
+            }
+        }
+    } | ConvertTo-Json -Depth 6 -Compress)
+    Assert-HookCondition -Name "invoke_subagent pass-through allows 3-slot XML prompt (<OBJECTIVE>/<SCOPE>/<DELIVERABLE>)" -Condition ($subagentThreeSlot.ExitCode -eq 0 -and $subagentThreeSlot.SingleJson -and $subagentThreeSlot.Parsed.decision -eq "allow" -and $subagentThreeSlot.StdOut.Trim() -eq '{"decision":"allow"}') -Details "out=$($subagentThreeSlot.StdOut)"
+
+    $subagentResearch = Invoke-HookCli -EventName "PreToolUse" -HomeOverride $isolatedHome -JsonInput (@{
+        toolCall = @{
+            name = "invoke_subagent"
+            args = @{
+                TypeName = "research"
+                Prompt   = "Search repo for hook matcher usages and return file paths."
+            }
+        }
+    } | ConvertTo-Json -Depth 6 -Compress)
+    Assert-HookCondition -Name "invoke_subagent pass-through allows untagged built-in research prompt" -Condition ($subagentResearch.ExitCode -eq 0 -and $subagentResearch.SingleJson -and $subagentResearch.Parsed.decision -eq "allow" -and $subagentResearch.StdOut.Trim() -eq '{"decision":"allow"}') -Details "out=$($subagentResearch.StdOut)"
+
+    $subagentSelf = Invoke-HookCli -EventName "PreToolUse" -HomeOverride $isolatedHome -JsonInput (@{
+        toolCall = @{
+            name = "invoke_subagent"
+            args = @{
+                TypeName = "self"
+                prompt   = "Summarize test suite results without delegation tags."
+            }
+        }
+    } | ConvertTo-Json -Depth 6 -Compress)
+    Assert-HookCondition -Name "invoke_subagent pass-through allows untagged built-in self prompt" -Condition ($subagentSelf.ExitCode -eq 0 -and $subagentSelf.SingleJson -and $subagentSelf.Parsed.decision -eq "allow" -and $subagentSelf.StdOut.Trim() -eq '{"decision":"allow"}') -Details "out=$($subagentSelf.StdOut)"
+
+    $subagentArray = Invoke-HookCli -EventName "PreToolUse" -HomeOverride $isolatedHome -JsonInput (@{
         toolCall = @{
             name = "invoke_subagent"
             args = @{
                 Subagents = @(
-                    @{ TypeName = "tdd-guide"; Model = "inherit"; Prompt = $validPrompt },
-                    @{ TypeName = "ui-crafter"; Model = "flash"; Prompt = $validPrompt },
-                    @{ TypeName = "spec-verifier"; Model = "pro"; Prompt = $validPrompt }
+                    @{ TypeName = "teamwork"; Model = "inherit"; Prompt = "Requested team: quick-review`nCheck diff." },
+                    @{ TypeName = "tdd-guide"; Model = "flash"; Prompt = $threeSlotPrompt },
+                    @{ TypeName = "research"; Prompt = "Locate all callers of Test-DenyPath." },
+                    @{ TypeName = "tdd-guide"; Model = "sonnet"; Prompt = "Plain prompt without model restriction." }
                 )
             }
         }
     } | ConvertTo-Json -Depth 6 -Compress)
-    Assert-HookCondition -Name "Guard 3 allows Subagents array with 4-slot tags and inherit/flash/pro models" -Condition ($g3ArrayAllow.ExitCode -eq 0 -and $g3ArrayAllow.SingleJson -and $g3ArrayAllow.Parsed.decision -eq "allow") -Details "out=$($g3ArrayAllow.StdOut)"
-
-    $g3ArrayDeny = Invoke-HookCli -EventName "PreToolUse" -HomeOverride $isolatedHome -JsonInput (@{
-        toolCall = @{
-            name = "invoke_subagent"
-            args = @{
-                Subagents = @(
-                    @{ TypeName = "tdd-guide"; Model = "inherit"; Prompt = $validPrompt },
-                    @{ TypeName = "code-auditor"; Model = "inherit"; Prompt = $missingTagPrompt }
-                )
-            }
-        }
-    } | ConvertTo-Json -Depth 6 -Compress)
-    Assert-HookCondition -Name "Guard 3 denies Subagents array item missing tag with exact reason" -Condition ($g3ArrayDeny.ExitCode -eq 0 -and $g3ArrayDeny.SingleJson -and $g3ArrayDeny.Parsed.decision -eq "deny" -and $g3ArrayDeny.Parsed.reason -eq $expectedMissingTagReason) -Details "out=$($g3ArrayDeny.StdOut)"
-
-    $g3SingleAllow = Invoke-HookCli -EventName "PreToolUse" -HomeOverride $isolatedHome -JsonInput (@{
-        toolCall = @{
-            name = "invoke_subagent"
-            args = @{
-                Subagents = @{ TypeName = "code-auditor"; Model = "inherit"; Prompt = $validPrompt }
-            }
-        }
-    } | ConvertTo-Json -Depth 6 -Compress)
-    Assert-HookCondition -Name "Guard 3 allows Subagents single-object shape with 4-slot tags" -Condition ($g3SingleAllow.ExitCode -eq 0 -and $g3SingleAllow.SingleJson -and $g3SingleAllow.Parsed.decision -eq "allow") -Details "out=$($g3SingleAllow.StdOut)"
-
-    $g3SingleDeny = Invoke-HookCli -EventName "PreToolUse" -HomeOverride $isolatedHome -JsonInput (@{
-        toolCall = @{
-            name = "invoke_subagent"
-            args = @{
-                Subagents = @{ TypeName = "code-auditor"; Prompt = $missingTagPrompt }
-            }
-        }
-    } | ConvertTo-Json -Depth 6 -Compress)
-    Assert-HookCondition -Name "Guard 3 denies Subagents single-object missing tag with exact reason" -Condition ($g3SingleDeny.ExitCode -eq 0 -and $g3SingleDeny.SingleJson -and $g3SingleDeny.Parsed.decision -eq "deny" -and $g3SingleDeny.Parsed.reason -eq $expectedMissingTagReason) -Details "out=$($g3SingleDeny.StdOut)"
-
-    $g3DirectAllow = Invoke-HookCli -EventName "PreToolUse" -HomeOverride $isolatedHome -JsonInput (@{
-        toolCall = @{
-            name = "invoke_subagent"
-            args = @{
-                Prompt = $validPrompt
-            }
-        }
-    } | ConvertTo-Json -Depth 6 -Compress)
-    Assert-HookCondition -Name "Guard 3 allows direct toolCall.args.Prompt with 4-slot tags" -Condition ($g3DirectAllow.ExitCode -eq 0 -and $g3DirectAllow.SingleJson -and $g3DirectAllow.Parsed.decision -eq "allow") -Details "out=$($g3DirectAllow.StdOut)"
-
-    $g3DirectDeny = Invoke-HookCli -EventName "PreToolUse" -HomeOverride $isolatedHome -JsonInput (@{
-        toolCall = @{
-            name = "invoke_subagent"
-            args = @{
-                prompt = $missingTagPrompt
-            }
-        }
-    } | ConvertTo-Json -Depth 6 -Compress)
-    Assert-HookCondition -Name "Guard 3 denies direct lowercase args.prompt missing tag with exact reason" -Condition ($g3DirectDeny.ExitCode -eq 0 -and $g3DirectDeny.SingleJson -and $g3DirectDeny.Parsed.decision -eq "deny" -and $g3DirectDeny.Parsed.reason -eq $expectedMissingTagReason) -Details "out=$($g3DirectDeny.StdOut)"
-
-    $g3BadModel = Invoke-HookCli -EventName "PreToolUse" -HomeOverride $isolatedHome -JsonInput (@{
-        toolCall = @{
-            name = "invoke_subagent"
-            args = @{
-                Subagents = @(
-                    @{ TypeName = "tdd-guide"; Model = "sonnet"; Prompt = $validPrompt }
-                )
-            }
-        }
-    } | ConvertTo-Json -Depth 6 -Compress)
-    Assert-HookCondition -Name "Guard 3 denies invalid subagent Model alias (sonnet)" -Condition ($g3BadModel.ExitCode -eq 0 -and $g3BadModel.SingleJson -and $g3BadModel.Parsed.decision -eq "deny") -Details "out=$($g3BadModel.StdOut)"
+    Assert-HookCondition -Name "invoke_subagent pass-through allows Subagents array payloads" -Condition ($subagentArray.ExitCode -eq 0 -and $subagentArray.SingleJson -and $subagentArray.Parsed.decision -eq "allow" -and $subagentArray.StdOut.Trim() -eq '{"decision":"allow"}') -Details "out=$($subagentArray.StdOut)"
 
     # Guard 4: PostToolUse gate2_handoff.md diff injection & stdout isolation
     $postRepo = Join-Path $hookTempDir "post_repo"
@@ -649,6 +633,8 @@ try {
         (Join-Path $syncRepo "config/agents/tdd-guide"),
         (Join-Path $syncRepo "config/skills/orchestrator"),
         (Join-Path $syncRepo "docs/adr"),
+        (Join-Path $syncHome ".gemini/docs/adr"),
+        (Join-Path $syncHome ".gemini/config/docs/adr"),
         (Join-Path $syncHome ".gemini/config/skills/custom-external-skill"),
         (Join-Path $syncHome ".gemini/config/skills/audit-dev-workflow"),
         (Join-Path $syncHome ".gemini/config/skills/orchestrator"),
@@ -666,6 +652,8 @@ try {
     Set-Content -LiteralPath (Join-Path $syncRepo "config/skills/orchestrator/SKILL.md") -Value "name: orchestrator" -Encoding utf8
     Set-Content -LiteralPath (Join-Path $syncRepo "docs/adr/README.md") -Value "# ADR" -Encoding utf8
 
+    Set-Content -LiteralPath (Join-Path $syncHome ".gemini/docs/adr/0001-old.md") -Value "# Old ADR" -Encoding utf8
+    Set-Content -LiteralPath (Join-Path $syncHome ".gemini/config/docs/adr/0001-old.md") -Value "# Legacy Old ADR" -Encoding utf8
     Set-Content -LiteralPath (Join-Path $syncHome ".gemini/config/hooks.json") -Value '{"old":true}' -Encoding utf8
     Set-Content -LiteralPath (Join-Path $syncHome ".gemini/config/skills/custom-external-skill/SKILL.md") -Value "external" -Encoding utf8
     Set-Content -LiteralPath (Join-Path $syncHome ".gemini/config/skills/audit-dev-workflow/SKILL.md") -Value "retired" -Encoding utf8
@@ -674,20 +662,26 @@ try {
     Set-Content -LiteralPath (Join-Path $syncHome ".gemini/config/plugins/my-marketplace-plugin/plugin.json") -Value "{}" -Encoding utf8
 
     $psExe = if ($PSVersionTable.PSEdition -eq "Core") { (Get-Process -Id $PID).Path } else { Join-Path $PSHOME "powershell.exe" }
-    $restorePsi = New-Object System.Diagnostics.ProcessStartInfo
-    $restorePsi.FileName = $psExe
-    $restorePsi.Arguments = "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File `"$(Join-Path $syncRepo 'restore.ps1')`""
-    $restorePsi.UseShellExecute = $false
-    $restorePsi.RedirectStandardOutput = $true
-    $restorePsi.RedirectStandardError = $true
-    $restorePsi.EnvironmentVariables["USERPROFILE"] = $syncHome
-    $restorePsi.EnvironmentVariables["HOME"] = $syncHome
-    $rProc = [System.Diagnostics.Process]::Start($restorePsi)
-    $rOut = $rProc.StandardOutput.ReadToEndAsync()
-    $rErr = $rProc.StandardError.ReadToEndAsync()
-    $rProc.WaitForExit()
-    $null = $rOut.Result
-    $null = $rErr.Result
+    function Invoke-SandboxScript {
+        param([string]$ScriptPath)
+        $psi = New-Object System.Diagnostics.ProcessStartInfo
+        $psi.FileName = $psExe
+        $psi.Arguments = "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File `"$ScriptPath`""
+        $psi.UseShellExecute = $false
+        $psi.RedirectStandardOutput = $true
+        $psi.RedirectStandardError = $true
+        $psi.EnvironmentVariables["USERPROFILE"] = $syncHome
+        $psi.EnvironmentVariables["HOME"] = $syncHome
+        $proc = [System.Diagnostics.Process]::Start($psi)
+        $outTask = $proc.StandardOutput.ReadToEndAsync()
+        $errTask = $proc.StandardError.ReadToEndAsync()
+        $proc.WaitForExit()
+        $null = $outTask.Result
+        $null = $errTask.Result
+        return $proc.ExitCode
+    }
+
+    $restoreExit = Invoke-SandboxScript -ScriptPath (Join-Path $syncRepo "restore.ps1")
 
     $externalPreserved = Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/skills/custom-external-skill/SKILL.md")
     $pluginPreserved = Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/plugins/my-marketplace-plugin/plugin.json")
@@ -697,9 +691,14 @@ try {
     $hooksDeployed = Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/hooks.json")
     $scriptDeployed = Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/scripts/Invoke-AntigravityHook.ps1")
     $hooksBackedUp = @(Get-ChildItem -Path (Join-Path $syncHome ".gemini") -Filter "backup_*" -Directory | ForEach-Object { Join-Path $_.FullName "hooks.json" } | Where-Object { Test-Path $_ }).Count -gt 0
+    $docsAdrGone = -not (Test-Path -LiteralPath (Join-Path $syncHome ".gemini/docs/adr"))
+    $docsParentGone = -not (Test-Path -LiteralPath (Join-Path $syncHome ".gemini/docs"))
+    $legacyDocsAdrGone = -not (Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/docs/adr"))
+    $legacyDocsParentGone = -not (Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/docs"))
 
-    Assert-HookCondition -Name "restore.ps1 preserves unrecognized skills & plugins while pruning only retired repo names and skill orphans" -Condition ($rProc.ExitCode -eq 0 -and $externalPreserved -and $pluginPreserved -and $retiredAgentGone -and $retiredSkillGone -and $orphanFileGone) -Details "ext=$externalPreserved plug=$pluginPreserved retA=$retiredAgentGone retS=$retiredSkillGone orph=$orphanFileGone"
+    Assert-HookCondition -Name "restore.ps1 preserves unrecognized skills & plugins while pruning only retired repo names and skill orphans" -Condition ($restoreExit -eq 0 -and $externalPreserved -and $pluginPreserved -and $retiredAgentGone -and $retiredSkillGone -and $orphanFileGone) -Details "ext=$externalPreserved plug=$pluginPreserved retA=$retiredAgentGone retS=$retiredSkillGone orph=$orphanFileGone"
     Assert-HookCondition -Name "restore.ps1 backs up and deploys hooks.json and scripts/" -Condition ($hooksDeployed -and $scriptDeployed -and $hooksBackedUp)
+    Assert-HookCondition -Name "restore.ps1 prunes ~/.gemini/docs/adr, ~/.gemini/config/docs/adr, and empty parent docs/ directories" -Condition ($restoreExit -eq 0 -and $docsAdrGone -and $docsParentGone -and $legacyDocsAdrGone -and $legacyDocsParentGone) -Details "docsAdrGone=$docsAdrGone docsParentGone=$docsParentGone legacyAdrGone=$legacyDocsAdrGone legacyParentGone=$legacyDocsParentGone"
 
     # Verify sync.ps1 pulls back only tracked items and guards against empty source deletion
     New-Item -ItemType Directory -Path (Join-Path $syncHome ".gemini/config/agents/untracked-user-agent") -Force | Out-Null
@@ -707,27 +706,39 @@ try {
     Set-Content -LiteralPath (Join-Path $syncHome ".gemini/config/hooks.json") -Value '{"updatedByUser":true}' -Encoding utf8
     Remove-Item -LiteralPath (Join-Path $syncHome ".gemini/config/skills/orchestrator/SKILL.md") -Force
 
-    $syncPsi = New-Object System.Diagnostics.ProcessStartInfo
-    $syncPsi.FileName = $psExe
-    $syncPsi.Arguments = "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File `"$(Join-Path $syncRepo 'sync.ps1')`""
-    $syncPsi.UseShellExecute = $false
-    $syncPsi.RedirectStandardOutput = $true
-    $syncPsi.RedirectStandardError = $true
-    $syncPsi.EnvironmentVariables["USERPROFILE"] = $syncHome
-    $syncPsi.EnvironmentVariables["HOME"] = $syncHome
-    $sProc = [System.Diagnostics.Process]::Start($syncPsi)
-    $sOut = $sProc.StandardOutput.ReadToEndAsync()
-    $sErr = $sProc.StandardError.ReadToEndAsync()
-    $sProc.WaitForExit()
-    $null = $sOut.Result
-    $null = $sErr.Result
+    $repoAdrReadme = Join-Path $syncRepo "docs/adr/README.md"
+    $adrSentinelUtc = [datetime]::SpecifyKind([datetime]"2020-01-01T00:00:00", [System.DateTimeKind]::Utc)
+    [System.IO.File]::SetLastWriteTimeUtc($repoAdrReadme, $adrSentinelUtc)
+    $adrAbsentBeforeSync = -not (Test-Path -LiteralPath (Join-Path $syncHome ".gemini/docs/adr"))
+
+    $syncExit = Invoke-SandboxScript -ScriptPath (Join-Path $syncRepo "sync.ps1")
 
     $syncedHooks = (Get-Content -LiteralPath (Join-Path $syncRepo "config/hooks.json") -Raw).Trim() -eq '{"updatedByUser":true}'
     $ignoredUntrackedAgent = -not (Test-Path -LiteralPath (Join-Path $syncRepo "config/agents/untracked-user-agent"))
     $ignoredExternalSkill = -not (Test-Path -LiteralPath (Join-Path $syncRepo "config/skills/custom-external-skill"))
     $emptySourcePreserved = Test-Path -LiteralPath (Join-Path $syncRepo "config/skills/orchestrator/SKILL.md")
+    $adrReadmeUntouched = (Test-Path -LiteralPath $repoAdrReadme) -and ([System.IO.File]::GetLastWriteTimeUtc($repoAdrReadme) -eq $adrSentinelUtc) -and ((Get-Content -LiteralPath $repoAdrReadme -Raw).Trim() -eq "# ADR")
 
-    Assert-HookCondition -Name "sync.ps1 pulls back tracked hooks.json, ignores unrecognized agents/skills, and guards against empty source deletion" -Condition ($sProc.ExitCode -eq 0 -and $syncedHooks -and $ignoredUntrackedAgent -and $ignoredExternalSkill -and $emptySourcePreserved) -Details "hooks=$syncedHooks ignA=$ignoredUntrackedAgent ignS=$ignoredExternalSkill emptyGuard=$emptySourcePreserved"
+    Assert-HookCondition -Name "sync.ps1 pulls back tracked hooks.json, ignores unrecognized agents/skills, and guards against empty source deletion" -Condition ($syncExit -eq 0 -and $syncedHooks -and $ignoredUntrackedAgent -and $ignoredExternalSkill -and $emptySourcePreserved) -Details "hooks=$syncedHooks ignA=$ignoredUntrackedAgent ignS=$ignoredExternalSkill emptyGuard=$emptySourcePreserved"
+    Assert-HookCondition -Name "sync.ps1 neither creates nor touches repo docs/adr/README.md when ~/.gemini/docs/adr is absent" -Condition ($syncExit -eq 0 -and $adrAbsentBeforeSync -and $adrReadmeUntouched) -Details "adrAbsentBeforeSync=$adrAbsentBeforeSync adrReadmeUntouched=$adrReadmeUntouched"
+
+    # Verify restore.ps1 preserves non-empty sibling files in docs/ and sync.ps1 ignores stale ~/.gemini/docs/adr
+    New-Item -ItemType Directory -Path (Join-Path $syncHome ".gemini/docs/adr"), (Join-Path $syncHome ".gemini/config/docs/adr") -Force | Out-Null
+    Set-Content -LiteralPath (Join-Path $syncHome ".gemini/docs/notes.txt") -Value "keep-docs" -Encoding utf8
+    Set-Content -LiteralPath (Join-Path $syncHome ".gemini/docs/adr/0002-stale.md") -Value "# Stale" -Encoding utf8
+    Set-Content -LiteralPath (Join-Path $syncHome ".gemini/docs/adr/README.md") -Value "# Overwrite" -Encoding utf8
+    Set-Content -LiteralPath (Join-Path $syncHome ".gemini/config/docs/notes.txt") -Value "keep-legacy-docs" -Encoding utf8
+    Set-Content -LiteralPath (Join-Path $syncHome ".gemini/config/docs/adr/0002-stale.md") -Value "# Legacy Stale" -Encoding utf8
+
+    Remove-Item -LiteralPath $repoAdrReadme -Force
+    $syncStaleExit = Invoke-SandboxScript -ScriptPath (Join-Path $syncRepo "sync.ps1")
+    $staleAdrNotSynced = (-not (Test-Path -LiteralPath $repoAdrReadme)) -and (-not (Test-Path -LiteralPath (Join-Path $syncRepo "docs/adr/0002-stale.md")))
+    Assert-HookCondition -Name "sync.ps1 never syncs or creates repo docs/adr files even when ~/.gemini/docs/adr exists" -Condition ($syncStaleExit -eq 0 -and $staleAdrNotSynced) -Details "staleAdrNotSynced=$staleAdrNotSynced"
+
+    $restoreSiblingExit = Invoke-SandboxScript -ScriptPath (Join-Path $syncRepo "restore.ps1")
+    $docsSiblingPreserved = (Test-Path -LiteralPath (Join-Path $syncHome ".gemini/docs/notes.txt")) -and (-not (Test-Path -LiteralPath (Join-Path $syncHome ".gemini/docs/adr")))
+    $legacySiblingPreserved = (Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/docs/notes.txt")) -and (-not (Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/docs/adr")))
+    Assert-HookCondition -Name "restore.ps1 preserves non-empty sibling files in ~/.gemini/docs and ~/.gemini/config/docs while pruning adr/" -Condition ($restoreSiblingExit -eq 0 -and $docsSiblingPreserved -and $legacySiblingPreserved) -Details "docsSibling=$docsSiblingPreserved legacySibling=$legacySiblingPreserved"
 } finally {
     if (Test-Path -LiteralPath $hookTempDir) {
         Remove-Item -LiteralPath $hookTempDir -Recurse -Force -ErrorAction SilentlyContinue

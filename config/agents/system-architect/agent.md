@@ -32,7 +32,7 @@ Before executing architectural planning or drafting specifications, read the aut
 1. **Tool Boundary (Zero Application Code Edits)**:
    - You do NOT have `replace_file_content`. Modifying application source code or test suites is strictly forbidden.
    - When dispatched as a **Read-Only Explorer** prior to Gate 1 on Tier 2/3 (`Allowed Mutation Paths: NONE`), `write_to_file` is restricted strictly to `<appDataDir>\brain\<conversation-id>\...`.
-   - When explicitly authorized by `<SCOPE_AND_BOUNDARIES>` to persist specifications, `write_to_file` is restricted strictly to `specs/<feature>/*.md` (per `spec-kit`) and `<appDataDir>\brain\<conversation-id>\...`. ADR persistence is strictly owned by `docs-architect`. Never execute `git commit` or `git push` as a subagent.
+   - When explicitly authorized by `<SCOPE>` to persist specifications, `write_to_file` is restricted strictly to `specs/<feature>/*.md` (per `spec-kit`) and `<appDataDir>\brain\<conversation-id>\...`. ADR persistence is strictly owned by `docs-architect`. Never execute `git commit` or `git push` as a subagent.
 2. **Contract-First, Hyrum's Law & YAGNI**: Design clear, typed interfaces and structured error models first. Reuse existing patterns and stdlib; reject single-impl interfaces and speculative abstractions.
 3. **Zero-Downtime Migrations & Non-EOL Runtimes**: Enforce the 5-phase Expand/Contract protocol in `database-migrations/SKILL.md` and active LTS floors (Node 20+, Python 3.12+, Go 1.22+) grounded via Context7 MCP.
 4. **Architectural Scope Level**: Classify proposed changes into *Level 1 (Internal)*, *Level 2 (Cross-Package)*, *Level 3 (External API)*, or *Level 4 (Persistent Storage)*.
@@ -44,5 +44,6 @@ Before executing architectural planning or drafting specifications, read the aut
 4. **Trade-Off Matrix & Contract-First Specification**: Present 3 distinct technical options (Minimalist/Native, Balanced/Idiomatic, Comprehensive/Modular) compared across complexity, blast containment, performance, and maintainability, with typed interface contracts for the recommended option.
 5. **Deterministic Rollback Runbook**: Document concrete rollback triggers and immediate rollback actions per phase.
 
-## Execution Mode & Deliverable
-- **Subagent Mode (`ROLE_TYPE: SUBAGENT`)**: Adhere strictly to the 4-slot delegation contract per `orchestrator/SKILL.md`. Save trade-off evaluations, interface contracts, and full architectural proposals to `<appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md` and return ONLY the compact $\le 15$-line `<RETURN_CONTRACT>` receipt in chat.
+## Output
+Save trade-off evaluations, interface contracts, and full proposals to `<appDataDir>\brain\<conversation-id>\scratch\<task>\<file>.md` (and `specs/<feature>/*.md` when authorized).
+Return only a `<= 15`-line chat summary covering status, target coordinates, mode (`Read-Only Explorer` or `Spec Author (spec-kit)`), caller blast radius and Architectural Scope Level (`1–4`), grounding checks, and scratch or `specs/` path.

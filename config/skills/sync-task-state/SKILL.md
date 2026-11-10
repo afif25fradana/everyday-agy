@@ -25,8 +25,8 @@ Enforces strict size limits (target: **<= 8,192 bytes** and **<= 100 lines**) wh
     1. *Active Capture*: Record tactical pitfalls into `## Known Edge Cases` during execution.
     2. *Code Inlining*: Permanent tactical workarounds are inlined directly into code comments per `clean-docs` (explaining *why*).
     3. *ADR Promotion*: Significant decisions altering protocols, dependencies, or security boundaries are promoted to `docs/adr/` and removed from `task_state.md`.
-  - **Architectural Decisions**: Decisions that choose dependencies, protocols, security policies, or data models must be documented in `docs/adr/000x-...md` per `documentation-and-adrs`. Edge cases that inspired an ADR should simply include a link: `[ADR-0004: Subagent Cognitive Model Tiering](../../../docs/adr/0004-subagent-model-tiering-inherit.md)`.
-- **Commit Authority Boundary (ADR-0019 Subagent Commit Ban)**:
+  - **Architectural Decisions**: Decisions that choose dependencies, protocols, security policies, or data models must be documented in `docs/adr/NNNN-<slug>.md` per `documentation-and-adrs`. Edge cases that inspired an ADR should simply include a link: `[ADR-0002: Agent Fleet, Model Split, and External Skills](../../../docs/adr/0002-agent-fleet-model-split-and-external-skills.md)`.
+- **Commit Authority Boundary (ADR-0001 Subagent Commit Ban)**:
   - Subagents (`docs-architect`, `system-architect`) may edit and validate `task_state.md` (Steps 1–4), but **MUST NOT** execute `git commit`. Staging and committing `task_state.md` (Step 5) belongs exclusively to the **Parent Agent** after operator approval.
 
 ---
@@ -59,7 +59,7 @@ Follow the standardized section layout:
 2. **`## Current Task`**: 1–2 sentences summarizing the active task, current objectives, and target commit `$codeHead`.
 3. **`## Completed Steps`**: Retain only the most recent **1–2 immediate milestones** relevant to current work. Remove older finished stages (already preserved in `rtk git log`).
 4. **`## Deferred / Next Milestone`**: Bulleted list of immediate backlog items or future version tasks.
-5. **`## Known Edge Cases`**: 1–2 line summaries of active edge cases, gotchas, or platform quirks (max 5 items). Link to `docs/adr/000x-....md` where applicable and remove resolved edge cases covered by regression tests.
+5. **`## Known Edge Cases`**: 1–2 line summaries of active edge cases, gotchas, or platform quirks (max 5 items). Link to `docs/adr/NNNN-<slug>.md` where applicable and remove resolved edge cases covered by regression tests.
 
 ### Step 4: Verification Gate (Size, Line & Gotcha Limits)
 Verify that `task_state.md` meets the constraints directly in pwsh:

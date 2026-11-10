@@ -1,6 +1,6 @@
 # Council Seat Catalog & Agent Mapping (`seat-catalog.md`)
 
-This catalog maps evaluation domains to specialized Antigravity custom subagents (`config/agents/`). Each seat functions as an independent reviewer during Pillar 3 council deliberation, adhering to the 8 `inherit` / 2 `flash` fleet split per ADR-0029.
+This catalog maps evaluation domains to specialized Antigravity custom subagents (`config/agents/`). Each seat functions as an independent reviewer during Pillar 3 council deliberation, adhering to the 8 `inherit` / 2 `flash` fleet split per ADR-0002.
 
 ---
 

@@ -5,7 +5,7 @@ description: "Meta-orchestrator protocol (/orchestrator) for Parent Agent: task 
 
 # Universal Lead Orchestrator Protocol (Operational Runbook)
 
-A high-rigor governance runbook enforcing Anthropic Lead-Agent context insulation, `obra/superpowers` subagent-driven development, and Antigravity multi-agent fleet coordination. Governed by `config/GEMINI.md` (`~/.gemini/GEMINI.md`), [`ADR-0019`](../../../docs/adr/0019-universal-lead-orchestrator-and-context-insulation.md), and [`ADR-0028`](../../../docs/adr/0028-orchestrator-consolidation-audit-dev-streamlining-and-dual-subagent-pipeline.md).
+A high-rigor governance runbook enforcing Anthropic Lead-Agent context insulation, `obra/superpowers` subagent-driven development, and Antigravity multi-agent fleet coordination. Governed by `config/GEMINI.md` (`~/.gemini/GEMINI.md`) and [`ADR-0001`](../../../docs/adr/0001-orchestrator-tiering-and-subagent-delegation.md).
 
 > [!TIP]
 > **Workflow Routing**: `orchestrator` is the sole authoritative operational runbook governing the end-to-end execution lifecycle across all tiers (Tier 0–3). For code quality auditing, skeptical verification, and the Five-Axis Review Rubric, consult [`audit-dev`](../audit-dev/SKILL.md).
@@ -29,7 +29,7 @@ Before opening any source file, the Parent Agent classifies task blast radius us
 *Sizing Thresholds (Canonical Definition)*:
 - **Tier 0 (`trivial`: $\le 2$ files, $\le 3$ exec / $\le 5$ doc lines, zero logic/state/schema mutation)**: Single-turn Parent fast-path post-checkpoint. Subagents and Gate 1 bypassed; pauses at `[TRIVIAL REVIEW]` before commit.
 - **Tier 1 (`small`: 1 module bugfix/enhancement)**: Autonomous Parent TDD post-checkpoint (`New-AuditCheckpoint.ps1` $\rightarrow$ RED test $\rightarrow$ GREEN fix $\rightarrow$ 5-Axis check per [`audit-dev/SKILL.md`](../audit-dev/SKILL.md) $\rightarrow$ Gate 2 `gate2_handoff.md`). Subagents optional on-demand.
-- **Tier 2 (`standard`: 2–5 files, internal boundaries)**: Lead Parent Orchestrator + Direct Specialist Subagents. Parent inline code reading strictly banned. Read-only exploration precedes Gate 1 approval and Phase 2 checkpoint.
+- **Tier 2 (`standard`: 2–5 non-test files or >1 module boundary)**: Lead Parent Orchestrator + Direct Specialist Subagents. Parent inline code reading strictly banned. Read-only exploration precedes Gate 1 approval and Phase 2 checkpoint.
 - **Tier 3 (`large`: >5 files, architectural overhaul, schema rewrite)**: Lead Parent Orchestrator + Single `teamwork` Council Review dispatch.
 - **Package Installations**: Any addition, removal, or upgrade of dependencies (regardless of file count) strictly requires Gate 1 human approval before modifying files.
 - **Mid-Execution Scope Escalation**: If execution reveals a task exceeds its initial tier boundaries (e.g. Tier 1 expanding to >2 files or crossing module boundaries):
@@ -57,7 +57,7 @@ Before opening any source file, the Parent Agent classifies task blast radius us
 ### 1.6 Subagent Commit/Push Ban, Shell Safety & Direct Parent CLI Test Runner
 - **Subagent Commit & PR Ban**: Subagents are strictly barred from running `git commit`, `git tag`, `git push`, `gh pr create`, `gh pr merge`, or `gh release create`. Commit and PR authority belongs exclusively to the Parent Agent post-Gate 2 approval.
 - **AST Shell Validation**: Any non-standard mutating or file-deleting shell command executed by Parent or Subagent must first pass `Test-PowerShellCommandSafety.ps1` per `config/GEMINI.md#L64`.
-- **Direct Parent Test Runner**: Parent must directly run the verification test command via `run_command`, verifying exit code 0 AND positive assertion count ($>0$ passed, $0$ failed per ADR-0015). For testless repos, label `[TEST HARNESS: NONE]` and verify via static compilation/linter/build checks.
+- **Direct Parent Test Runner**: Parent must directly run the verification test command via `run_command`, verifying exit code 0 AND positive assertion count ($>0$ passed, $0$ failed per ADR-0001). For testless repos, label `[TEST HARNESS: NONE]` and verify via static compilation/linter/build checks.
 
 ### 1.7 Pre-Mutation Syntax Interception (SWE-Agent Fast Syntax Gate — SSOT)
 - **Fast Syntax Gate**: Before executing test runners or presenting verification, mutators or Parent run a rapid syntax check on modified files (`node --check <file>` or `rtk npx tsc --noEmit` for Node/JS/TS, `python -m py_compile <file>` for Python, `[System.Management.Automation.Language.Parser]::ParseFile("<file>", [ref]$null, [ref]$err)` for PowerShell).
@@ -124,7 +124,7 @@ Parent dispatches targeted custom subagents directly via `invoke_subagent`:
 - Quality Gate: `code-auditor` or `silent-failure-hunter` (diff review against [`audit-dev`](../audit-dev/SKILL.md)).
 
 > [!NOTE]
-> **Dynamic Model Elevation & Workspace Mode (ADR-0015 / ADR-0029)**: Across the 10-agent fleet, `build-error-resolver` and `maintenance-bot` default to `model: flash` while the other 8 specialists default to `model: inherit`. When Parent Orchestrator runs on `flash`, `Model: "inherit"` remains on `flash`; pass `Model: "pro"` dynamically in `invoke_subagent` to elevate `spec-verifier`, `system-architect`, or `docs-architect` for third-party API verification or high-stakes architectural synthesis. Default to `Workspace: inherit` to avoid Windows file locks and `node_modules` duplication, writing intermediate reports to `<appDataDir>\brain\<conversation-id>\scratch\<task>\`.
+> **Dynamic Model Elevation & Workspace Mode (ADR-0001 / ADR-0002)**: Across the 10-agent fleet, `build-error-resolver` and `maintenance-bot` default to `model: flash` while the other 8 specialists default to `model: inherit`. When Parent Orchestrator runs on `flash`, `Model: "inherit"` remains on `flash`; pass `Model: "pro"` dynamically in `invoke_subagent` to elevate `spec-verifier`, `system-architect`, or `docs-architect` for third-party API verification or high-stakes architectural synthesis. Default to `Workspace: inherit` to avoid Windows file locks and `node_modules` duplication, writing intermediate reports to `<appDataDir>\brain\<conversation-id>\scratch\<task>\`.
 
 ---
 
@@ -156,10 +156,10 @@ Upon receiving Gate 1 approval (or immediately following Step 0 for Tier 0/1):
 1. **Code Features / Bug Fixes**: Parent dispatches `tdd-guide` under the Single-Pass TDD Protocol (Section 1.5). `tdd-guide` writes the RED test, executes the failure receipt, writes the GREEN fix, runs the Fast Syntax Gate, and verifies test success in a single continuous pass.
 2. **Domain Specialists**: When specialized tasks are required, Parent dispatches the appropriate single mutator (`ui-crafter`, `build-error-resolver`, `maintenance-bot`) strictly serialized per the Single-Writer Invariant (Section 1.3).
 3. **Conditional Mode B Duet for Public Repository Documentation**:
-   - For Tier 2/3 public/narrative repository docs (`README.md`, `TOOLKIT.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, and non-ADR `docs/**/*.md`), Parent executes a serialized two-stage duet:
+   - For Tier 2/3 public and narrative repository docs (`README.md`, `TOOLKIT.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, and general `docs/**/*.md`), Parent executes a serialized two-stage duet (major `docs/adr/**` rewrites or consolidations may optionally run Stage 3b `l10n-humanizer` Scope B prose polish under Fact Lock):
      - **Stage 3a (`docs-architect` - Mode B)**: Formulates the 4-part pragmatic README/doc structure, grounds technical claims in verified code, verifies CLI snippets, and enforces clean documentation standards.
      - **Stage 3b (`l10n-humanizer` - Scope B)**: Reviews and humanizes the drafted prose, stripping AI writing tells, marketing hyperbole, and promotional slop while strictly preserving technical facts, code blocks, and CLI flags verbatim.
-   - *Exemption*: Mode A documentation (`docs/adr/**`, `task_state.md`, architecture topology maps) and Tier 0/1 documentation edits remain single-pass on `docs-architect`.
+   - *Exemption*: Routine Mode A documentation (`docs/adr/**`, `task_state.md`, architecture topology maps) and Tier 0/1 documentation edits remain single-pass on `docs-architect`; major ADR rewrites or consolidations may optionally add `l10n-humanizer` (Scope B) Fact-Locked prose polish.
 4. **Fast Syntax Gate**: All mutating subagents run pre-mutation syntax checks before reporting completion.
 
 ### Phase 4: Local Verification & Quality Gate
@@ -217,6 +217,6 @@ Return ONLY the compact <= 15-line summary defined in ## Output of your agent.md
 | :--- | :--- | :--- |
 | *"I'll just read one target file to understand the bug."* | Reading 1 file invariably escalates to reading 5 files, burning 30k tokens and degrading reasoning. | Use `rtk rg -l` and `rtk rg -c` for Zero-Read Triage. Dispatch `system-architect` or `code-auditor`. |
 | *"Direct reading is faster than spawning a subagent."* | Inline reading pollutes Parent context, triggering middle-loss, dropped safety checks, and hallucinated test passes. | Subagent dispatch takes 1 turn and guarantees context insulation. |
-| *"The task is small enough that I don't need a subagent."* | If it crosses module boundaries (>1 module or >2 non-test files) or requires architectural redesign, it is Tier 2 by definition (ADR-0009, ADR-0015, ADR-0019, ADR-0028). | Follow the Zero-Read Triage Gate strictly; do not rationalize away Tier 2 boundaries. |
+| *"The task is small enough that I don't need a subagent."* | If it crosses module boundaries (>1 module or >2 non-test files) or requires architectural redesign, it is Tier 2 by definition (ADR-0001). | Follow the Zero-Read Triage Gate strictly; do not rationalize away Tier 2 boundaries. |
 | *"The subagent reported green, so I can commit directly."* | Subagents may mock-cheat, delete tests, or suffer from Exit Code 0 fallacies. | Parent independently runs CLI tests (`run_command`) and validates $>0$ passed assertions. |
-| *"Two subagents failed, let me read the code to fix it myself."* | Violates the 2-Attempt Stop Rule and ADR-0019 clean-fail invariant. | Execute `$HOME\.gemini\config\skills\orchestrator\scripts\Restore-AuditCheckpoint.ps1`, record failure evidence, and escalate to human operator. |
+| *"Two subagents failed, let me read the code to fix it myself."* | Violates the 2-Attempt Stop Rule and ADR-0001 clean-fail invariant. | Execute `$HOME\.gemini\config\skills\orchestrator\scripts\Restore-AuditCheckpoint.ps1`, record failure evidence, and escalate to human operator. |

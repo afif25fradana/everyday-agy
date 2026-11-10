@@ -13,7 +13,7 @@ Core development tools registered in `GEMINI.md` and verified across workflows.
 | **rtk** | LLM Token Proxy & Filter | [rtk-ai/rtk](https://github.com/rtk-ai/rtk) • [rtk-ai.app](https://rtk-ai.app) | `winget install rtk-ai.rtk` |
 | **ast-grep** (`sg`) | AST Code Search & Rewrite | [ast-grep/ast-grep](https://github.com/ast-grep/ast-grep) | `npm install -g @ast-grep/cli` *(or `winget install ast-grep`)* |
 | **gh** | GitHub CLI | [cli/cli](https://github.com/cli/cli) | `winget install GitHub.cli` |
-| **ripgrep** (`rg`) | Ultra-Fast Regex Search | [BurntSushi/ripgrep](https://github.com/BurntSushi/ripgrep) | `winget install BurntSushi.ripgrep.MSVC` |
+| **ripgrep** (`rg`) | Regex Text Search | [BurntSushi/ripgrep](https://github.com/BurntSushi/ripgrep) | `winget install BurntSushi.ripgrep.MSVC` |
 | **fzf** | Fuzzy Finder | [junegunn/fzf](https://github.com/junegunn/fzf) | `winget install junegunn.fzf` |
 | **pwsh** | PowerShell 7+ | [PowerShell/PowerShell](https://github.com/PowerShell/PowerShell) | `winget install Microsoft.PowerShell` |
 | **ffmpeg** | Media Processing | [FFmpeg](https://ffmpeg.org/) • [GyanD/codexffmpeg](https://github.com/GyanD/codexffmpeg) | `winget install Gyan.FFmpeg` |
@@ -68,13 +68,13 @@ npm install -g @ast-grep/cli
 
 ## 3. Custom Skills Catalog
 
-15 bespoke and adapted skills shipped directly within this repository (`config/skills/`), with external third-party suites decoupled into Section 4.
+15 custom and adapted skills tracked in this repository (`config/skills/`); external third-party suites are listed in Section 4.
 
 ### A. Spec-Driven & Development Workflows
 | Skill Name | Trigger / Command | Description | Upstream / Origin |
 |---|---|---|---|
 | **orchestrator** | `/orchestrator` | Lead orchestrator protocol: sizes task blast radius, insulates parent context, and coordinates subagent handoffs. | **Original Work (@afif25fradana)** /<br>Inspired by Anthropic Lead Agent & [obra/superpowers](https://github.com/obra/superpowers) |
-| **council-review** | `/council`<br>`/council-review` | Deliberative multi-agent council review panel: fact grounding, socratic alignment, and adversarial peer review. | **Original Work (@afif25fradana)** /<br>Inspired by Anthropic & Karpathy |
+| **council-review** | `/council`<br>`/council-review` | Deliberative multi-agent council review panel: fact grounding, Socratic alignment, and adversarial peer review. | **Original Work (@afif25fradana)** /<br>Inspired by Anthropic & Karpathy |
 | **academic-council** | `/academic-council`<br>`/thesis-council` | Multi-agent council for empirical capital market, accounting, and BEI thesis proposal defense. | **Original Work (@afif25fradana)** |
 | **spec-kit** | `/speckit.specify`<br>`/speckit.plan`<br>`/speckit.tasks` | Spec-Driven Development (SDD) framework to specify, architect, and generate task lists before coding. | [github/spec-kit](https://github.com/github/spec-kit) |
 | **gh-workflow** | `/gh-workflow` | GitHub CLI automation for PR creation, non-interactive CI monitoring, and PR review comments. | Antigravity Native / [cli/cli](https://github.com/cli/cli) |
@@ -83,10 +83,10 @@ npm install -g @ast-grep/cli
 ### B. Security, Standards & Architecture
 | Skill Name | Trigger / Command | Description | Upstream / Origin |
 |---|---|---|---|
-| **audit-dev** | `/audit-dev` | Standalone code quality and skeptical evaluation rubric: Two-Stage Spec-First review, Five-Axis audit rubric, 4-bucket dispute resolution, and 20 engineering pitfalls (ADR-0028). | **Original Work (@afif25fradana)** /<br>Heuristics adapted from [obra/superpowers](https://github.com/obra/superpowers) |
+| **audit-dev** | `/audit-dev` | Standalone code quality and skeptical evaluation rubric: Two-Stage Spec-First review, Five-Axis audit rubric, 4-bucket dispute resolution, and 20 engineering pitfalls (ADR-0004). | **Original Work (@afif25fradana)** /<br>Heuristics adapted from [obra/superpowers](https://github.com/obra/superpowers) |
 | **audit-context-building** | `/audit-context-building` | Builds codebase comprehension before security audits: maps invariants, assumptions (`nothing found`), and contracts. | **Trail of Bits**<br>[trailofbits/skills](https://github.com/trailofbits/skills)<br>*(Adapted for Google Antigravity)* |
 | **differential-review** | `/differential-review` | Security-focused differential review evaluating blast radius, test gaps, regressions, and attacker models. | **Trail of Bits**<br>[trailofbits/skills](https://github.com/trailofbits/skills)<br>*(Adapted for Google Antigravity)* |
-| **contract-first** | `/contract-first` | Schema-first API collaboration (OpenAPI, Protobuf, JSON Schema) preventing consumer/provider field drift. | Domain Best Practices / ECC Port |
+| **contract-first** | `/contract-first` | Schema-first API collaboration (OpenAPI, Protobuf, JSON Schema) to prevent consumer/provider field drift. | Domain Best Practices / ECC Port |
 | **database-migrations** | `/database-migrations` | Zero-downtime expand-contract schema changes, reversible migrations, and concurrent indexes. | Database Reliability Engineering |
 | **coding-standards** | `/coding-standards` | Baseline naming, immutability, type safety, and defensive error-handling conventions. | Universal Engineering Standards |
 | **clean-docs** | `/clean-docs` | Enforces plain-spoken repo prose, humanized conventional commits, and zero AI process leaks. | **Original Work (@afif25fradana)** |
@@ -97,9 +97,9 @@ npm install -g @ast-grep/cli
 
 ---
 
-## 4. Recommended Upstream Skills & Plugins (Decoupled per ADR-0016)
+## 4. Recommended Upstream Skills & Plugins (Decoupled per ADR-0002)
 
-These skills and plugins are maintained in their own upstream repositories with dedicated Antigravity installers. Refer to their official project documentation for installation instructions rather than tracking vendor clones in Git:
+These skills and plugins live in their own upstream repositories with dedicated installers. Follow their official docs to install them instead of tracking vendor clones in Git:
 
 | Project / Suite | Included Skills | Description | Official Documentation & Antigravity Setup |
 |---|---|---|---|
@@ -114,7 +114,7 @@ These skills and plugins are maintained in their own upstream repositories with 
 
 ## 5. Custom Subagents
 
-Specialized agents available for delegation in Antigravity across an 8 `inherit` / 2 `flash` fleet split (ADR-0027, ADR-0029):
+Specialized agents available for delegation in Antigravity across an 8 `inherit` / 2 `flash` fleet split (ADR-0002):
 
 | Agent Name | Model Tier | Tools Boundary | Core Responsibility |
 |---|:---:|---|---|
@@ -124,7 +124,7 @@ Specialized agents available for delegation in Antigravity across an 8 `inherit`
 | **spec-verifier** | `model: inherit` | Read, Artifact Write, Search, Run, MCP (inheritMcp: true) *(Read-Only)* | Cross-checks proposed fixes and API contracts against Context7 MCP and official vendor docs. |
 | **tdd-guide** | `model: inherit` | Read, Write, Replace, Run | Guides Single-Pass Test-Driven Development (Red-Green-Refactor cycles; Iron Law adapted from [obra/superpowers](https://github.com/obra/superpowers)). |
 | **build-error-resolver** | `model: flash` | Read, Replace, Run, MCP (inheritMcp: true) *(No write)* | Resolves compiler, typecheck, and build errors with shortest working diffs. |
-| **docs-architect** | `model: inherit` | Read, Write, Replace, Run | Modernizes technical documentation, sole owner of Nygard ADRs, public repository docs, and synchronizes AI-Context repositories (ADR-0017, ADR-0027, ADR-0029). |
+| **docs-architect** | `model: inherit` | Read, Write, Replace, Run | Updates technical documentation, owns Nygard ADRs and public repository docs, and syncs AI-Context repositories (ADR-0002, ADR-0005). |
 | **maintenance-bot** | `model: flash` | Read, Write, Replace, Run | Dependabot PR triage, CI failure diagnosis, and CVE remediation. |
 | **ui-crafter** | `model: inherit` | Read, Write, Replace, Run, MCP (inheritMcp: true) | Modern web UI widget creation, WCAG AA accessibility, and Generative UI design. |
 | **l10n-humanizer** | `model: inherit` | Read, Write, Replace, Run | Dual-Scope UI/UX localization (Microsoft Indonesian style guide) and second-pass bilingual prose humanization (anti-AI rules, fact lock). |
@@ -133,10 +133,10 @@ Specialized agents available for delegation in Antigravity across an 8 `inherit`
 
 ## 6. Native Antigravity Runtime Hooks
 
-Native event handlers configured in `config/hooks.json` and routed via `config/scripts/Invoke-AntigravityHook.ps1` (ADR-0029, ADR-0030):
+Native event handlers configured in `config/hooks.json` and routed via `config/scripts/Invoke-AntigravityHook.ps1` (ADR-0003):
 
 | Hook Event | Matcher | Enforcement & Safety Gates |
 |---|---|---|
-| **PreToolUse** | `run_command` | Intercepts commands and validates syntax safety via PowerShell AST parser (`Test-PowerShellCommandSafety.ps1`), blocking dangerous shell operations (`rm -rf`, `git push --force`, `git clean -fdx`). |
+| **PreToolUse** | `run_command` | Parses commands via PowerShell AST (`Test-PowerShellCommandSafety.ps1`) and blocks dangerous shell operations (`rm -rf`, `git push --force`, `git clean -fdx`). |
 | **PreToolUse** | `view_file`<br>`replace_file_content`<br>`multi_replace_file_content`<br>`write_to_file` | Enforces credential and secret deny-path rules only (`Test-DenyPath`: `.env*` except `.env.example`/`.env.sample`/`.env.template`, `~/.ssh`, `~/.aws`, `~/.gnupg`, `*.key`, `*.pem`, Antigravity `mcp/**`); does not restrict workspace or role boundaries. |
-| **PostToolUse** | `write_to_file`<br>`replace_file_content`<br>`multi_replace_file_content` | Performs automatic diff injection via `Update-Gate2Diff.ps1` when `gate2_handoff.md` contains `{{VERBATIM_GIT_DIFF}}` or `{{VERBATIM_GIT_DIFFSTAT}}`. |
+| **PostToolUse** | `write_to_file`<br>`replace_file_content`<br>`multi_replace_file_content` | Injects git diffs automatically via `Update-Gate2Diff.ps1` when `gate2_handoff.md` contains `{{VERBATIM_GIT_DIFF}}` or `{{VERBATIM_GIT_DIFFSTAT}}`. |

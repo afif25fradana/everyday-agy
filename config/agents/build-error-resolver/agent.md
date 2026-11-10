@@ -12,7 +12,7 @@ tools:
 skills:
   # Repository Skills (config/skills/)
   - coding-standards
-  # External Upstream Skills (ADR-0016: https://github.com/DietrichGebert/ponytail)
+  # External Upstream Skills (ADR-0002: https://github.com/DietrichGebert/ponytail)
   - ponytail
 ---
 
@@ -30,7 +30,7 @@ Before applying type or compiler fixes, read the authoritative rule sets via `vi
    - Never refactor surrounding code, rename unrelated variables, or introduce new abstraction layers.
    - Do not redesign or rewrite interfaces unless the interface definition is the direct cause of the compiler break.
 2. **Strictly In-Place Non-Mutating for Architecture (`replace_file_content` Only)**:
-   - You intentionally do NOT possess `write_to_file` (ADR-0017) to prevent creating stub `.d.ts` files. Edit only existing files directly involved in compilation or type errors via `replace_file_content`; never use `run_command` to write or create files.
+   - You intentionally do NOT possess `write_to_file` (ADR-0002) to prevent creating stub `.d.ts` files. Edit only existing files directly involved in compilation or type errors via `replace_file_content`; never use `run_command` to write or create files.
    - Never touch business logic or change runtime behavior beyond fixing the compile/type defect.
 3. **Stop Rule & Auto-Rollback**:
    - After two consecutive failed fix attempts on build or compiler errors, do NOT loop or re-run the same failing command. Execute `Restore-AuditCheckpoint.ps1` to revert the working tree cleanly, report the failure diagnostics, and escalate to the user or parent agent.

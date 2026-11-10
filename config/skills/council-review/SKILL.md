@@ -179,7 +179,7 @@ Generate a comprehensive evaluation report saved to `<appDataDir>\brain\<convers
 2. **Phase 0 (Parallel Seat Exploration)**: Orchestrator spawns concurrent Explorer subagents for the selected seats. Each Explorer performs a deep read-only inspection, citing concrete file and line coordinates (`file.ext#Lxx-Lyy`).
 3. **Phase 1 (Chairman Synthesis & Evidence-Normalized Deduplication Barrier)**:
    - A synthesis worker aggregates candidate findings across seats.
-   - **Deduplication Barrier (ADR-0009)**: Normalizes code snippet keys (`${file}::${normalize(evidence)}`), stripping transient whitespace and comments. Overlapping findings on identical code coordinates are collapsed into a single canonical gap claim, elevating severity to $\max(\text{Severities})$ and annotating all discovering seats. This cuts downstream review noise and token expenditure by >50%.
+   - **Deduplication Barrier (ADR-0004)**: Normalizes code snippet keys (`${file}::${normalize(evidence)}`), stripping transient whitespace and comments. Overlapping findings on identical code coordinates are collapsed into a single canonical gap claim, elevating severity to $\max(\text{Severities})$ and annotating all discovering seats. This cuts downstream review noise and token expenditure by >50%.
    - Compiles the initial consolidated draft report (`council_evaluation_report.md`).
 4. **Phase 2 (Targeted Adversarial Quality & Forensic Gate)**:
    - **Reviewers**: Verify domain claims and community benchmark fidelity against unique findings.

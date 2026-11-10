@@ -148,7 +148,7 @@ $testCases = @(
     @{ Expected = "BLOCK"; Cmd = 'del *'; Reason = "del naked wildcard wipe" },
     @{ Expected = "BLOCK"; Cmd = 'Remove-Item .\*'; Reason = "Remove-Item relative naked wildcard wipe" },
 
-    # Blocked: Wrapper flags, backtick escapes, two-statement scriptblock variables, git switch/stash, robocopy /MIR (ADR-0022)
+    # Blocked: Wrapper flags, backtick escapes, two-statement scriptblock variables, git switch/stash, robocopy /MIR (ADR-0003)
     @{ Expected = "BLOCK"; Cmd = 'rtk -v git push --force'; Reason = "rtk flag before git force push" },
     @{ Expected = "BLOCK"; Cmd = 'sudo -E rm -rf ./dir'; Reason = "sudo -E flag before recursive rm" },
     @{ Expected = "BLOCK"; Cmd = 'sudo -u root Remove-Item -Recurse C:\test'; Reason = "sudo -u user option before Remove-Item" },

@@ -22,13 +22,13 @@ This specification defines the communication contracts, trigger headers, quantit
 - **Quantitative Limits**: Modifies `<= 2` files AND `<= 3` lines of executable code (or `<= 5` lines of non-executable docs/comments).
 - **Qualitative Limits**: ZERO changes to business logic, conditionals, loops, state transitions, error handlers, public API signatures, schemas, or security boundaries.
 - **Required Payload**: Diffstat and full inline unified diff (`+`/`-`) in chat (if $\le 5$ diff lines) or UserFacing Artifact.
-- **Bypass Rule**: Qualifying Tier 0 changes bypass formal Gate 1 ceremony, executing autonomously immediately following verified checkpoint creation (`New-AuditCheckpoint.ps1`), and submitting `[TRIVIAL REVIEW]` before commit per ADR-0015.
+- **Bypass Rule**: Qualifying Tier 0 changes bypass formal Gate 1 ceremony, executing autonomously immediately following verified checkpoint creation (`New-AuditCheckpoint.ps1`), and submitting `[TRIVIAL REVIEW]` before commit per ADR-0001.
 
 ### 2.2 Gate 1 (Pre-Execution Proposal Review)
 - **Trigger Header**: `# Review Request: Gate 1 (Pre-Execution Proposal)`
 - **Packaging Protocol**: Gate 1 proposals MUST be written exclusively as an Antigravity UserFacing Artifact (`<appDataDir>\brain\<conversation-id>/gate1_proposal.md`) with `ArtifactMetadata` (`UserFacing: true`, `RequestFeedback: true` to provide the native one-click "Proceed" approval button).
 - **Chat Response Standard**: Chat responses must strictly be 1–3 lines linking directly to `gate1_proposal.md`, never dumping the raw proposal or diffs directly into chat.
-- **Lifecycle Timing**: Generated AFTER Phase 1 (Read-Only Diagnostic Audit & Blast Radius Analysis), strictly BEFORE Phase 2 Checkpoint creation (`New-AuditCheckpoint.ps1`), RED test file creation, and production file modifications (mandatory for Tier 2/3 and package installations; skipped for Tier 0 and Tier 1 per ADR-0015).
+- **Lifecycle Timing**: Generated AFTER Phase 1 (Read-Only Diagnostic Audit & Blast Radius Analysis), strictly BEFORE Phase 2 Checkpoint creation (`New-AuditCheckpoint.ps1`), RED test file creation, and production file modifications (mandatory for Tier 2/3 and package installations; skipped for Tier 0 and Tier 1 per ADR-0001).
 - **Required Payload**:
   1. Task & Context summary.
   2. Root cause validation with exact target coordinates (`file.ext#Lxx-Lyy`).

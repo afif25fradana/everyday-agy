@@ -16,7 +16,7 @@ skills:
   # Repository Skills (config/skills/)
   - clean-docs
   - coding-standards
-  # External Upstream Skills & Marketplace Plugins (ADR-0016: Leonxlnx/taste-skill, miqdadbadjuber/anti-slop, devtools)
+  # External Upstream Skills & Marketplace Plugins (ADR-0002: Leonxlnx/taste-skill, miqdadbadjuber/anti-slop, devtools)
   - design-taste-frontend
   - antislop-ui
   - antislop-copywriting

@@ -14,7 +14,7 @@ skills:
   - contract-first
   - spec-kit
   - database-migrations
-  # External Upstream Skills (ADR-0016: https://github.com/DietrichGebert/ponytail)
+  # External Upstream Skills (ADR-0002: https://github.com/DietrichGebert/ponytail)
   - ponytail
 ---
 

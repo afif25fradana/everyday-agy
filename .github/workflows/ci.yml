@@ -149,27 +149,43 @@ jobs:
       - name: Verify ADR Index Integrity
         shell: pwsh
         run: |
-          $adrs = Get-ChildItem -Path "docs/adr" -Filter "*.md" | Where-Object { $_.Name -ne "README.md" }
-          if ($adrs.Count -lt 20) {
-            Write-Error "Expected at least 20 ADRs, found $($adrs.Count)"
+          $adrs = @(Get-ChildItem -Path "docs/adr" -Filter "*.md" -File | Where-Object { $_.Name -ne "README.md" })
+          if ($adrs.Count -lt 5 -or $adrs.Count -gt 8) {
+            Write-Error "Expected 5-8 Living Domain ADRs, found $($adrs.Count)"
             exit 1
           }
+          $adrSet = New-Object System.Collections.Hashtable ([System.StringComparer]::Ordinal)
+          foreach ($adr in $adrs) { $adrSet[$adr.Name] = $true }
           $adrReadme = Get-Content "docs/adr/README.md" -Raw
-          foreach ($adr in $adrs) {
-            if ($adrReadme -notmatch [regex]::Escape($adr.Name)) {
-              Write-Error "ADR $($adr.Name) is not indexed in docs/adr/README.md"
-              exit 1
-            }
-          }
-          $indexedMatches = [regex]::Matches($adrReadme, '(?m)\[ADR-\d+\]\(\.\/([^)]+)\)')
+          $indexedMatches = [regex]::Matches($adrReadme, '(?m)\[ADR-(\d+)\]\(\.\/([^)\s]+)\)')
+          $seenIds = New-Object System.Collections.Hashtable ([System.StringComparer]::Ordinal)
+          $seenFiles = New-Object System.Collections.Hashtable ([System.StringComparer]::Ordinal)
           foreach ($m in $indexedMatches) {
-            $target = Join-Path "docs/adr" $m.Groups[1].Value
-            if (-not (Test-Path $target)) {
-              Write-Error "Indexed ADR file does not exist: $target"
+            $id = $m.Groups[1].Value
+            $fname = $m.Groups[2].Value
+            if ($seenIds.ContainsKey($id)) {
+              Write-Error "Duplicate ADR index entry for ADR-$id in docs/adr/README.md"
+              exit 1
+            }
+            $seenIds[$id] = $true
+            if ($seenFiles.ContainsKey($fname)) {
+              Write-Error "Duplicate ADR link target ./$fname in docs/adr/README.md"
+              exit 1
+            }
+            $seenFiles[$fname] = $true
+            $target = Join-Path "docs/adr" $fname
+            if (-not (Test-Path -LiteralPath $target) -or -not $adrSet.ContainsKey($fname)) {
+              Write-Error "Indexed ADR file does not exist or case-mismatches: $target"
               exit 1
             }
           }
-          Write-Host "[PASS] All $($adrs.Count) ADRs indexed and verified (two-way validation)."
+          foreach ($adr in $adrs) {
+            if (-not $seenFiles.ContainsKey($adr.Name)) {
+              Write-Error "ADR $($adr.Name) is not indexed with [ADR-NNNN](./$($adr.Name)) in docs/adr/README.md"
+              exit 1
+            }
+          }
+          Write-Host "[PASS] All $($adrs.Count) Living Domain ADRs indexed and verified (two-way parity)."
 
       - name: Run Secret / Credential Leak Scanner
         shell: pwsh

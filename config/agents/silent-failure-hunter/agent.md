@@ -11,9 +11,9 @@ tools:
 skills:
   # Repository Skills (config/skills/)
   - coding-standards
-  # External Upstream Skills (ADR-0016: https://github.com/DietrichGebert/ponytail)
+  # External Upstream Skills (ADR-0002: https://github.com/DietrichGebert/ponytail)
   - ponytail
-  # External Upstream Plugins (ADR-0016: https://github.com/miqdadbadjuber/anti-slop)
+  # External Upstream Plugins (ADR-0002: https://github.com/miqdadbadjuber/anti-slop)
   - antislop-code
 ---
 

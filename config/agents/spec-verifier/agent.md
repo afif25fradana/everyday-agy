@@ -15,7 +15,7 @@ skills:
   - contract-first
   - coding-standards
   - deep-web-research
-  # External Upstream Skills (ADR-0016: https://github.com/DietrichGebert/ponytail)
+  # External Upstream Skills (ADR-0002: https://github.com/DietrichGebert/ponytail)
   - ponytail
 ---
 

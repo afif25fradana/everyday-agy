@@ -9,7 +9,7 @@ Consult this checklist when evaluating plans, diffs, test logs, and audit report
 
 1. **API Drift & Hallucinated Methods**: Calling library methods, flags, or configuration options from outdated pre-training data without verifying against Context7 MCP (`resolve-library-id`, `query-docs`) or local lockfiles.
 2. **EOL Runtime Targets**: Generating code targeting unsupported runtimes (e.g. Python <= 3.10, Node <= 18) instead of modern active/LTS floors (Python 3.12+, Node 20/22+).
-3. **Unchecked Mutating Actions**: Modifying repository files without a verified rollback checkpoint (`New-AuditCheckpoint.ps1`), or mutating files on Tier 2/3 tasks and package installations before obtaining explicit Gate 1 user confirmation per ADR-0015.
+3. **Unchecked Mutating Actions**: Modifying repository files without a verified rollback checkpoint (`New-AuditCheckpoint.ps1`), or mutating files on Tier 2/3 tasks and package installations before obtaining explicit Gate 1 user confirmation per ADR-0001.
 4. **Mock & Harness Drift**: Relying on passing unit tests where mocks or test fixtures reflect outdated assumptions rather than real API/database payloads.
 5. **State & Concurrency Blindness**: Overlooking async event loops, thread safety, daemon lifecycles, or race conditions during refactoring.
 6. **Premature Abstraction / YAGNI**: Writing speculative interfaces, single-implementation factories, or wrapper classes when native platform features or stdlib suffice.

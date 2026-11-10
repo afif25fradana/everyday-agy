@@ -5,7 +5,7 @@ description: "Defensive developer audit standard (/audit-dev): caller tracing, p
 
 # Defensive Developer Audit Standard (Skeptical Review Rubric)
 
-An evidence-anchored, skeptical code quality and review rubric for developers, auditors, and review subagents. Governed by `config/GEMINI.md` (`~/.gemini/GEMINI.md`), [`orchestrator`](../orchestrator/SKILL.md), and [`ADR-0028`](../../../docs/adr/0028-orchestrator-consolidation-audit-dev-streamlining-and-dual-subagent-pipeline.md).
+An evidence-anchored, skeptical code quality and review rubric for developers, auditors, and review subagents. Governed by `config/GEMINI.md` (`~/.gemini/GEMINI.md`), [`orchestrator`](../orchestrator/SKILL.md), and [`ADR-0004`](../../../docs/adr/0004-code-review-council-and-verification-rules.md).
 
 > [!TIP]
 > **Workflow vs. Audit Separation**: `orchestrator` is the operational runbook governing the execution lifecycle (triage, checkpoints, subagents, and gate packaging). `audit-dev` provides the authoritative quality criteria, skeptical inquiry doctrine, and Five-Axis Review Rubric applied during diagnostic audits and pre-flight diff reviews.

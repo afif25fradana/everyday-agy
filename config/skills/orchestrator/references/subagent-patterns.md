@@ -14,11 +14,11 @@ The multi-tiered architecture allows the **Parent Agent** to orchestrate special
 | **Reliability & Silent Failures** | `silent-failure-hunter` | `inherit` | `inherit` | Audits swallowed exceptions, masking fallbacks (`.catch(() => [])`), resource leaks, unhandled edge cases, and timeout drops. Read-only auditor. |
 | **Test Integrity & TDD** | `tdd-guide` | `inherit` | `inherit` | Single-Pass Test-Driven Development (Red-Green-Refactor), boundary testing, mutation checks, and anti-mock cheating verification. Mutating subagent (sequential execution). |
 | **Official Spec Verifier** | `spec-verifier` | `inherit` (`pro` on Flash) | `inherit` | Authoritative vendor spec verification via Context7 MCP (`resolve-library-id` -> `query-docs`) and [`deep-web-research`](../../deep-web-research/SKILL.md) before implementing third-party APIs. Read-only verifier. |
-| **Frontend UX & Primitives** | `ui-crafter` | `flash` | `inherit` | Web platform primitives, WCAG 2.2 AA accessibility, layout shifts, dark mode, responsive styling, and anti-slop UI design. Mutating subagent (sequential execution). |
-| **Documentation & ADRs** | `docs-architect` | `flash` (`inherit` on deep ADR synthesis) | `inherit` | Sole owner of Architecture Decision Records (ADRs), progressive disclosure sub-docs, anti-slop copywriting, and AI context synchronization (`task_state.md`). Mutating subagent (sequential execution). |
+| **Frontend UX & Primitives** | `ui-crafter` | `inherit` | `inherit` | Web platform primitives, WCAG 2.2 AA accessibility, layout shifts, dark mode, responsive styling, and anti-slop UI design. Mutating subagent (sequential execution). |
+| **Documentation & ADRs** | `docs-architect` | `inherit` | `inherit` | Sole owner of Architecture Decision Records (ADRs), progressive disclosure sub-docs, anti-slop copywriting, and AI context synchronization (`task_state.md`). Mutating subagent (sequential execution). |
 | **Type Safety & Compilation** | `build-error-resolver` | `flash` | `inherit` | TypeScript/compiler error resolution, type soundness, generic constraints, and strict compilation hygiene via `replace_file_content` (no `write_to_file`). Mutating subagent (sequential execution). |
 | **Dependency & CI Maintenance** | `maintenance-bot` | `flash` | `inherit` | Package dependency hygiene, CVE vulnerability mitigation, Dependabot triage, and CI workflow diagnosis. Mutating subagent (sequential execution). |
-| **Software Localization & Humanizer** | `l10n-humanizer` | `flash` | `inherit` | Dual-Scope: (A) Software UI/UX localization per Microsoft Indonesian style guide; (B) Second-pass bilingual prose humanizer (5 tells purged, fact lock). Mutating subagent (sequential execution). |
+| **Software Localization & Humanizer** | `l10n-humanizer` | `inherit` | `inherit` | Dual-Scope: (A) Software UI/UX localization per Microsoft Indonesian style guide; (B) Second-pass bilingual prose humanizer (7 tells purged, fact lock). Mutating subagent (sequential execution). |
 
 ---
 
@@ -29,10 +29,9 @@ The multi-tiered architecture allows the **Parent Agent** to orchestrate special
 - **Workspace Modes**: Default to `inherit` workspace mode to avoid Windows file-locking or worktree `node_modules` duplication. Use session scratch (`<appDataDir>\brain\<conversation-id>\scratch\<task>\`) for intermediate audit artifacts.
 
 ### 2.2 Model Selection Invariant (`Model`)
-- **Manifest Defaults (`inherit` vs `flash`)**: The 5 cognitive/read-only reasoning agents (`system-architect`, `code-auditor`, `silent-failure-hunter`, `spec-verifier`, `tdd-guide`) default to `model: inherit`, while the 5 tactical execution agents (`build-error-resolver`, `ui-crafter`, `docs-architect`, `maintenance-bot`, `l10n-humanizer`) default to `model: flash` per ADR-0004 & ADR-0027.
+- **Manifest Defaults (8 `inherit` / 2 `flash` Fleet Split)**: The 8 high-context and craft agents (`system-architect`, `code-auditor`, `silent-failure-hunter`, `spec-verifier`, `tdd-guide`, `ui-crafter`, `docs-architect`, `l10n-humanizer`) default to `model: inherit`, while the 2 tactical execution agents (`build-error-resolver`, `maintenance-bot`) default to `model: flash` per ADR-0004, ADR-0027, and ADR-0029.
 - **Dynamic Elevation Rules**:
-  - When the parent session runs on `Gemini 3.8 Flash`, pass `Model: "pro"` dynamically in `invoke_subagent` when invoking `spec-verifier` (ADR-0015).
-  - For high-stakes multi-system ADR synthesis on `docs-architect`, the Parent Agent may dynamically elevate invocation via `Model: "inherit"` (or `Model: "pro"`).
+  - When the parent session runs on `Gemini 3.8 Flash`, pass `Model: "pro"` dynamically in `invoke_subagent` when invoking `spec-verifier` (ADR-0015) or for high-stakes multi-system architectural synthesis on `system-architect` or `docs-architect`.
 
 ### 2.3 Core Execution & Verification Invariants
 1. **4-Slot Delegation Contract & Compact Receipts**: Follow the normative 4-slot structure in [`orchestrator/SKILL.md#4-the-4-slot-delegation-contract-ssot`](../SKILL.md#4-the-4-slot-delegation-contract-ssot). Subagents write detailed forensic reports to `<appDataDir>\brain\<conversation-id>\scratch\<task>\` (except `build-error-resolver`, which performs in-place `replace_file_content` edits only) and return ONLY a compact $\le 15$-line receipt to chat.
@@ -136,7 +135,7 @@ In your final chat message, return ONLY this compact receipt (<= 15 lines):
 #### Template 3: Cross-Specialist Mutating Implementation Prompt Skeleton (Post-Gate 1 & Post-Checkpoint)
 - **TypeName**: `ui-crafter` (or `build-error-resolver` / `docs-architect` / `l10n-humanizer` / `maintenance-bot`)
 - **Role**: `Implementation Specialist`
-- **Model**: `flash` (or `inherit` on complex Tier 2 logic)
+- **Model**: `inherit` (or `flash` for `build-error-resolver` / `maintenance-bot`)
 - **Workspace**: `inherit`
 
 ```markdown

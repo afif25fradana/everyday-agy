@@ -4,18 +4,12 @@
 
 $ErrorActionPreference = "Stop"
 
-$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-if (-not $scriptDir) { $scriptDir = (Get-Location).Path }
-
-# Discover repository root
-$repoRoot = $scriptDir
-while ($repoRoot -and -not (Test-Path (Join-Path $repoRoot ".git")) -and -not (Test-Path (Join-Path $repoRoot "config/GEMINI.md"))) {
-    $parent = Split-Path -Parent $repoRoot
-    if ($parent -eq $repoRoot) { break }
-    $repoRoot = $parent
-}
-if (-not $repoRoot -or -not (Test-Path (Join-Path $repoRoot "config/GEMINI.md"))) {
-    $repoRoot = (Get-Location).Path
+$repoRoot = if ($PSScriptRoot) {
+    Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+} elseif ($MyInvocation.MyCommand.Path) {
+    Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path))
+} else {
+    (Get-Location).Path
 }
 
 $testsRun = 0
@@ -145,7 +139,8 @@ Write-Host "==================================================" -ForegroundColor
 # Part 1: Pure YAML Files (.github/**/*.yml)
 # ---------------------------------------------------------
 Write-Host "`n[1] Validating Pure YAML Files (.github/**/*.yml)..." -ForegroundColor White
-$yamlFiles = Get-ChildItem -Path (Join-Path $repoRoot ".github") -Include "*.yml", "*.yaml" -Recurse
+$yamlFiles = @(Get-ChildItem -Path (Join-Path $repoRoot ".github") -Include "*.yml", "*.yaml" -Recurse -File)
+Assert-Test -Name "Pure YAML files discovered under .github/" -Condition ($yamlFiles.Count -ge 1) -Details "No .yml/.yaml files found under .github"
 
 foreach ($f in $yamlFiles) {
     $content = Get-Content -LiteralPath $f.FullName -Raw
@@ -247,6 +242,111 @@ Assert-Test -Name "Quoted scalar with inline comment syntax" -Condition ($inline
 $tabAfterSpaceYaml = "key:`n  `tvalue"
 $tabAfterSpaceResult = Test-YamlBlockSyntax -Content $tabAfterSpaceYaml -FilePath "tab-after-space-test.yml"
 Assert-Test -Name "Tab following spaces in indentation is rejected" -Condition (-not $tabAfterSpaceResult.Success) -Details ($tabAfterSpaceResult.Error)
+
+# ---------------------------------------------------------
+# Part 5: Hooks Configuration & Script Integrity
+# ---------------------------------------------------------
+Write-Host "`n[5] Validating Antigravity Hooks Configuration & Scripts..." -ForegroundColor White
+
+$hooksJsonPath = Join-Path (Join-Path $repoRoot "config") "hooks.json"
+$hooksExist = Test-Path -LiteralPath $hooksJsonPath
+Assert-Test -Name "config/hooks.json exists" -Condition $hooksExist -Details "Missing $hooksJsonPath"
+
+if ($hooksExist) {
+    $rawBytes = [System.IO.File]::ReadAllBytes($hooksJsonPath)
+    $hasBom = ($rawBytes.Length -ge 3 -and $rawBytes[0] -eq 0xEF -and $rawBytes[1] -eq 0xBB -and $rawBytes[2] -eq 0xBF)
+    Assert-Test -Name "config/hooks.json has no UTF-8 BOM" -Condition (-not $hasBom) -Details "hooks.json must be UTF-8 without BOM"
+
+    $hooksObj = $null
+    $jsonValid = $false
+    try {
+        $hooksText = [System.IO.File]::ReadAllText($hooksJsonPath, [System.Text.Encoding]::UTF8)
+        $hooksObj = $hooksText | ConvertFrom-Json
+        $jsonValid = ($null -ne $hooksObj)
+    } catch {
+        $jsonValid = $false
+    }
+    Assert-Test -Name "config/hooks.json parses as valid JSON" -Condition $jsonValid
+
+    if ($jsonValid) {
+        $preMatchers = @()
+        $postMatchers = @()
+        $allCommandsValid = $true
+        $allGroupsHaveHooks = $true
+
+        foreach ($prop in $hooksObj.PSObject.Properties) {
+            $hookSpec = $prop.Value
+            if ($hookSpec.PSObject.Properties["PreToolUse"]) {
+                foreach ($group in @($hookSpec.PreToolUse)) {
+                    $preMatchers += [string]$group.matcher
+                    if (-not ($null -ne $group.hooks -and @($group.hooks).Count -ge 1)) {
+                        $allGroupsHaveHooks = $false
+                        $allCommandsValid = $false
+                    }
+                    foreach ($h in @($group.hooks)) {
+                        $cmd = [string]$h.command
+                        if ($cmd -notmatch '^powershell\s+-NoProfile\s+-NonInteractive\s+-ExecutionPolicy\s+Bypass\s+-File\s+\./scripts/Invoke-AntigravityHook\.ps1\s+-Event\s+PreToolUse\s*$') {
+                            $allCommandsValid = $false
+                        }
+                    }
+                }
+            }
+            if ($hookSpec.PSObject.Properties["PostToolUse"]) {
+                foreach ($group in @($hookSpec.PostToolUse)) {
+                    $postMatchers += [string]$group.matcher
+                    if (-not ($null -ne $group.hooks -and @($group.hooks).Count -ge 1)) {
+                        $allGroupsHaveHooks = $false
+                        $allCommandsValid = $false
+                    }
+                    foreach ($h in @($group.hooks)) {
+                        $cmd = [string]$h.command
+                        if ($cmd -notmatch '^powershell\s+-NoProfile\s+-NonInteractive\s+-ExecutionPolicy\s+Bypass\s+-File\s+\./scripts/Invoke-AntigravityHook\.ps1\s+-Event\s+PostToolUse\s*$') {
+                            $allCommandsValid = $false
+                        }
+                    }
+                }
+            }
+        }
+
+        $expectedPre = @(
+            "run_command",
+            "view_file|replace_file_content|multi_replace_file_content|write_to_file",
+            "invoke_subagent"
+        )
+        $expectedPost = @(
+            "write_to_file|replace_file_content|multi_replace_file_content"
+        )
+        $hasExactPre = ($preMatchers.Count -eq 3) -and ($expectedPre[0] -in $preMatchers) -and ($expectedPre[1] -in $preMatchers) -and ($expectedPre[2] -in $preMatchers)
+        $hasExactPost = ($postMatchers.Count -eq 1) -and ($expectedPost[0] -in $postMatchers)
+
+        Assert-Test -Name "config/hooks.json defines exact 3 PreToolUse matchers" -Condition $hasExactPre -Details ("Found: " + ($preMatchers -join ", "))
+        Assert-Test -Name "config/hooks.json defines exact 1 PostToolUse matcher" -Condition $hasExactPost -Details ("Found: " + ($postMatchers -join ", "))
+        Assert-Test -Name "config/hooks.json matcher groups define at least 1 hook handler" -Condition $allGroupsHaveHooks
+        Assert-Test -Name "config/hooks.json handlers invoke ./scripts/Invoke-AntigravityHook.ps1 correctly" -Condition $allCommandsValid
+    }
+}
+
+$hookScriptPath = Join-Path (Join-Path (Join-Path $repoRoot "config") "scripts") "Invoke-AntigravityHook.ps1"
+$hookScriptExists = Test-Path -LiteralPath $hookScriptPath
+Assert-Test -Name "config/scripts/Invoke-AntigravityHook.ps1 exists" -Condition $hookScriptExists -Details "Missing $hookScriptPath"
+
+if ($hookScriptExists) {
+    $parseErrors = $null
+    [System.Management.Automation.Language.Parser]::ParseFile($hookScriptPath, [ref]$null, [ref]$parseErrors) | Out-Null
+    $astValid = (-not $parseErrors) -or ($parseErrors.Count -eq 0)
+    Assert-Test -Name "Invoke-AntigravityHook.ps1 passes PowerShell AST parse" -Condition $astValid -Details ("$parseErrors")
+}
+
+foreach ($rootScriptName in @("sync.ps1", "restore.ps1")) {
+    $rootScriptPath = Join-Path $repoRoot $rootScriptName
+    $scriptText = Get-Content -LiteralPath $rootScriptPath -Raw
+    $parseErrors = $null
+    [System.Management.Automation.Language.Parser]::ParseFile($rootScriptPath, [ref]$null, [ref]$parseErrors) | Out-Null
+    $astValid = (-not $parseErrors) -or ($parseErrors.Count -eq 0)
+    Assert-Test -Name "$rootScriptName passes PowerShell AST parse" -Condition $astValid -Details ("$parseErrors")
+    Assert-Test -Name "$rootScriptName removes legacy externalSkills/officialPlugins lists" -Condition ($scriptText -notmatch '\$externalSkills' -and $scriptText -notmatch '\$officialPlugins')
+    Assert-Test -Name "$rootScriptName includes hooks.json and scripts/ support" -Condition ($scriptText -match 'hooks\.json' -and $scriptText -match 'scripts')
+}
 
 # ---------------------------------------------------------
 # Final Summary

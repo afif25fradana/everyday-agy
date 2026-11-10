@@ -1,0 +1,48 @@
+{
+  "everyday-agy": {
+    "PreToolUse": [
+      {
+        "matcher": "run_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File ./scripts/Invoke-AntigravityHook.ps1 -Event PreToolUse",
+            "timeout": 15
+          }
+        ]
+      },
+      {
+        "matcher": "view_file|replace_file_content|multi_replace_file_content|write_to_file",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File ./scripts/Invoke-AntigravityHook.ps1 -Event PreToolUse",
+            "timeout": 15
+          }
+        ]
+      },
+      {
+        "matcher": "invoke_subagent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File ./scripts/Invoke-AntigravityHook.ps1 -Event PreToolUse",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "write_to_file|replace_file_content|multi_replace_file_content",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File ./scripts/Invoke-AntigravityHook.ps1 -Event PostToolUse",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

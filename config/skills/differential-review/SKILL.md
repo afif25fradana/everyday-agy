@@ -67,21 +67,21 @@ Phase 3: Blast Radius → Phase 4: Deep Context → Phase 5: Adversarial → Pha
 
 ```
 ├─ Need detailed phase-by-phase methodology?
-│  └─ Read: methodology.md
+│  └─ Read: references/methodology.md
 │     (Pre-Analysis + Phases 0-4: triage, code analysis, test coverage, blast radius)
 │
 ├─ Analyzing HIGH RISK change?
-│  ├─ Read: adversarial.md
+│  ├─ Read: references/adversarial.md
 │  │  (Phase 5: Attacker modeling, exploit scenarios, exploitability rating)
-│  └─ Or delegate to: invoke_subagent (`TypeName: "code-auditor"`, `Role: "Adversarial Security Modeler"`) applying adversarial.md
+│  └─ Or delegate to: invoke_subagent (`TypeName: "code-auditor"`, `Role: "Adversarial Security Modeler"`) applying references/adversarial.md
 │     (Autonomous attacker modeling with concrete exploit scenarios)
 │
 ├─ Writing the final report?
-│  └─ Read: reporting.md
+│  └─ Read: references/reporting.md
 │     (Phase 6: Report structure, templates, formatting guidelines)
 │
 ├─ Looking for specific vulnerability patterns?
-│  └─ Read: patterns.md
+│  └─ Read: references/patterns.md
 │     (Regressions, reentrancy, access control, overflow, etc.)
 │
 └─ Quick triage only?
@@ -94,10 +94,10 @@ Phase 3: Blast Radius → Phase 4: Deep Context → Phase 5: Adversarial → Pha
 
 **Adversarial Security Modeler** - Models attacker perspectives and builds exploit
 scenarios for HIGH RISK code changes. Follows the 5-step adversarial methodology in
-`adversarial.md` (attacker model, attack vectors, exploitability rating, exploit
+`references/adversarial.md` (attacker model, attack vectors, exploitability rating, exploit
 scenario, baseline cross-reference) and produces structured vulnerability reports.
 Delegate to this agent using `invoke_subagent` (`TypeName: "code-auditor"`, `Role: "Adversarial Security Modeler"`),
-instructing it to apply `adversarial.md`.
+instructing it to apply `references/adversarial.md`.
 
 ---
 
@@ -169,10 +169,10 @@ These patterns require adversarial analysis even in quick triage.
 
 ## Supporting Documentation
 
-- **[methodology.md](methodology.md)** - Detailed phase-by-phase workflow (Phases 0-4)
-- **[adversarial.md](adversarial.md)** - Attacker modeling and exploit scenarios (Phase 5)
-- **[reporting.md](reporting.md)** - Report structure and formatting (Phase 6)
-- **[patterns.md](patterns.md)** - Common vulnerability patterns reference
+- **[methodology.md](references/methodology.md)** - Detailed phase-by-phase workflow (Phases 0-4)
+- **[adversarial.md](references/adversarial.md)** - Attacker modeling and exploit scenarios (Phase 5)
+- **[reporting.md](references/reporting.md)** - Report structure and formatting (Phase 6)
+- **[patterns.md](references/patterns.md)** - Common vulnerability patterns reference
 
 ---
 

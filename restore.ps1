@@ -67,12 +67,13 @@ New-Item -ItemType Directory -Force -Path $configHome | Out-Null
 $timestamp = (Get-Date).ToString("yyyyMMdd_HHmmss")
 $backupDir = Join-Path $geminiHome "backup_$timestamp"
 $geminiMdPath = Join-Path $geminiHome "GEMINI.md"
+$hooksJsonPath = Join-Path $configHome "hooks.json"
+$configScripts = Join-Path $configHome "scripts"
 $configAgents = Join-Path $configHome "agents"
 $configSkills = Join-Path $configHome "skills"
-$configPlugins = Join-Path $configHome "plugins"
 $docsAdr = Join-Path (Join-Path $geminiHome "docs") "adr"
 $legacyAdr = Join-Path (Join-Path $configHome "docs") "adr"
-$needsBackup = (Test-Path $geminiMdPath) -or (Test-Path $configAgents) -or (Test-Path $configSkills) -or (Test-Path $configPlugins) -or (Test-Path $docsAdr) -or (Test-Path $legacyAdr)
+$needsBackup = (Test-Path $geminiMdPath) -or (Test-Path $hooksJsonPath) -or (Test-Path $configScripts) -or (Test-Path $configAgents) -or (Test-Path $configSkills) -or (Test-Path $docsAdr) -or (Test-Path $legacyAdr)
 
 if ($needsBackup) {
     Write-Host ">>> Existing configuration detected. Creating backup at $backupDir..." -ForegroundColor Yellow
@@ -80,14 +81,17 @@ if ($needsBackup) {
     if (Test-Path $geminiMdPath) {
         Copy-Item $geminiMdPath (Join-Path $backupDir "GEMINI.md") -Force
     }
+    if (Test-Path $hooksJsonPath) {
+        Copy-Item $hooksJsonPath (Join-Path $backupDir "hooks.json") -Force
+    }
+    if (Test-Path $configScripts) {
+        Copy-Item -Path $configScripts -Destination (Join-Path $backupDir "scripts") -Recurse -Force
+    }
     if (Test-Path $configAgents) {
         Copy-Item -Path $configAgents -Destination (Join-Path $backupDir "agents") -Recurse -Force
     }
     if (Test-Path $configSkills) {
         Copy-Item -Path $configSkills -Destination (Join-Path $backupDir "skills") -Recurse -Force
-    }
-    if (Test-Path $configPlugins) {
-        Copy-Item -Path $configPlugins -Destination (Join-Path $backupDir "plugins") -Recurse -Force
     }
     if (Test-Path $docsAdr) {
         Copy-Item -Path $docsAdr -Destination (Join-Path $backupDir "adr") -Recurse -Force
@@ -105,56 +109,83 @@ if (Test-Path $srcGeminiMd) {
     Write-Host "[OK] Restored GEMINI.md" -ForegroundColor Green
 }
 
-# 2. Restore Custom Agents
+# 2. Restore Hooks Configuration & Scripts
+$srcHooksJson = Join-Path (Join-Path $scriptRoot "config") "hooks.json"
+if (Test-Path $srcHooksJson) {
+    Copy-Item $srcHooksJson $hooksJsonPath -Force
+    Write-Host "[OK] Restored hooks.json" -ForegroundColor Green
+}
+
+$srcScripts = Join-Path (Join-Path $scriptRoot "config") "scripts"
+if (Test-Path $srcScripts) {
+    $dstScripts = Join-Path $configHome "scripts"
+    New-Item -ItemType Directory -Force -Path $dstScripts | Out-Null
+    $srcScriptFiles = @(Get-ChildItem -Path $srcScripts -Recurse -File)
+    if ($srcScriptFiles.Count -gt 0) {
+        Copy-Item -Path (Join-Path $srcScripts "*") -Destination $dstScripts -Recurse -Force
+    }
+    Write-Host "[OK] Restored $($srcScriptFiles.Count) Config Scripts" -ForegroundColor Green
+}
+
+# 3. Restore Custom Agents (preserve user/external agents; prune only retired repo-owned agents)
 $srcAgents = Join-Path (Join-Path $scriptRoot "config") "agents"
 if (Test-Path $srcAgents) {
     $dstAgents = Join-Path $configHome "agents"
     New-Item -ItemType Directory -Force -Path $dstAgents | Out-Null
-    # Prune stale agents in ~/.gemini/config/agents/ that no longer exist in repo
-    $srcAgentNames = @(Get-ChildItem -Path $srcAgents -Directory | ForEach-Object { $_.Name })
-    Get-ChildItem -Path $dstAgents -Directory | ForEach-Object {
-        if ($_.Name -notin $srcAgentNames) {
-            Remove-Item -Path $_.FullName -Recurse -Force
-            Write-Host "[CLEANUP] Pruned stale agent: $($_.Name)" -ForegroundColor DarkGray
+    $retiredRepoAgents = @("database-reviewer")
+    foreach ($retiredAgent in $retiredRepoAgents) {
+        $retiredPath = Join-Path $dstAgents $retiredAgent
+        if (Test-Path -LiteralPath $retiredPath) {
+            Remove-Item -LiteralPath $retiredPath -Recurse -Force
+            Write-Host "[CLEANUP] Pruned retired repo agent: $retiredAgent" -ForegroundColor DarkGray
         }
     }
-    Copy-Item -Path (Join-Path $srcAgents "*") -Destination $dstAgents -Recurse -Force
-    $agentCount = (Get-ChildItem -Path $srcAgents -Directory).Count
-    Write-Host "[OK] Restored $agentCount Custom Agents" -ForegroundColor Green
+    $srcAgentDirs = @(Get-ChildItem -Path $srcAgents -Directory)
+    foreach ($aDir in $srcAgentDirs) {
+        $targetDir = Join-Path $dstAgents $aDir.Name
+        if (Test-Path $targetDir) {
+            $srcFiles = @(Get-ChildItem -LiteralPath $aDir.FullName -Recurse -File | ForEach-Object {
+                $_.FullName.Substring($aDir.FullName.Length).Replace('\', '/')
+            })
+            Get-ChildItem -LiteralPath $targetDir -Recurse -File | ForEach-Object {
+                $rel = $_.FullName.Substring($targetDir.Length).Replace('\', '/')
+                if ($rel -notin $srcFiles) {
+                    Remove-Item -LiteralPath $_.FullName -Force
+                    Write-Host "[CLEANUP] Pruned orphan agent file: $($aDir.Name)$rel" -ForegroundColor DarkGray
+                }
+            }
+        } else {
+            New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
+        }
+        if (@(Get-ChildItem -Path $aDir.FullName -Force).Count -gt 0) {
+            Copy-Item -Path (Join-Path $aDir.FullName "*") -Destination $targetDir -Recurse -Force
+        }
+    }
+    Write-Host "[OK] Restored $($srcAgentDirs.Count) Custom Agents" -ForegroundColor Green
 }
 
-# 3. Restore Custom Skills
+# 4. Restore Custom Skills (preserve external skills; prune only retired repo-owned skills and orphan files within tracked skills)
 $srcSkills = Join-Path (Join-Path $scriptRoot "config") "skills"
 if (Test-Path $srcSkills) {
     $dstSkills = Join-Path $configHome "skills"
     New-Item -ItemType Directory -Force -Path $dstSkills | Out-Null
-    # Prune stale skills, preserving decoupled upstream skills (ADR-0016)
-    $externalSkills = @(
-        "design-taste-frontend",
-        "ponytail",
-        "ponytail-audit",
-        "ponytail-debt",
-        "ponytail-gain",
-        "ponytail-help",
-        "ponytail-review"
-    )
-    $srcSkillDirs = @(Get-ChildItem -Path $srcSkills -Directory)
-    $srcSkillNames = @($srcSkillDirs | ForEach-Object { $_.Name })
-    Get-ChildItem -Path $dstSkills -Directory | ForEach-Object {
-        if ($_.Name -notin $srcSkillNames -and $_.Name -notin $externalSkills) {
-            Remove-Item -Path $_.FullName -Recurse -Force
-            Write-Host "[CLEANUP] Pruned stale skill: $($_.Name)" -ForegroundColor DarkGray
+    $retiredRepoSkills = @("audit-dev-workflow")
+    foreach ($retiredSkill in $retiredRepoSkills) {
+        $retiredPath = Join-Path $dstSkills $retiredSkill
+        if (Test-Path -LiteralPath $retiredPath) {
+            Remove-Item -LiteralPath $retiredPath -Recurse -Force
+            Write-Host "[CLEANUP] Pruned retired repo skill: $retiredSkill" -ForegroundColor DarkGray
         }
     }
+    $srcSkillDirs = @(Get-ChildItem -Path $srcSkills -Directory)
     foreach ($sDir in $srcSkillDirs) {
         $targetDir = Join-Path $dstSkills $sDir.Name
         if (Test-Path $targetDir) {
-            # Prune orphan files inside tracked skill directory
-            $srcFiles = @(Get-ChildItem -Path $sDir.FullName -Recurse -File | ForEach-Object {
-                $_.FullName.Substring($sDir.FullName.Length)
+            $srcFiles = @(Get-ChildItem -LiteralPath $sDir.FullName -Recurse -File | ForEach-Object {
+                $_.FullName.Substring($sDir.FullName.Length).Replace('\', '/')
             })
-            Get-ChildItem -Path $targetDir -Recurse -File | ForEach-Object {
-                $rel = $_.FullName.Substring($targetDir.Length)
+            Get-ChildItem -LiteralPath $targetDir -Recurse -File | ForEach-Object {
+                $rel = $_.FullName.Substring($targetDir.Length).Replace('\', '/')
                 if ($rel -notin $srcFiles) {
                     Remove-Item -LiteralPath $_.FullName -Force
                     Write-Host "[CLEANUP] Pruned orphan skill file: $($sDir.Name)$rel" -ForegroundColor DarkGray
@@ -168,56 +199,35 @@ if (Test-Path $srcSkills) {
         } else {
             New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
         }
-        Copy-Item -Path (Join-Path $sDir.FullName "*") -Destination $targetDir -Recurse -Force
-    }
-    $skillCount = $srcSkillDirs.Count
-    Write-Host "[OK] Restored $skillCount Custom Skills" -ForegroundColor Green
-}
-
-# 4. Restore Custom Plugins (if any local custom plugins exist)
-$srcPlugins = Join-Path (Join-Path $scriptRoot "config") "plugins"
-if (Test-Path $srcPlugins) {
-    $customPluginList = Get-ChildItem -Path $srcPlugins -Directory
-    if ($customPluginList.Count -gt 0) {
-        $dstPlugins = Join-Path $configHome "plugins"
-        New-Item -ItemType Directory -Force -Path $dstPlugins | Out-Null
-        $officialPlugins = @("antislop", "devtools")
-        $srcPluginNames = @($customPluginList | ForEach-Object { $_.Name })
-        Get-ChildItem -Path $dstPlugins -Directory | ForEach-Object {
-            if ($_.Name -notin $srcPluginNames -and $_.Name -notin $officialPlugins) {
-                Remove-Item -LiteralPath $_.FullName -Recurse -Force
-                Write-Host "[CLEANUP] Pruned stale plugin: $($_.Name)" -ForegroundColor DarkGray
-            }
+        if (@(Get-ChildItem -Path $sDir.FullName -Force).Count -gt 0) {
+            Copy-Item -Path (Join-Path $sDir.FullName "*") -Destination $targetDir -Recurse -Force
         }
-        Copy-Item -Path (Join-Path $srcPlugins "*") -Destination $dstPlugins -Recurse -Force
-        $pluginCount = (Get-ChildItem -Path $dstPlugins -Directory).Count
-        Write-Host "[OK] Restored $pluginCount Custom Plugins" -ForegroundColor Green
     }
+    Write-Host "[OK] Restored $($srcSkillDirs.Count) Custom Skills" -ForegroundColor Green
 }
 
 # 5. Restore Architectural Decision Records (ADRs)
 $srcAdr = Join-Path (Join-Path $scriptRoot "docs") "adr"
 if (Test-Path $srcAdr) {
-    # Standardize ADR storage on ~/.gemini/docs/adr/ in 1-to-1 parity with git root docs/adr/ (GAP-ARCH-01)
     $dstAdr = Join-Path (Join-Path $geminiHome "docs") "adr"
     New-Item -ItemType Directory -Force -Path $dstAdr | Out-Null
 
-    # Clean up legacy ~/.gemini/config/docs/adr if present
     $legacyAdr = Join-Path (Join-Path $configHome "docs") "adr"
     if (Test-Path $legacyAdr) {
         Remove-Item -Path $legacyAdr -Recurse -Force
         Write-Host "[CLEANUP] Pruned legacy ADR path: $legacyAdr" -ForegroundColor DarkGray
     }
 
-    # Prune stale ADR files that no longer exist in repo
     $srcAdrNames = @(Get-ChildItem -Path $srcAdr -Filter "*.md" | ForEach-Object { $_.Name })
-    Get-ChildItem -Path $dstAdr -Filter "*.md" | ForEach-Object {
-        if ($_.Name -notin $srcAdrNames) {
-            Remove-Item -Path $_.FullName -Force
-            Write-Host "[CLEANUP] Pruned stale ADR: $($_.Name)" -ForegroundColor DarkGray
+    if ($srcAdrNames.Count -gt 0) {
+        Get-ChildItem -Path $dstAdr -Filter "*.md" | ForEach-Object {
+            if ($_.Name -notin $srcAdrNames) {
+                Remove-Item -Path $_.FullName -Force
+                Write-Host "[CLEANUP] Pruned stale ADR: $($_.Name)" -ForegroundColor DarkGray
+            }
         }
+        Copy-Item -Path (Join-Path $srcAdr "*") -Destination $dstAdr -Recurse -Force
     }
-    Copy-Item -Path (Join-Path $srcAdr "*") -Destination $dstAdr -Recurse -Force
     $adrCount = (Get-ChildItem -Path $dstAdr -Filter "*.md" | Where-Object { $_.Name -ne "README.md" }).Count
     Write-Host "[OK] Restored $adrCount Architectural Decision Records (ADRs)" -ForegroundColor Green
 }

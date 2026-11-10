@@ -88,3 +88,29 @@ Before finalizing any commit message, PR description, README, or doc change, run
    - `CALIBRATE`: Narrow the claim to match exact verified evidence.
    - `RELOCATE`: Move operational caveats to the specific step where the user makes a choice.
    - `KEEP`: Retain caveats directly backed by documented system limits.
+
+---
+
+## 6. The Tri-Guard Editorial Guardrails (SSOT)
+
+To guarantee authentic engineering tone across documentation surfaces, enforce three non-negotiable editorial guardrails:
+
+### Guardrail A: Anti-Casual & Anti-Indie-Hacker Marketing Slop
+- **Voice**: Maintain an honest developer-to-developer notebook tone. Never emulate breathless tech marketing, Twitter threads, or startup pitch decks.
+- **Banned Promotional Hooks**: Strictly purge ProductHunt/indie-hacker slogans (`"Meet your new superpower"`, `"Supercharge your workflow"`, `"The ultimate toolkit"`, `"Game-changing"`, `"Frictionless developer experience"`).
+- **No Fictional Roleplay Dialogue**: Ban invented conversational dialogues (`"Alice: How do I do X? Bob: Easy, just use Y!"`) or Q&A personas unless explicitly mandated by project specifications.
+- **Ban Punctuation Variants of False Contrast ("Not X, but Y")**: Purge all stylistic permutations staged to inflate the second clause:
+  - Semicolon variant: *"Not a simple linter; it is an architectural enforcement engine."*
+  - Em-dash variant: *"Not just a database helper—a complete transactional rethink."*
+  - Colon variant: *"Not standard caching: it's proactive memory invalidation."*
+  - Staccato fragment variant: *"Not an ordinary script. A paradigm shift."*
+  - Direct rewrite: Plainly state what the component actually does without negative staging.
+- **Anti-Corporate Cosplay Rule**: For personal/single-developer repositories, dotfiles, or experimental side projects, strictly avoid generating or recommending enterprise bureaucracy templates (`CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, `.github/pull_request_template.md`, `.github/ISSUE_TEMPLATE/*`) unless explicitly requested by the user.
+
+### Guardrail B: Upfront Sandbox & Scaffolding Honesty
+- **Opening Disclosure**: Clearly disclose prototype, mockup, or scaffolding limits in the opening paragraphs of `README.md` or component documentation.
+- **No Footnote Hiding**: Never bury incomplete features, simulated endpoints, or stubbed adapters in bottom footnotes or deep caveats. If a capability runs in sandbox mode or uses mocked data, state it plainly alongside the feature overview.
+
+### Guardrail C: Cross-Session Continuity via `task_state.md`
+- **Pre-Documentation Inspection**: Before editing or rewriting public documentation (`README.md`, `TOOLKIT.md`, sub-docs), inspect `task_state.md` in the current repository or its sibling `<Project>-AI-Context` repository.
+- **Continuity Lock**: Carry over settled findings, documented gotchas, rejected alternatives, and project-specific banned terminology across AI sessions to prevent re-introducing discarded patterns or conflicting architectural claims.

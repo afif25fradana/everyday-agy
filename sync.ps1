@@ -30,18 +30,6 @@ $secretPatterns = @(
 
 $binaryExtensions = @('.png', '.jpg', '.jpeg', '.gif', '.ico', '.webp', '.woff', '.woff2', '.ttf', '.otf', '.zip', '.pdf')
 
-# Plugins and skills excluded from sync (maintained by upstream repositories with dedicated Antigravity installers)
-$officialPlugins = @("chrome-devtools-plugin", "modern-web-guidance-plugin", "android-cli-plugin", "antislop", "context7")
-$externalSkills = @(
-    "design-taste-frontend",
-    "ponytail",
-    "ponytail-audit",
-    "ponytail-debt",
-    "ponytail-gain",
-    "ponytail-help",
-    "ponytail-review"
-)
-
 function Assert-NoCredentialsInFile($filePath) {
     if (-not (Test-Path -LiteralPath $filePath)) { return }
     try {
@@ -60,152 +48,165 @@ function Assert-NoCredentialsInFile($filePath) {
     }
 }
 
-# ==============================================================================
-# PHASE 1: PRE-FLIGHT CREDENTIAL SCAN AT SOURCE (~/.gemini/)
-# Scans all source candidate files BEFORE touching repository disk
-# ==============================================================================
-Write-Host ">>> Running pre-flight credential audit on source files ($geminiHome)..." -ForegroundColor Cyan
+# Discover tracked targets strictly from this repository
+$repoConfigDir = Join-Path $scriptRoot "config"
+$dstGeminiMd = Join-Path $repoConfigDir "GEMINI.md"
+$dstHooksJson = Join-Path $repoConfigDir "hooks.json"
+$dstScripts = Join-Path $repoConfigDir "scripts"
+$dstAgents = Join-Path $repoConfigDir "agents"
+$dstSkills = Join-Path $repoConfigDir "skills"
+$dstAdr = Join-Path (Join-Path $scriptRoot "docs") "adr"
 
-# 1a. Scan GEMINI.md at source
+$trackedAgentNames = if (Test-Path $dstAgents) { @(Get-ChildItem -Path $dstAgents -Directory | ForEach-Object { $_.Name }) } else { @() }
+$trackedSkillNames = if (Test-Path $dstSkills) { @(Get-ChildItem -Path $dstSkills -Directory | ForEach-Object { $_.Name }) } else { @() }
+$trackedScriptRels = if (Test-Path $dstScripts) {
+    @(Get-ChildItem -Path $dstScripts -Recurse -File | ForEach-Object {
+        $_.FullName.Substring($dstScripts.Length).TrimStart('\', '/').Replace('\', '/')
+    })
+} else { @() }
+
 $srcGeminiMd = Join-Path $geminiHome "GEMINI.md"
-if (Test-Path $srcGeminiMd) {
-    Assert-NoCredentialsInFile $srcGeminiMd
+$srcHooksJson = Join-Path $configHome "hooks.json"
+$srcScriptsDir = Join-Path $configHome "scripts"
+$srcAgentsDir = Join-Path $configHome "agents"
+$srcSkillsDir = Join-Path $configHome "skills"
+$srcAdrsDir = Join-Path (Join-Path $geminiHome "docs") "adr"
+if (-not (Test-Path $srcAdrsDir)) {
+    $srcAdrsDir = Join-Path (Join-Path $configHome "docs") "adr"
 }
 
-# 1b. Scan custom plugins at source (excluding official marketplace plugins)
-$pluginsDir = Join-Path $configHome "plugins"
-$customPluginDirs = if (Test-Path $pluginsDir) {
-    Get-ChildItem -Path $pluginsDir -Directory | Where-Object { $_.Name -notin $officialPlugins } | Select-Object -ExpandProperty FullName
-} else { @() }
+# ==============================================================================
+# PHASE 1: PRE-FLIGHT CREDENTIAL SCAN AT SOURCE (~/.gemini/)
+# Scans only tracked candidate source files BEFORE touching repository disk
+# ==============================================================================
+Write-Host ">>> Running pre-flight credential audit on tracked source files ($geminiHome)..." -ForegroundColor Cyan
 
-# 1c. Scan all candidate source files (excluding external decoupled skills and binary assets)
-$allSkillsDir = Join-Path $configHome "skills"
-$customSkillDirs = if (Test-Path $allSkillsDir) {
-    Get-ChildItem -Path $allSkillsDir -Directory | Where-Object { $_.Name -notin $externalSkills } | Select-Object -ExpandProperty FullName
-} else { @() }
+if (Test-Path -LiteralPath $srcGeminiMd) {
+    Assert-NoCredentialsInFile $srcGeminiMd
+}
+if (Test-Path -LiteralPath $srcHooksJson) {
+    Assert-NoCredentialsInFile $srcHooksJson
+}
+foreach ($relScript in $trackedScriptRels) {
+    $srcScriptFile = Join-Path $srcScriptsDir $relScript
+    if (Test-Path -LiteralPath $srcScriptFile) {
+        Assert-NoCredentialsInFile $srcScriptFile
+    }
+}
 
-$sourceScanTargets = @(
-    (Join-Path $configHome "agents"),
-    (Join-Path (Join-Path $geminiHome "docs") "adr"),
-    (Join-Path (Join-Path $configHome "docs") "adr")
-) + $customSkillDirs + $customPluginDirs | Where-Object { $_ -and (Test-Path $_) }
+$trackedSourceDirs = @()
+foreach ($aName in $trackedAgentNames) {
+    $p = Join-Path $srcAgentsDir $aName
+    if (Test-Path -LiteralPath $p) { $trackedSourceDirs += $p }
+}
+foreach ($sName in $trackedSkillNames) {
+    $p = Join-Path $srcSkillsDir $sName
+    if (Test-Path -LiteralPath $p) { $trackedSourceDirs += $p }
+}
+if (Test-Path -LiteralPath $srcAdrsDir) {
+    $trackedSourceDirs += $srcAdrsDir
+}
 
-if ($sourceScanTargets) {
-    $sourceFiles = Get-ChildItem -Path $sourceScanTargets -Recurse -File -Force | Where-Object { $_.Extension.ToLowerInvariant() -notin $binaryExtensions }
+if ($trackedSourceDirs.Count -gt 0) {
+    $sourceFiles = Get-ChildItem -Path $trackedSourceDirs -Recurse -File -Force | Where-Object { $_.Extension.ToLowerInvariant() -notin $binaryExtensions }
     foreach ($sf in $sourceFiles) {
         Assert-NoCredentialsInFile $sf.FullName
     }
 }
 
-Write-Host "[PASS] Pre-flight audit clean: zero secrets detected in candidate source files." -ForegroundColor Green
+Write-Host "[PASS] Pre-flight audit clean: zero secrets detected in tracked source files." -ForegroundColor Green
 Write-Host ">>> Proceeding to copy configurations into everyday-agy repository..." -ForegroundColor Cyan
 
 # ==============================================================================
-# PHASE 2: SYNCHRONIZATION
+# PHASE 2: REPO-SCOPED SYNCHRONIZATION
 # ==============================================================================
 
-# 2. Sync Global Prompt & Rules
-if (Test-Path $srcGeminiMd) {
-    Copy-Item $srcGeminiMd (Join-Path (Join-Path $scriptRoot "config") "GEMINI.md") -Force
+# 1. Sync Global Prompt & Rules
+if ((Test-Path -LiteralPath $srcGeminiMd) -and ((Get-Item -LiteralPath $srcGeminiMd).Length -gt 0)) {
+    Copy-Item -LiteralPath $srcGeminiMd -Destination $dstGeminiMd -Force
     Write-Host "[OK] Synced GEMINI.md to config/GEMINI.md" -ForegroundColor Green
 }
 
-# 3. Sync Custom Agents
-$srcAgents = Join-Path $configHome "agents"
-if (Test-Path $srcAgents) {
-    $dstAgents = Join-Path (Join-Path $scriptRoot "config") "agents"
-    New-Item -ItemType Directory -Force -Path $dstAgents | Out-Null
-    # Prune repo agents that no longer exist in configHome (prevent zombie resurrection)
-    $activeAgentNames = @(Get-ChildItem -Path $srcAgents -Directory | ForEach-Object { $_.Name })
-    Get-ChildItem -Path $dstAgents -Directory | ForEach-Object {
-        if ($_.Name -notin $activeAgentNames) {
-            Remove-Item -Path $_.FullName -Recurse -Force
-            Write-Host "[CLEANUP] Pruned deleted agent from repo: $($_.Name)" -ForegroundColor DarkGray
-        }
-    }
-    Copy-Item -Path (Join-Path $srcAgents "*") -Destination $dstAgents -Recurse -Force
-    $agentCount = (Get-ChildItem -Path $dstAgents -Directory).Count
-    Write-Host "[OK] Synced $agentCount Custom Agents" -ForegroundColor Green
+# 2. Sync Hooks Configuration & Tracked Scripts
+if ((Test-Path -LiteralPath $srcHooksJson) -and ((Get-Item -LiteralPath $srcHooksJson).Length -gt 0)) {
+    Copy-Item -LiteralPath $srcHooksJson -Destination $dstHooksJson -Force
+    Write-Host "[OK] Synced hooks.json to config/hooks.json" -ForegroundColor Green
 }
 
-# 4. Sync Custom Skills (excluding decoupled upstream skills)
-$srcSkills = Join-Path $configHome "skills"
-if (Test-Path $srcSkills) {
-    $dstSkills = Join-Path (Join-Path $scriptRoot "config") "skills"
-    New-Item -ItemType Directory -Force -Path $dstSkills | Out-Null
-    $customSkills = Get-ChildItem -Path $srcSkills -Directory | Where-Object { $_.Name -notin $externalSkills }
-    $activeCustomSkillNames = @($customSkills | ForEach-Object { $_.Name })
-    Get-ChildItem -Path $dstSkills -Directory | ForEach-Object {
-        if ($_.Name -notin $activeCustomSkillNames) {
-            Remove-Item -Path $_.FullName -Recurse -Force
-            Write-Host "[CLEANUP] Pruned deleted skill from repo: $($_.Name)" -ForegroundColor DarkGray
+$syncedScripts = 0
+foreach ($relScript in $trackedScriptRels) {
+    $srcScriptFile = Join-Path $srcScriptsDir $relScript
+    $dstScriptFile = Join-Path $dstScripts $relScript
+    if ((Test-Path -LiteralPath $srcScriptFile) -and ((Get-Item -LiteralPath $srcScriptFile).Length -gt 0)) {
+        $dstParent = Split-Path -Parent $dstScriptFile
+        if (-not (Test-Path -LiteralPath $dstParent)) {
+            New-Item -ItemType Directory -Force -Path $dstParent | Out-Null
         }
+        Copy-Item -LiteralPath $srcScriptFile -Destination $dstScriptFile -Force
+        $syncedScripts++
     }
-    foreach ($cs in $customSkills) {
-        $targetDir = Join-Path $dstSkills $cs.Name
-        if (Test-Path $targetDir) {
-            # Prune orphan files inside tracked skill directory
-            $srcFiles = @(Get-ChildItem -Path $cs.FullName -Recurse -File | ForEach-Object {
-                $_.FullName.Substring($cs.FullName.Length)
-            })
-            Get-ChildItem -Path $targetDir -Recurse -File | ForEach-Object {
-                $rel = $_.FullName.Substring($targetDir.Length)
+}
+Write-Host "[OK] Synced $syncedScripts Tracked Config Scripts" -ForegroundColor Green
+
+# 3. Sync Tracked Custom Agents (guard against empty source deletion)
+$syncedAgents = 0
+foreach ($aName in $trackedAgentNames) {
+    $srcAgentDir = Join-Path $srcAgentsDir $aName
+    $dstAgentDir = Join-Path $dstAgents $aName
+    if (Test-Path -LiteralPath $srcAgentDir) {
+        $srcFiles = @(Get-ChildItem -LiteralPath $srcAgentDir -Recurse -File | ForEach-Object {
+            $_.FullName.Substring($srcAgentDir.Length).Replace('\', '/')
+        })
+        if ($srcFiles.Count -gt 0) {
+            Get-ChildItem -LiteralPath $dstAgentDir -Recurse -File | ForEach-Object {
+                $rel = $_.FullName.Substring($dstAgentDir.Length).Replace('\', '/')
                 if ($rel -notin $srcFiles) {
                     Remove-Item -LiteralPath $_.FullName -Force
-                    Write-Host "[CLEANUP] Pruned orphan skill file from repo: $($cs.Name)$rel" -ForegroundColor DarkGray
+                    Write-Host "[CLEANUP] Pruned orphan agent file from repo: $aName$rel" -ForegroundColor DarkGray
                 }
             }
-            Get-ChildItem -LiteralPath $targetDir -Recurse -Directory | Sort-Object -Property FullName -Descending | ForEach-Object {
+            Copy-Item -Path (Join-Path $srcAgentDir "*") -Destination $dstAgentDir -Recurse -Force
+            $syncedAgents++
+        }
+    }
+}
+Write-Host "[OK] Synced $syncedAgents Tracked Custom Agents" -ForegroundColor Green
+
+# 4. Sync Tracked Custom Skills (guard against empty source deletion)
+$syncedSkills = 0
+foreach ($sName in $trackedSkillNames) {
+    $srcSkillDir = Join-Path $srcSkillsDir $sName
+    $dstSkillDir = Join-Path $dstSkills $sName
+    if (Test-Path -LiteralPath $srcSkillDir) {
+        $srcFiles = @(Get-ChildItem -LiteralPath $srcSkillDir -Recurse -File | ForEach-Object {
+            $_.FullName.Substring($srcSkillDir.Length).Replace('\', '/')
+        })
+        if ($srcFiles.Count -gt 0) {
+            Get-ChildItem -LiteralPath $dstSkillDir -Recurse -File | ForEach-Object {
+                $rel = $_.FullName.Substring($dstSkillDir.Length).Replace('\', '/')
+                if ($rel -notin $srcFiles) {
+                    Remove-Item -LiteralPath $_.FullName -Force
+                    Write-Host "[CLEANUP] Pruned orphan skill file from repo: $sName$rel" -ForegroundColor DarkGray
+                }
+            }
+            Get-ChildItem -LiteralPath $dstSkillDir -Recurse -Directory | Sort-Object -Property FullName -Descending | ForEach-Object {
                 if (@(Get-ChildItem -LiteralPath $_.FullName -Force).Count -eq 0) {
                     Remove-Item -LiteralPath $_.FullName -Force
                 }
             }
-        } else {
-            New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
+            Copy-Item -Path (Join-Path $srcSkillDir "*") -Destination $dstSkillDir -Recurse -Force
+            $syncedSkills++
         }
-        Copy-Item -Path (Join-Path $cs.FullName "*") -Destination $targetDir -Recurse -Force
-    }
-    $skillCount = (Get-ChildItem -Path $dstSkills -Directory).Count
-    Write-Host "[OK] Synced $skillCount Custom Skills (excluding decoupled upstream skills)" -ForegroundColor Green
-}
-
-# 5. Sync Custom Plugins (exclude official marketplace and external plugins)
-if (Test-Path $pluginsDir) {
-    $customPluginList = Get-ChildItem -Path $pluginsDir -Directory | Where-Object { $_.Name -notin $officialPlugins }
-    if ($customPluginList.Count -gt 0) {
-        $dstPlugins = Join-Path (Join-Path $scriptRoot "config") "plugins"
-        New-Item -ItemType Directory -Force -Path $dstPlugins | Out-Null
-        $customPluginList | ForEach-Object {
-            $targetDir = Join-Path $dstPlugins $_.Name
-            New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
-            Copy-Item -Path (Join-Path $_.FullName "*") -Destination $targetDir -Recurse -Force
-        }
-        # Remove nested .git if any (scoped strictly to target plugin directories)
-        $resolvedDst = (Resolve-Path $dstPlugins).Path
-        Get-ChildItem -Path $dstPlugins -Filter ".git" -Recurse -Directory -Hidden -Force | ForEach-Object {
-            if ($_.FullName.StartsWith($resolvedDst, [System.StringComparison]::OrdinalIgnoreCase)) {
-                Remove-Item -LiteralPath $_.FullName -Recurse -Force
-            }
-        }
-        $pluginCount = (Get-ChildItem -Path $dstPlugins -Directory).Count
-        Write-Host "[OK] Synced $pluginCount Custom Plugins" -ForegroundColor Green
-    } else {
-        Write-Host "[INFO] All active plugins are external (antislop, devtools); skipped syncing." -ForegroundColor DarkGray
     }
 }
+Write-Host "[OK] Synced $syncedSkills Tracked Custom Skills" -ForegroundColor Green
 
-# 6. Sync Architectural Decision Records (ADRs)
-$srcAdrsDir = Join-Path (Join-Path $geminiHome "docs") "adr"
-if (-not (Test-Path $srcAdrsDir)) {
-    # Fallback to legacy path during migration
-    $srcAdrsDir = Join-Path (Join-Path $configHome "docs") "adr"
-}
-if (Test-Path $srcAdrsDir) {
-    $srcAdrs = Get-ChildItem -Path $srcAdrsDir -Filter "*.md"
+# 5. Sync Architectural Decision Records (ADRs)
+if (Test-Path -LiteralPath $srcAdrsDir) {
+    $srcAdrs = @(Get-ChildItem -Path $srcAdrsDir -Filter "*.md")
     if ($srcAdrs.Count -gt 0) {
-        $dstAdr = Join-Path (Join-Path $scriptRoot "docs") "adr"
         New-Item -ItemType Directory -Force -Path $dstAdr | Out-Null
-        $srcAdrNames = @(Get-ChildItem -Path $srcAdrsDir -Filter "*.md" | ForEach-Object { $_.Name })
+        $srcAdrNames = @($srcAdrs | ForEach-Object { $_.Name })
         Get-ChildItem -Path $dstAdr -Filter "*.md" | ForEach-Object {
             if ($_.Name -notin $srcAdrNames) {
                 Remove-Item -Path $_.FullName -Force

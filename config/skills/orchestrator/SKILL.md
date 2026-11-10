@@ -14,10 +14,10 @@ A high-rigor governance runbook enforcing Anthropic Lead-Agent context insulatio
 
 ## 1. Core Operational Invariants
 
-### 1.1 Parent Context Insulation Invariant (Strict Application Code Ban)
-- **Rule**: On Tier 2 (`standard`) and Tier 3 (`large`) tasks, the **Parent Agent** (identified by possessing `invoke_subagent` and `read_file`) is strictly prohibited from invoking `read_file` or `view_file` on application source code (`src/**`, `core/**`, `web/**`, `lib/**`, business logic implementations).
+### 1.1 Role-Scoped Execution & Context Insulation Invariant
+- **Parent Lead Orchestrator (`invoke_subagent` present)**: On Tier 2 (`standard`) and Tier 3 (`large`) tasks, the Parent Agent is strictly prohibited from invoking `read_file` or `view_file` on application source code (`src/**`, `core/**`, `web/**`, `lib/**`, business logic implementations) AND strictly barred from calling `replace_file_content`, `multi_replace_file_content`, `write_to_file`, `edit_file`, or `write_file` on any workspace repository file. Parent write tools on Tier 2/3 are restricted strictly to session artifacts under `<appDataDir>\brain\<conversation-id>\*.md` and scratch files.
 - **Allowed Parent Reads**: High-level task coordination files (`task_state.md`, ADR summaries, `specs/<feature>/*.md`), intermediate subagent dossiers in scratch (`<appDataDir>\brain\<conversation-id>\scratch\<task>\` or `$HOME/.gemini/antigravity/scratch/<task>/`), git tracking receipts (`rtk git status --short`, `rtk git diff --stat`), CLI test output, and raw `git --no-pager diff HEAD` / `git --no-pager diff --stat` specifically for programmatic Gate 2 artifact injection.
-- **Subagent Mandate**: All deep code reading, syntax analysis, code editing, and test authoring belong exclusively to subagents (identified by possessing `view_file`, `replace_file_content`, and `write_to_file`).
+- **Execution Specialist Subagents (`ROLE_TYPE: SUBAGENT` / `invoke_subagent` absent)**: Deep code reading, syntax analysis, code editing, and test authoring belong exclusively to subagents. Mutating specialists (`tdd-guide`, `ui-crafter`, `docs-architect`, `l10n-humanizer`, `maintenance-bot`, `build-error-resolver`) are explicitly authorized to edit granted `<SCOPE_AND_BOUNDARIES>` paths within the active repository or sibling `<Project>-AI-Context` repo. Read-only specialists (`code-auditor`, `silent-failure-hunter`, `spec-verifier`, `system-architect`) write exclusively to `scratch/` dossiers.
 
 ### 1.2 Zero-Read Triage Gate (Step 0 Blast Radius Sizing — SSOT)
 Before opening any source file, the Parent Agent classifies task blast radius using **zero-read metadata commands only**:
@@ -93,10 +93,14 @@ flowchart TD
     T1Exec --> P4Local["Phase 4 Verification"]
     
     CkptT2 -->|"Bugfix / Feature"| S2["Phase 3 Single-Pass Mutator: tdd-guide<br/>RED Test -> GREEN Fix -> Fast Syntax Check"]
-    CkptT2 -->|"Domain Specialist"| S3["Phase 3 Domain Specialist: ui-crafter /<br/>build-error-resolver / docs-architect"]
+    CkptT2 -->|"Domain Specialist"| S3["Phase 3 Domain Specialist: ui-crafter /<br/>build-error-resolver / maintenance-bot"]
+    CkptT2 -->|"Tier 2/3 Public Docs"| S3Duet["Phase 3 Mode B Duet:<br/>Stage 3a: docs-architect (Structure & Claims)<br/>-> Stage 3b: l10n-humanizer (Scope B Anti-Slop)"]
+    CkptT2 -->|"ADR / task_state"| S3ModeA["Phase 3 Single-Pass: docs-architect (Mode A)"]
     
     S2 --> S4["Phase 4 Stage 4a: Diff Audit<br/>code-auditor (audit-dev Five-Axis Rubric)"]
     S3 --> S4
+    S3Duet --> S4
+    S3ModeA --> S4
     
     S4 -->|"Diff Introduces Unverified APIs"| S4b["Phase 4 Stage 4b (Conditional):<br/>spec-verifier (API Cross-Check)"]
     S4 -->|"Diff Clean / Pre-Verified"| Gate2["Phase 5 Gate 2 Handoff Artifact<br/>Update-Gate2Diff.ps1"]
@@ -150,8 +154,13 @@ Upon receiving Gate 1 approval (or immediately following Step 0 for Tier 0/1):
 
 ### Phase 3: Execution & Single-Pass TDD
 1. **Code Features / Bug Fixes**: Parent dispatches `tdd-guide` under the Single-Pass TDD Protocol (Section 1.5). `tdd-guide` writes the RED test, executes the failure receipt, writes the GREEN fix, runs the Fast Syntax Gate, and verifies test success in a single continuous pass.
-2. **Domain Specialists**: When specialized tasks are required, Parent dispatches the appropriate single mutator (`ui-crafter`, `build-error-resolver`, etc.) strictly serialized per the Single-Writer Invariant (Section 1.3).
-3. **Fast Syntax Gate**: All mutating subagents run pre-mutation syntax checks before reporting completion.
+2. **Domain Specialists**: When specialized tasks are required, Parent dispatches the appropriate single mutator (`ui-crafter`, `build-error-resolver`, `maintenance-bot`) strictly serialized per the Single-Writer Invariant (Section 1.3).
+3. **Conditional Mode B Duet for Public Repository Documentation**:
+   - For Tier 2/3 public/narrative repository docs (`README.md`, `TOOLKIT.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, and non-ADR `docs/**/*.md`), Parent executes a serialized two-stage duet:
+     - **Stage 3a (`docs-architect` - Mode B)**: Formulates the 4-part pragmatic README/doc structure, grounds technical claims in verified code, verifies CLI snippets, and enforces clean documentation standards.
+     - **Stage 3b (`l10n-humanizer` - Scope B)**: Reviews and humanizes the drafted prose, stripping AI writing tells, marketing hyperbole, and promotional slop while strictly preserving technical facts, code blocks, and CLI flags verbatim.
+   - *Exemption*: Mode A documentation (`docs/adr/**`, `task_state.md`, architecture topology maps) and Tier 0/1 documentation edits remain single-pass on `docs-architect`.
+4. **Fast Syntax Gate**: All mutating subagents run pre-mutation syntax checks before reporting completion.
 
 ### Phase 4: Local Verification & Quality Gate
 1. **Direct Parent CLI Test Runner**: Parent independently executes the test command via `run_command` and validates `exit code 0` AND positive assertion count ($>0$ passed, $0$ failed).

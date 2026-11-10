@@ -25,7 +25,7 @@ jobs:
       - name: Verify essential root and configuration files
         shell: bash
         run: |
-          for file in config/GEMINI.md README.md TOOLKIT.md LICENSE sync.ps1 restore.ps1; do
+          for file in config/GEMINI.md config/hooks.json config/scripts/Invoke-AntigravityHook.ps1 README.md TOOLKIT.md LICENSE sync.ps1 restore.ps1; do
             if [ ! -f "$file" ]; then
               echo "Error: Required file $file is missing!" >&2
               exit 1
@@ -49,25 +49,39 @@ jobs:
       - name: Run PowerShell AST Command Safety Test Suite (pwsh)
         shell: pwsh
         run: |
-          pwsh -NoProfile -ExecutionPolicy Bypass -File "config/skills/orchestrator/scripts/Test-PowerShellCommandSafety.Tests.ps1"
+          pwsh -NoProfile -ExecutionPolicy Bypass -File ".github/tests/Test-PowerShellCommandSafety.Tests.ps1"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Run Audit Checkpoint & Rollback Test Suite (pwsh)
         shell: pwsh
         run: |
-          pwsh -NoProfile -ExecutionPolicy Bypass -File "config/skills/orchestrator/scripts/AuditCheckpoint.Tests.ps1"
+          pwsh -NoProfile -ExecutionPolicy Bypass -File ".github/tests/AuditCheckpoint.Tests.ps1"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Run YAML Syntax & Schema Test Suite (pwsh)
         shell: pwsh
         run: |
-          pwsh -NoProfile -ExecutionPolicy Bypass -File "config/skills/orchestrator/scripts/YamlValidation.Tests.ps1"
+          pwsh -NoProfile -ExecutionPolicy Bypass -File ".github/tests/YamlValidation.Tests.ps1"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Run Test Suites on Windows PowerShell 5.1
         if: runner.os == 'Windows'
         shell: powershell
         run: |
-          powershell -NoProfile -ExecutionPolicy Bypass -File "config/skills/orchestrator/scripts/Test-PowerShellCommandSafety.Tests.ps1"
-          powershell -NoProfile -ExecutionPolicy Bypass -File "config/skills/orchestrator/scripts/AuditCheckpoint.Tests.ps1"
-          powershell -NoProfile -ExecutionPolicy Bypass -File "config/skills/orchestrator/scripts/YamlValidation.Tests.ps1"
+          Get-ChildItem -Path . -Filter "*.ps1" -Recurse | ForEach-Object {
+            $err = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$null, [ref]$err) | Out-Null
+            if ($err) {
+              Write-Error "PowerShell 5.1 syntax error in $($_.FullName): $err"
+              exit 1
+            }
+          }
+          powershell -NoProfile -ExecutionPolicy Bypass -File ".github/tests/Test-PowerShellCommandSafety.Tests.ps1"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          powershell -NoProfile -ExecutionPolicy Bypass -File ".github/tests/AuditCheckpoint.Tests.ps1"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          powershell -NoProfile -ExecutionPolicy Bypass -File ".github/tests/YamlValidation.Tests.ps1"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Run Runner-Native yamllint on Pure YAML (.github/**/*.yml)
         shell: bash

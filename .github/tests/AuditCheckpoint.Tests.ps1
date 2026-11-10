@@ -2,10 +2,23 @@
 # Unit verification suite for New-AuditCheckpoint.ps1 and Restore-AuditCheckpoint.ps1
 # Compatible with Windows PowerShell 5.1 and PowerShell 7.x
 
-$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$newScript = Join-Path $scriptDir "New-AuditCheckpoint.ps1"
-$restoreScript = Join-Path $scriptDir "Restore-AuditCheckpoint.ps1"
-$updateScript = Join-Path $scriptDir "Update-Gate2Diff.ps1"
+$repoRoot = if ($PSScriptRoot) {
+    Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+} elseif ($MyInvocation.MyCommand.Path) {
+    Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path))
+} else {
+    (Get-Location).Path
+}
+$orchestratorScriptsDir = Join-Path (Join-Path (Join-Path (Join-Path $repoRoot "config") "skills") "orchestrator") "scripts"
+$newScript = Join-Path $orchestratorScriptsDir "New-AuditCheckpoint.ps1"
+$restoreScript = Join-Path $orchestratorScriptsDir "Restore-AuditCheckpoint.ps1"
+$updateScript = Join-Path $orchestratorScriptsDir "Update-Gate2Diff.ps1"
+foreach ($requiredScript in @($newScript, $restoreScript, $updateScript)) {
+    if (-not (Test-Path -LiteralPath $requiredScript)) {
+        Write-Error "Required script not found at $requiredScript!"
+        exit 1
+    }
+}
 
 $ErrorActionPreference = "Stop"
 

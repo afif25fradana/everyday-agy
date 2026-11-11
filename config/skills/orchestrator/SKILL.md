@@ -147,7 +147,7 @@ Classify blast radius using zero-read CLI commands (`rtk git status --short`, `r
 Upon receiving Gate 1 approval (or immediately following Step 0 for Tier 0/1):
 1. Parent executes:
    ```powershell
-   powershell -ExecutionPolicy Bypass -File "$HOME\.gemini\config\skills\orchestrator\scripts\New-AuditCheckpoint.ps1" -Task "<task>"
+   powershell -ExecutionPolicy Bypass -File "$HOME\.gemini\config\scripts\New-AuditCheckpoint.ps1" -Task "<task>"
    ```
 2. For git repositories, this creates a dedicated branch `checkpoint-<task>` pointing to HEAD. For non-git targets, it creates a verified backup in `$HOME/.gemini/antigravity/scratch/<task>/`.
 3. If neither is possible, Parent halts and notifies the operator.
@@ -170,7 +170,7 @@ Upon receiving Gate 1 approval (or immediately following Step 0 for Tier 0/1):
    - If Phase 3 introduced new third-party APIs or dependency options not already certified during Phase 1 Stage 1b, Parent dispatches `spec-verifier` to cross-check them against Context7 MCP before proceeding to Gate 2.
 4. **Clean-Fail Rollback**: If tests fail or code auditor rejects the diff twice (`global_attempt_counter == 2`), Parent halts and executes:
    ```powershell
-   powershell -ExecutionPolicy Bypass -File "$HOME\.gemini\config\skills\orchestrator\scripts\Restore-AuditCheckpoint.ps1" -Task "<task>"
+   powershell -ExecutionPolicy Bypass -File "$HOME\.gemini\config\scripts\Restore-AuditCheckpoint.ps1" -Task "<task>"
    ```
 
 ### Phase 5: Gate 2 Programmatic Diff, Commit & Push
@@ -178,7 +178,7 @@ Upon receiving Gate 1 approval (or immediately following Step 0 for Tier 0/1):
    - Parent authors `<appDataDir>\brain\<conversation-id>/gate2_handoff.md` with placeholders `{{VERBATIM_GIT_DIFFSTAT}}` and `{{VERBATIM_GIT_DIFF}}`.
    - Parent executes:
      ```powershell
-     powershell -ExecutionPolicy Bypass -File "$HOME\.gemini\config\skills\orchestrator\scripts\Update-Gate2Diff.ps1" -ArtifactPath "<appDataDir>\brain\<conversation-id>\gate2_handoff.md"
+     powershell -ExecutionPolicy Bypass -File "$HOME\.gemini\config\scripts\Update-Gate2Diff.ps1" -ArtifactPath "<appDataDir>\brain\<conversation-id>\gate2_handoff.md"
      ```
    - Parent outputs a 1–3 line chat message linking directly to `gate2_handoff.md` and pauses for human operator approval.
 2. **Commit Discipline**:
@@ -219,4 +219,4 @@ Return ONLY the compact <= 15-line summary defined in ## Output of your agent.md
 | *"Direct reading is faster than spawning a subagent."* | Inline reading pollutes Parent context, triggering middle-loss, dropped safety checks, and hallucinated test passes. | Subagent dispatch takes 1 turn and guarantees context insulation. |
 | *"The task is small enough that I don't need a subagent."* | If it crosses module boundaries (>1 module or >2 non-test files) or requires architectural redesign, it is Tier 2 by definition (ADR-0001). | Follow the Zero-Read Triage Gate strictly; do not rationalize away Tier 2 boundaries. |
 | *"The subagent reported green, so I can commit directly."* | Subagents may mock-cheat, delete tests, or suffer from Exit Code 0 fallacies. | Parent independently runs CLI tests (`run_command`) and validates $>0$ passed assertions. |
-| *"Two subagents failed, let me read the code to fix it myself."* | Violates the 2-Attempt Stop Rule and ADR-0001 clean-fail invariant. | Execute `$HOME\.gemini\config\skills\orchestrator\scripts\Restore-AuditCheckpoint.ps1`, record failure evidence, and escalate to human operator. |
+| *"Two subagents failed, let me read the code to fix it myself."* | Violates the 2-Attempt Stop Rule and ADR-0001 clean-fail invariant. | Execute `$HOME\.gemini\config\scripts\Restore-AuditCheckpoint.ps1`, record failure evidence, and escalate to human operator. |

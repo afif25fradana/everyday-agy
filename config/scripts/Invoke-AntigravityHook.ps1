@@ -52,7 +52,7 @@ function Write-HookLog {
                 $fs = [System.IO.FileStream]::new($logPath, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
                 $tailText = ""
                 try {
-                    $readLen = [Math]::Min($keepBytes, [int]$fs.Length)
+                    $readLen = [int][Math]::Min([long]$keepBytes, $fs.Length)
                     $fs.Seek(-$readLen, [System.IO.SeekOrigin]::End) | Out-Null
                     $buf = New-Object byte[] $readLen
                     $readCount = $fs.Read($buf, 0, $readLen)
@@ -64,11 +64,24 @@ function Write-HookLog {
                 } finally {
                     $fs.Dispose()
                 }
-                [System.IO.File]::WriteAllText($logPath, $tailText + $entry, $utf8NoBom)
-                return
+                for ($attempt = 0; $attempt -lt 2; $attempt++) {
+                    try {
+                        [System.IO.File]::WriteAllText($logPath, $tailText + $entry, $utf8NoBom)
+                        return
+                    } catch [System.IO.IOException] {
+                        if ($attempt -eq 0) { Start-Sleep -Milliseconds 15 } else { throw }
+                    }
+                }
             }
         }
-        [System.IO.File]::AppendAllText($logPath, $entry, $utf8NoBom)
+        for ($attempt = 0; $attempt -lt 2; $attempt++) {
+            try {
+                [System.IO.File]::AppendAllText($logPath, $entry, $utf8NoBom)
+                break
+            } catch [System.IO.IOException] {
+                if ($attempt -eq 0) { Start-Sleep -Milliseconds 15 } else { throw }
+            }
+        }
     } catch {
         # Preserve JSON stdout contract even if logging fails
     }
@@ -107,6 +120,17 @@ function Get-PropValue {
     return $null
 }
 
+function Test-HookPayloadHasError {
+    param($RawError)
+    if ($null -eq $RawError) { return $false }
+    if ($RawError -is [bool]) { return $RawError }
+    if ($RawError -is [string]) { return (-not [string]::IsNullOrWhiteSpace($RawError)) }
+    if ($RawError -is [System.Collections.IDictionary]) { return ($RawError.Count -gt 0) }
+    if ($RawError -is [System.Collections.IEnumerable]) { return (@($RawError).Count -gt 0) }
+    if ($RawError -is [PSCustomObject]) { return (@($RawError.PSObject.Properties).Count -gt 0) }
+    return (-not [string]::IsNullOrWhiteSpace([string]$RawError))
+}
+
 function Get-NormalizedPath {
     param([string]$RawPath)
     if ([string]::IsNullOrWhiteSpace($RawPath)) { return "" }
@@ -118,16 +142,20 @@ function Get-NormalizedPath {
         $p = $userHomeNorm + $p.Substring($Matches[1].Length)
     }
     $p = $p -replace '\\', '/'
+    if ($p -match '^file:///([A-Za-z]:.*)$') {
+        $p = $Matches[1]
+    } elseif ($p -match '^file://(/.*)$') {
+        $p = $Matches[1]
+    }
+    if ($p -match '^//[\.\?]/([A-Za-z]:.*)$') {
+        $p = $Matches[1]
+    }
 
     $prefix = ""
     $rest = $p
     if ($p -match '^([A-Za-z]:)(.*)$') {
-        $prefix = $Matches[1].ToLowerInvariant()
-        $rest = $Matches[2]
-        if ($rest.StartsWith("/")) {
-            $prefix += "/"
-            $rest = $rest.TrimStart("/")
-        }
+        $prefix = $Matches[1].ToLowerInvariant() + "/"
+        $rest = $Matches[2].TrimStart("/")
     } elseif ($p.StartsWith("//")) {
         $prefix = "//"
         $rest = $p.TrimStart("/")
@@ -153,24 +181,123 @@ function Get-NormalizedPath {
     return $prefix + ($stack -join '/')
 }
 
-function Test-DenyPath {
-    param([string]$RawPath)
-    $norm = Get-NormalizedPath -RawPath $RawPath
-    if ([string]::IsNullOrWhiteSpace($norm)) { return $false }
+function Test-LexicalDenyPath {
+    param([string]$NormPath)
+    if ([string]::IsNullOrWhiteSpace($NormPath)) { return $false }
 
-    $leaf = ($norm -split '/')[-1]
+    $parts = $NormPath -split '/'
+    $leaf = $parts[-1] -replace ':.*$', ''
+    $parts[-1] = $leaf
+    $normNoAds = $parts -join '/'
+
     if ($leaf -match '^\.env' -and $leaf -notin @('.env.example', '.env.sample', '.env.template')) {
         return $true
     }
     if ($leaf -match '\.(key|pem)$') {
         return $true
     }
-    if ($norm -match '(^|/)(\.ssh|\.aws|\.gnupg)(/|$)') {
+    if ($normNoAds -match '(^|/)(\.ssh|\.aws|\.gnupg)(/|$)') {
         return $true
     }
-    if ($norm -match '(^|/)\.gemini/(?:antigravity[^/]*/)?mcp(/|$)') {
+    if ($normNoAds -match '(^|/)\.gemini/(?:antigravity[^/]*/)?mcp(/|$)') {
         return $true
     }
+    if ($normNoAds -match '(^|/)\.gemini/(?:config/|antigravity[^/]*/)?mcp_config[^/]*\.json$') {
+        return $true
+    }
+    return $false
+}
+
+function Test-DenyPath {
+    param(
+        [string]$RawPath,
+        [int]$Depth = 0
+    )
+    if ($Depth -gt 8) { return $false }
+
+    $norm = Get-NormalizedPath -RawPath $RawPath
+    if ([string]::IsNullOrWhiteSpace($norm)) { return $false }
+    if (Test-LexicalDenyPath -NormPath $norm) { return $true }
+
+    $expanded = $RawPath.Trim().Trim('"', "'")
+    $userHome = if ($env:USERPROFILE) { $env:USERPROFILE } elseif ($HOME) { $HOME } else { "" }
+    if ($userHome -and $expanded -match '^(~|\$HOME|\$\{HOME\}|\$env:USERPROFILE|%USERPROFILE%)(?=[/\\]|$)') {
+        $expanded = $userHome.TrimEnd('\', '/') + $expanded.Substring($Matches[1].Length)
+    }
+    if ($expanded -match '^file:///([A-Za-z]:.*)$') {
+        $expanded = $Matches[1]
+    } elseif ($expanded -match '^file://(/.*)$') {
+        $expanded = $Matches[1]
+    }
+    $expanded = $expanded -replace '/', '\'
+    if ($expanded -match '^\\\\[\.\?]\\([A-Za-z]:.*)$') {
+        $expanded = $Matches[1]
+    }
+
+    $drivePart = ""
+    $bodyPart = $expanded
+    if ($expanded -match '^([A-Za-z]:)(.*)$') {
+        $drivePart = $Matches[1]
+        $bodyPart = $Matches[2]
+    }
+    $lastSlash = $bodyPart.LastIndexOf('\')
+    if ($lastSlash -ge 0) {
+        $expanded = $drivePart + $bodyPart.Substring(0, $lastSlash + 1) + ($bodyPart.Substring($lastSlash + 1) -replace ':.*$', '')
+    } else {
+        $expanded = $drivePart + ($bodyPart -replace ':.*$', '')
+    }
+
+    try {
+        $fullProbe = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($expanded)
+    } catch {
+        return $false
+    }
+    $fullNorm = Get-NormalizedPath -RawPath $fullProbe
+    if (Test-LexicalDenyPath -NormPath $fullNorm) { return $true }
+
+    $probe = $fullProbe.TrimEnd('\', '/')
+    if ($probe -match '^[A-Za-z]:$') { $probe += '\' }
+    $suffixParts = New-Object System.Collections.Generic.List[string]
+    while (-not [string]::IsNullOrWhiteSpace($probe)) {
+        $item = Get-Item -LiteralPath $probe -Force -ErrorAction SilentlyContinue
+        if ($null -ne $item -and (($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0)) {
+            $rawTargets = @()
+            if ($item.PSObject.Properties['LinkTarget'] -and -not [string]::IsNullOrWhiteSpace([string]$item.LinkTarget)) {
+                $rawTargets = @([string]$item.LinkTarget)
+            } elseif ($item.PSObject.Properties['Target'] -and $null -ne $item.Target) {
+                $rawTargets = @($item.Target | ForEach-Object { [string]$_ })
+            }
+            foreach ($lt in $rawTargets) {
+                if ([string]::IsNullOrWhiteSpace($lt)) { continue }
+                $resolvedTarget = $lt
+                if (-not [System.IO.Path]::IsPathRooted($resolvedTarget)) {
+                    $probeParent = Split-Path -Parent $probe
+                    if ($probeParent) {
+                        $resolvedTarget = Join-Path $probeParent $resolvedTarget
+                    }
+                }
+                $candidate = $resolvedTarget
+                if ($suffixParts.Count -gt 0) {
+                    $rev = New-Object System.Collections.Generic.List[string]
+                    for ($si = $suffixParts.Count - 1; $si -ge 0; $si--) {
+                        $rev.Add($suffixParts[$si])
+                    }
+                    $candidate = Join-Path $candidate ($rev -join [System.IO.Path]::DirectorySeparatorChar)
+                }
+                if (Test-DenyPath -RawPath $candidate -Depth ($Depth + 1)) {
+                    return $true
+                }
+            }
+        }
+        $parent = Split-Path -Parent $probe
+        if ([string]::IsNullOrWhiteSpace($parent) -or $parent -eq $probe) { break }
+        $leafName = Split-Path -Leaf $probe
+        if (-not [string]::IsNullOrEmpty($leafName)) {
+            $suffixParts.Add($leafName)
+        }
+        $probe = $parent
+    }
+
     return $false
 }
 
@@ -178,7 +305,7 @@ try {
     $rawInput = ""
     if ([Console]::IsInputRedirected) {
         $inStream = [Console]::OpenStandardInput()
-        $reader = New-Object System.IO.StreamReader($inStream, [System.Text.UTF8Encoding]::new($false), $true)
+        $reader = New-Object System.IO.StreamReader($inStream, [System.Text.UTF8Encoding]::new($false), $true, 4096, $true)
         try {
             $rawInput = $reader.ReadToEnd()
         } finally {
@@ -202,46 +329,58 @@ try {
     $toolName = [string](Get-PropValue -Object $toolCall -Names @("name"))
     $toolArgs = Get-PropValue -Object $toolCall -Names @("args")
 
-    $configRoot = Split-Path -Parent $PSScriptRoot
-    $orchestratorScripts = Join-Path (Join-Path (Join-Path $configRoot "skills") "orchestrator") "scripts"
+    $pathPropKeys = @("AbsolutePath", "TargetFile", "Path", "FilePath", "file_path", "target_file", "absolute_path", "path")
 
     if ($Event -eq "PostToolUse") {
-        $toolError = [string](Get-PropValue -Object $payload -Names @("error"))
-        if ([string]::IsNullOrWhiteSpace($toolError) -and $toolName -in @("write_to_file", "replace_file_content", "multi_replace_file_content")) {
-            $targetFile = [string](Get-PropValue -Object $toolArgs -Names @("TargetFile", "Path", "AbsolutePath"))
-            if (-not [string]::IsNullOrWhiteSpace($targetFile) -and ([System.IO.Path]::GetFileName($targetFile.Trim()) -ieq 'gate2_handoff.md')) {
+        $rawError = Get-PropValue -Object $payload -Names @("error")
+        if (-not (Test-HookPayloadHasError -RawError $rawError) -and $toolName -in @("write_to_file", "write_file", "create_file", "replace_file_content", "multi_replace_file_content", "edit_file")) {
+            $rawTargetFile = [string](Get-PropValue -Object $toolArgs -Names $pathPropKeys)
+            $targetFile = if ($null -ne $rawTargetFile) { $rawTargetFile.Trim() } else { "" }
+            if (-not [string]::IsNullOrWhiteSpace($targetFile) -and ([System.IO.Path]::GetFileName($targetFile) -ieq 'gate2_handoff.md')) {
                 if (Test-Path -LiteralPath $targetFile) {
                     $fileText = [System.IO.File]::ReadAllText($targetFile, [System.Text.Encoding]::UTF8)
                     if ($fileText.Contains("{{VERBATIM_GIT_DIFF}}") -or $fileText.Contains("{{VERBATIM_GIT_DIFFSTAT}}")) {
-                        $updateScript = Join-Path $orchestratorScripts "Update-Gate2Diff.ps1"
-                        if (-not (Test-Path -LiteralPath $updateScript)) {
-                            throw "Update-Gate2Diff.ps1 not found at $updateScript"
-                        }
-                        $repoArg = $null
-                        $wsPaths = Get-PropValue -Object $payload -Names @("workspacePaths")
-                        $prevEap = $ErrorActionPreference
-                        $ErrorActionPreference = "Continue"
                         try {
-                            if ($null -ne $wsPaths) {
-                                foreach ($ws in @($wsPaths)) {
-                                    $wsStr = [string]$ws
-                                    if (-not [string]::IsNullOrWhiteSpace($wsStr) -and (Test-Path -LiteralPath $wsStr -PathType Container)) {
-                                        $inGit = (git -C $wsStr rev-parse --is-inside-work-tree 2>$null | Out-String).Trim()
-                                        if ($LASTEXITCODE -eq 0 -and $inGit -eq "true") {
-                                            $repoArg = $wsStr
-                                            break
+                            $updateScript = Join-Path $PSScriptRoot "Update-Gate2Diff.ps1"
+                            if (-not (Test-Path -LiteralPath $updateScript)) {
+                                throw "Update-Gate2Diff.ps1 not found at $updateScript"
+                            }
+                            $repoArg = $null
+                            $wsPaths = Get-PropValue -Object $payload -Names @("workspacePaths")
+                            $prevEap = $ErrorActionPreference
+                            $ErrorActionPreference = "Continue"
+                            try {
+                                if ($null -ne $wsPaths) {
+                                    foreach ($ws in @($wsPaths)) {
+                                        $wsStr = [string]$ws
+                                        if (-not [string]::IsNullOrWhiteSpace($wsStr) -and (Test-Path -LiteralPath $wsStr -PathType Container)) {
+                                            $inGit = (git -C $wsStr rev-parse --is-inside-work-tree 2>$null | Out-String).Trim()
+                                            if ($LASTEXITCODE -eq 0 -and $inGit -eq "true") {
+                                                $repoArg = $wsStr
+                                                break
+                                            }
+                                            if (-not $repoArg) { $repoArg = $wsStr }
                                         }
-                                        if (-not $repoArg) { $repoArg = $wsStr }
                                     }
                                 }
+                                $global:LASTEXITCODE = 0
+                                if ($repoArg) {
+                                    & $updateScript -ArtifactPath $targetFile -RepoPath $repoArg 1>$null 3>$null 4>$null 5>$null 6>$null
+                                } else {
+                                    & $updateScript -ArtifactPath $targetFile 1>$null 3>$null 4>$null 5>$null 6>$null
+                                }
+                                if ($LASTEXITCODE -ne 0) {
+                                    throw "Update-Gate2Diff.ps1 exited with code $LASTEXITCODE"
+                                }
+                            } finally {
+                                $ErrorActionPreference = $prevEap
                             }
-                            if ($repoArg) {
-                                & $updateScript -ArtifactPath $targetFile -RepoPath $repoArg 1>$null 3>$null 4>$null 5>$null 6>$null
-                            } else {
-                                & $updateScript -ArtifactPath $targetFile 1>$null 3>$null 4>$null 5>$null 6>$null
-                            }
-                        } finally {
-                            $ErrorActionPreference = $prevEap
+                        } catch {
+                            $g4Err = $_.Exception.Message
+                            Write-HookLog -Message "Event=PostToolUse Guard4 Update-Gate2Diff failed: $g4Err"
+                            $banner = "[ERROR: Update-Gate2Diff.ps1 failed $([char]0x2014) $g4Err]"
+                            $updatedText = $fileText.Replace("{{VERBATIM_GIT_DIFFSTAT}}", $banner).Replace("{{VERBATIM_GIT_DIFF}}", $banner)
+                            [System.IO.File]::WriteAllText($targetFile, $updatedText, [System.Text.UTF8Encoding]::new($false))
                         }
                     }
                 }
@@ -258,9 +397,10 @@ try {
                 Write-HookResponse @{ decision = "ask"; reason = "Missing CommandLine argument in run_command payload." }
                 exit 0
             }
-            $safetyScript = Join-Path $orchestratorScripts "Test-PowerShellCommandSafety.ps1"
+            $safetyScript = Join-Path $PSScriptRoot "Test-PowerShellCommandSafety.ps1"
             if (-not (Test-Path -LiteralPath $safetyScript)) {
-                throw "Test-PowerShellCommandSafety.ps1 not found at $safetyScript"
+                Write-HookResponse @{ decision = "deny"; reason = "Security Hook Misconfiguration: Test-PowerShellCommandSafety.ps1 not found at $safetyScript" }
+                exit 0
             }
             $global:LASTEXITCODE = 0
             $blocked = $false
@@ -269,7 +409,9 @@ try {
                 $out = & $safetyScript -CommandLine ([string]$cmdLine) *>&1
                 if ($LASTEXITCODE -ne 0) {
                     $blocked = $true
-                    $blockMsg = ($out | Out-String).Trim()
+                    $blockMsg = (($out | ForEach-Object {
+                        if ($_ -is [System.Management.Automation.ErrorRecord]) { $_.Exception.Message } else { "$_" }
+                    }) -join "`n").Trim()
                 }
             } catch {
                 $blocked = $true
@@ -286,8 +428,8 @@ try {
             exit 0
         }
 
-        { $_ -in @("view_file", "replace_file_content", "multi_replace_file_content", "write_to_file") } {
-            $rawPath = Get-PropValue -Object $toolArgs -Names @("AbsolutePath", "TargetFile", "Path", "FilePath")
+        { $_ -in @("view_file", "read_file", "replace_file_content", "multi_replace_file_content", "edit_file", "write_to_file", "write_file", "create_file") } {
+            $rawPath = Get-PropValue -Object $toolArgs -Names $pathPropKeys
             if ([string]::IsNullOrWhiteSpace([string]$rawPath)) {
                 Write-HookResponse @{ decision = "ask"; reason = "Missing target file path argument in $toolName payload." }
                 exit 0

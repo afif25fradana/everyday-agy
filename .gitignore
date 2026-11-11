@@ -9,6 +9,10 @@ mcp_config*.json
 *.pem
 *.key
 id_rsa*
+id_ed25519*
+id_ecdsa*
+*.p12
+*.pfx
 
 # Cache and Runtime Logs
 *.log

@@ -107,7 +107,7 @@ jobs:
               Write-Error "Missing agent.md in $($a.Name)"
               exit 1
             }
-            $content = Get-Content $agentFile -Raw
+            $content = Get-Content -LiteralPath $agentFile -Raw -Encoding utf8
             if ($content -notmatch '(?m)^name:\s+' -or $content -notmatch '(?m)^description:\s+' -or $content -notmatch '(?m)^model:\s+(inherit|flash)\s*$' -or $content -notmatch '(?m)^subagent:\s+true\s*$' -or $content -notmatch '(?m)^mainAgent:\s+false\s*$' -or $content -notmatch '(?m)^tools:\s+') {
               Write-Error "Invalid frontmatter in $agentFile"
               exit 1
@@ -128,18 +128,36 @@ jobs:
             exit 1
           }
           foreach ($s in $skills) {
-            $content = Get-Content $s.FullName -Raw
-            if ($content -notmatch '(?m)^name:\s+' -or $content -notmatch '(?m)^description:\s*(.+)$') {
+            $content = (Get-Content -LiteralPath $s.FullName -Raw -Encoding utf8).TrimStart([char]0xFEFF)
+            if ($content -notmatch '(?s)^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)') {
+              Write-Error "Missing or invalid frontmatter delimiters in $($s.FullName)"
+              exit 1
+            }
+            $frontmatter = $Matches[1]
+            if ($frontmatter -notmatch '(?m)^name:\s+\S+' -or $frontmatter -notmatch '(?m)^description:\s*(.+)$') {
               Write-Error "Invalid frontmatter in $($s.FullName)"
               exit 1
             }
             $rawDesc = $Matches[1].Trim()
-            if ($rawDesc -notmatch '^([''"]).*\1$' -and $rawDesc -match ':\s') {
-              Write-Error "YAML Syntax Violation in $($s.FullName): Unquoted description contains ': ' sequence. Must be enclosed in quotes."
-              exit 1
+            if ($rawDesc -match '^[>|][+-]?\s*(?:#.*)?$') {
+              if ($frontmatter -match '(?ms)^description:\s*[>|][+-]?\s*(?:#[^\r\n]*)?\r?\n((?:[ ]+[^\r\n]*(?:\r?\n|$))+)') {
+                $foldedLines = ($Matches[1] -split "\r?\n") | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }
+                $desc = ($foldedLines -join " ").Trim()
+              } else {
+                $desc = ""
+              }
+              if ($desc.Length -le 1) {
+                Write-Error "Invalid empty folded/literal description in $($s.FullName)"
+                exit 1
+              }
+            } else {
+              if ($rawDesc -notmatch '^([''"]).*\1$' -and $rawDesc -match ':\s') {
+                Write-Error "YAML Syntax Violation in $($s.FullName): Unquoted description contains ': ' sequence. Must be enclosed in quotes."
+                exit 1
+              }
+              $desc = $rawDesc.Trim('''', '"').Replace("`r", "")
             }
-            $desc = $rawDesc.Trim('''', '"').Replace("`r", "")
-            if ($desc.Length -gt 128) {
+            if ($desc.Length -eq 0 -or $desc.Length -gt 128) {
               Write-Error "Frontmatter description in $($s.FullName) exceeds 128 chars ($($desc.Length) chars): $desc"
               exit 1
             }
@@ -156,7 +174,7 @@ jobs:
           }
           $adrSet = New-Object System.Collections.Hashtable ([System.StringComparer]::Ordinal)
           foreach ($adr in $adrs) { $adrSet[$adr.Name] = $true }
-          $adrReadme = Get-Content "docs/adr/README.md" -Raw
+          $adrReadme = Get-Content -LiteralPath "docs/adr/README.md" -Raw -Encoding utf8
           $indexedMatches = [regex]::Matches($adrReadme, '(?m)\[ADR-(\d+)\]\(\.\/([^)\s]+)\)')
           $seenIds = New-Object System.Collections.Hashtable ([System.StringComparer]::Ordinal)
           $seenFiles = New-Object System.Collections.Hashtable ([System.StringComparer]::Ordinal)
@@ -191,22 +209,33 @@ jobs:
         shell: pwsh
         run: |
           $secretPatterns = @(
-            'Bearer\s+(?!<)[A-Za-z0-9_\-\.]{12,}',
-            '["'']?(?:api[_-]?key|access[_-]?token|secret[_-]?key|token)["'']?\s*[:=]\s*["''](?!<)[^\s"'']{16,}["'']',
-            '(?m)^\s*(?:[A-Za-z0-9_]*_)?(?:api[_-]?key|access[_-]?token|secret[_-]?key)\s*[:=]\s*(?!<)[A-Za-z0-9_\-\.]{20,}\s*$',
+            '(?i)Bearer\s+(?!<)[A-Za-z0-9_\-\.+/=]{12,}',
+            '(?i)(["'']?(?:[A-Za-z0-9_]*_)?(?:api[_-]?key|access[_-]?token|secret[_-]?key|token)[A-Za-z0-9_-]*["'']?\s*[:=]\s*["''])(?!<)[^\s"'']{16,}(["''])',
+            '(?mi)(^[+\-\s]*(?:[A-Za-z0-9_]*_)?(?:api[_-]?key|access[_-]?token|secret[_-]?key|token)(?:_[A-Za-z0-9_]+)?\s*[:=]\s*)(?!<)[A-Za-z0-9_\-\.+/=]{20,}(\s*$)',
             '\b(ghp|github_pat|gho|ghu|ghs|ghr)_[A-Za-z0-9_]{20,}',
-            '-----BEGIN\s+([A-Z0-9_-]+\s+)?PRIVATE\s+KEY-----',
+            '(?i)-----BEGIN\s+([A-Z0-9_-]+\s+)?PRIVATE\s+KEY-----',
             '\b(AKIA[0-9A-Z]{16}|ASIA[0-9A-Z]{16}|AIza[0-9A-Za-z\-_]{35}|sk-ant-(?:api|admin)\d{2}-[a-zA-Z0-9_-]{30,}|sk-(?:proj|svcacct|admin)-[a-zA-Z0-9_-]{30,}|sk-[a-zA-Z0-9]{20,})\b',
             '\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b'
           )
           $binaryExtensions = @('.png', '.jpg', '.jpeg', '.gif', '.ico', '.webp', '.woff', '.woff2', '.ttf', '.otf', '.zip', '.pdf')
-          $files = Get-ChildItem -Path "README.md", "TOOLKIT.md", "sync.ps1", "restore.ps1", "config", "docs", ".github" -Recurse -File -Force | Where-Object { $_.Extension.ToLowerInvariant() -notin $binaryExtensions }
-          foreach ($f in $files) {
-            $content = Get-Content -LiteralPath $f.FullName
+          $trackedFiles = @(git -c core.quotePath=false ls-files)
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "git ls-files failed with exit code $LASTEXITCODE"
+            exit 1
+          }
+          foreach ($relPath in $trackedFiles) {
+            if ([string]::IsNullOrWhiteSpace($relPath) -or -not (Test-Path -LiteralPath $relPath -PathType Leaf)) {
+              continue
+            }
+            $ext = [System.IO.Path]::GetExtension($relPath).ToLowerInvariant()
+            if ($ext -in $binaryExtensions) {
+              continue
+            }
+            $content = Get-Content -LiteralPath $relPath -Encoding utf8
             foreach ($line in $content) {
               foreach ($p in $secretPatterns) {
                 if ($line -match $p) {
-                  Write-Error "Credential leak detected in $($f.FullName): $line"
+                  Write-Error "Credential leak detected in ${relPath}: $line"
                   exit 1
                 }
               }

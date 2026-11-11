@@ -1,6 +1,7 @@
 [CmdletBinding(PositionalBinding = $false)]
 param(
     [Parameter(Mandatory = $true)]
+    [ValidateNotNullOrEmpty()]
     [string]$Task,
 
     [Parameter(Mandatory = $false)]
@@ -12,6 +13,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $PSNativeCommandUseErrorActionPreference = $false
+try { [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false) } catch {}
 
 Push-Location
 try {
@@ -24,6 +26,10 @@ try {
     }
 
     $safeTask = ($Task -replace '[^A-Za-z0-9_-]', '-')
+    if ($safeTask -notmatch '[A-Za-z0-9]') {
+        Write-Error "Invalid Task name '$Task': must contain at least one alphanumeric character."
+        exit 1
+    }
     $userHome = if ($env:USERPROFILE) { $env:USERPROFILE } else { $HOME }
     $scratchDir = Join-Path $userHome ".gemini/antigravity/scratch/$safeTask"
 
@@ -40,19 +46,11 @@ try {
 
     if ($FilePath -and $FilePath.Count -gt 0) {
         Ensure-ScratchDir
-        $allTargets = @()
-        foreach ($fp in $FilePath) {
-            if ($fp -and $fp.Contains(',')) {
-                $allTargets += ($fp -split ',')
-            } else {
-                $allTargets += $fp
-            }
-        }
-        foreach ($rawTarget in $allTargets) {
+        foreach ($rawTarget in $FilePath) {
             $target = "$rawTarget".Trim().Trim('"').Trim("'")
             if ([string]::IsNullOrWhiteSpace($target)) { continue }
-            if (-not (Test-Path -LiteralPath $target)) {
-                Write-Error "Target file not found: $target"
+            if (-not (Test-Path -LiteralPath $target -PathType Leaf)) {
+                Write-Error "Target file not found or is not a file: $target"
                 exit 1
             }
             $resolvedPath = (Resolve-Path -LiteralPath $target).Path
@@ -75,10 +73,25 @@ try {
             Write-Output "Checkpoint created: $backupPath (sha $shortHash)"
         }
     } else {
-        $gitCheck = Invoke-GitCmd @("rev-parse", "--is-inside-work-tree") 2>$null
+        $gitCheckOut = Invoke-GitCmd @("rev-parse", "--is-inside-work-tree") 2>&1
+        $gitCheckRc = $LASTEXITCODE
+        $gitCheck = ($gitCheckOut | Where-Object { $_ -isnot [System.Management.Automation.ErrorRecord] } | Out-String).Trim()
+        if ($gitCheckRc -ne 0) {
+            $gitErrText = ($gitCheckOut | ForEach-Object { if ($_ -is [System.Management.Automation.ErrorRecord]) { $_.Exception.Message } else { "$_" } }) -join " "
+            if ($gitCheckRc -ne 128 -and $gitErrText -notmatch 'not a git repository') {
+                Write-Error "git rev-parse failed (exit code $gitCheckRc): $gitErrText"
+                exit 1
+            }
+            Write-Error "Cannot create checkpoint: current location is not a git repository and no FilePath was specified."
+            exit 1
+        }
         if ($gitCheck -eq "true") {
             $repoRoot = ((Invoke-GitCmd @("rev-parse", "--show-toplevel")) | Out-String).Trim()
-            if ($repoRoot -and (Test-Path -LiteralPath $repoRoot)) {
+            if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($repoRoot)) {
+                Write-Error "Failed to resolve git repository root (exit code $LASTEXITCODE)."
+                exit 1
+            }
+            if (Test-Path -LiteralPath $repoRoot) {
                 Set-Location -LiteralPath $repoRoot
             }
             $dirtyPreexisting = ((Invoke-GitCmd @("status", "--porcelain", "-uno")) | Out-String).Trim()
@@ -97,6 +110,13 @@ try {
                 exit 1
             }
             Ensure-ScratchDir
+            $baseBranchFile = Join-Path $scratchDir "base_branch.txt"
+            $currentBranch = ((Invoke-GitCmd @("symbolic-ref", "--quiet", "--short", "HEAD")) 2>$null | Out-String).Trim()
+            if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($currentBranch)) {
+                [System.IO.File]::WriteAllText($baseBranchFile, $currentBranch, [System.Text.UTF8Encoding]::new($false))
+            } elseif (Test-Path -LiteralPath $baseBranchFile) {
+                Remove-Item -LiteralPath $baseBranchFile -Force -ErrorAction SilentlyContinue
+            }
             $untrackedBaseline = Join-Path $scratchDir "untracked_baseline.txt"
             $untrackedFiles = Invoke-GitCmd @("-c", "core.quotePath=false", "ls-files", "--others", "--exclude-standard")
             if ($LASTEXITCODE -ne 0) {
@@ -108,8 +128,13 @@ try {
                 Write-Error "Failed to record untracked directories baseline."
                 exit 1
             }
-            (@($untrackedFiles) + @($untrackedDirs)) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique | Set-Content -LiteralPath $untrackedBaseline -Encoding utf8
+            [string[]]$baselineItems = @((@($untrackedFiles) + @($untrackedDirs)) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique)
+            [System.IO.File]::WriteAllLines($untrackedBaseline, $baselineItems, [System.Text.UTF8Encoding]::new($false))
             $rawSha = ((Invoke-GitCmd @("rev-parse", "HEAD")) | Out-String).Trim()
+            if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($rawSha)) {
+                Write-Error "Failed to resolve HEAD commit SHA."
+                exit 1
+            }
             $headSha = $rawSha.Substring(0, [Math]::Min(12, $rawSha.Length))
             Write-Output "Checkpoint created: git branch $branchName (sha $headSha)"
         } else {

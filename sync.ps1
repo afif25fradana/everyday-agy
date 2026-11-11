@@ -12,18 +12,18 @@ $userHome = if ($env:USERPROFILE) { $env:USERPROFILE } else { $HOME }
 $geminiHome = Join-Path $userHome ".gemini"
 $configHome = Join-Path $geminiHome "config"
 
-if (-not (Test-Path $geminiHome)) {
+if (-not (Test-Path -LiteralPath $geminiHome)) {
     Write-Error "Antigravity home directory not found at $geminiHome! Aborting sync."
     exit 1
 }
 
 # 1. Credential Scanner Definition
 $secretPatterns = @(
-    @{ Kind = "Bearer token"; Pattern = 'Bearer\s+(?!<)[A-Za-z0-9_\-\.]{12,}' },
-    @{ Kind = "Quoted Credential assignment"; Pattern = '["'']?(?:api[_-]?key|access[_-]?token|secret[_-]?key|token)["'']?\s*[:=]\s*["''](?!<)[^\s"'']{16,}["'']' },
-    @{ Kind = "Unquoted Key Assignment"; Pattern = '(?m)^\s*(?:[A-Za-z0-9_]*_)?(?:api[_-]?key|access[_-]?token|secret[_-]?key)\s*[:=]\s*(?!<)[A-Za-z0-9_\-\.]{20,}\s*$' },
+    @{ Kind = "Bearer token"; Pattern = '(?i)Bearer\s+(?!<)[A-Za-z0-9_\-\.+/=]{12,}' },
+    @{ Kind = "Quoted Credential assignment"; Pattern = '(?i)(["'']?(?:[A-Za-z0-9_]*_)?(?:api[_-]?key|access[_-]?token|secret[_-]?key|token)[A-Za-z0-9_-]*["'']?\s*[:=]\s*["''])(?!<)[^\s"'']{16,}(["''])' },
+    @{ Kind = "Unquoted Key Assignment"; Pattern = '(?mi)(^[+\-\s]*(?:[A-Za-z0-9_]*_)?(?:api[_-]?key|access[_-]?token|secret[_-]?key|token)(?:_[A-Za-z0-9_]+)?\s*[:=]\s*)(?!<)[A-Za-z0-9_\-\.+/=]{20,}(\s*$)' },
     @{ Kind = "GitHub Token"; Pattern = '\b(ghp|github_pat|gho|ghu|ghs|ghr)_[A-Za-z0-9_]{20,}' },
-    @{ Kind = "Private Key Header"; Pattern = '-----BEGIN\s+([A-Z0-9_-]+\s+)?PRIVATE\s+KEY-----' },
+    @{ Kind = "Private Key Header"; Pattern = '(?i)-----BEGIN\s+([A-Z0-9_-]+\s+)?PRIVATE\s+KEY-----' },
     @{ Kind = "Cloud API Key"; Pattern = '\b(AKIA[0-9A-Z]{16}|ASIA[0-9A-Z]{16}|AIza[0-9A-Za-z\-_]{35}|sk-ant-(?:api|admin)\d{2}-[a-zA-Z0-9_-]{30,}|sk-(?:proj|svcacct|admin)-[a-zA-Z0-9_-]{30,}|sk-[a-zA-Z0-9]{20,})\b' },
     @{ Kind = "JWT Token"; Pattern = '\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b' }
 )
@@ -33,7 +33,7 @@ $binaryExtensions = @('.png', '.jpg', '.jpeg', '.gif', '.ico', '.webp', '.woff',
 function Assert-NoCredentialsInFile($filePath) {
     if (-not (Test-Path -LiteralPath $filePath)) { return }
     try {
-        $lines = Get-Content -LiteralPath $filePath -ErrorAction Stop
+        $lines = Get-Content -LiteralPath $filePath -Encoding utf8 -ErrorAction Stop
     } catch {
         Write-Error "Security Audit Failure: Unable to read file for credential verification ($filePath): $($_.Exception.Message). Aborting to prevent credential leaks."
         exit 1
@@ -49,6 +49,29 @@ function Assert-NoCredentialsInFile($filePath) {
 }
 
 # Discover tracked targets strictly from this repository
+function Copy-DirectoryContentsLiteral {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$SourceDir,
+
+        [Parameter(Mandatory = $true)]
+        [string]$DestDir
+    )
+    if (-not (Test-Path -LiteralPath $SourceDir -PathType Container)) { return }
+    $srcNormalized = $SourceDir.TrimEnd('\', '/')
+    if (-not (Test-Path -LiteralPath $DestDir -PathType Container)) {
+        $null = [System.IO.Directory]::CreateDirectory($DestDir)
+    }
+    foreach ($file in @(Get-ChildItem -LiteralPath $srcNormalized -Recurse -File -Force)) {
+        $rel = $file.FullName.Substring($srcNormalized.Length).TrimStart('\', '/')
+        $targetFile = Join-Path $DestDir $rel
+        $targetParent = Split-Path -Parent $targetFile
+        if (-not (Test-Path -LiteralPath $targetParent -PathType Container)) {
+            $null = [System.IO.Directory]::CreateDirectory($targetParent)
+        }
+        Copy-Item -LiteralPath $file.FullName -Destination $targetFile -Force
+    }
+}
 $repoConfigDir = Join-Path $scriptRoot "config"
 $dstGeminiMd = Join-Path $repoConfigDir "GEMINI.md"
 $dstHooksJson = Join-Path $repoConfigDir "hooks.json"
@@ -56,10 +79,10 @@ $dstScripts = Join-Path $repoConfigDir "scripts"
 $dstAgents = Join-Path $repoConfigDir "agents"
 $dstSkills = Join-Path $repoConfigDir "skills"
 
-$trackedAgentNames = if (Test-Path $dstAgents) { @(Get-ChildItem -Path $dstAgents -Directory | ForEach-Object { $_.Name }) } else { @() }
-$trackedSkillNames = if (Test-Path $dstSkills) { @(Get-ChildItem -Path $dstSkills -Directory | ForEach-Object { $_.Name }) } else { @() }
-$trackedScriptRels = if (Test-Path $dstScripts) {
-    @(Get-ChildItem -Path $dstScripts -Recurse -File | ForEach-Object {
+$trackedAgentNames = if (Test-Path -LiteralPath $dstAgents) { @(Get-ChildItem -LiteralPath $dstAgents -Directory | ForEach-Object { $_.Name }) } else { @() }
+$trackedSkillNames = if (Test-Path -LiteralPath $dstSkills) { @(Get-ChildItem -LiteralPath $dstSkills -Directory | ForEach-Object { $_.Name }) } else { @() }
+$trackedScriptRels = if (Test-Path -LiteralPath $dstScripts) {
+    @(Get-ChildItem -LiteralPath $dstScripts -Recurse -File -Force | ForEach-Object {
         $_.FullName.Substring($dstScripts.Length).TrimStart('\', '/').Replace('\', '/')
     })
 } else { @() }
@@ -100,7 +123,7 @@ foreach ($sName in $trackedSkillNames) {
 }
 
 if ($trackedSourceDirs.Count -gt 0) {
-    $sourceFiles = Get-ChildItem -Path $trackedSourceDirs -Recurse -File -Force | Where-Object { $_.Extension.ToLowerInvariant() -notin $binaryExtensions }
+    $sourceFiles = foreach ($td in $trackedSourceDirs) { Get-ChildItem -LiteralPath $td -Recurse -File -Force | Where-Object { $_.Extension.ToLowerInvariant() -notin $binaryExtensions } }
     foreach ($sf in $sourceFiles) {
         Assert-NoCredentialsInFile $sf.FullName
     }
@@ -132,7 +155,7 @@ foreach ($relScript in $trackedScriptRels) {
     if ((Test-Path -LiteralPath $srcScriptFile) -and ((Get-Item -LiteralPath $srcScriptFile).Length -gt 0)) {
         $dstParent = Split-Path -Parent $dstScriptFile
         if (-not (Test-Path -LiteralPath $dstParent)) {
-            New-Item -ItemType Directory -Force -Path $dstParent | Out-Null
+            $null = [System.IO.Directory]::CreateDirectory($dstParent)
         }
         Copy-Item -LiteralPath $srcScriptFile -Destination $dstScriptFile -Force
         $syncedScripts++
@@ -146,18 +169,23 @@ foreach ($aName in $trackedAgentNames) {
     $srcAgentDir = Join-Path $srcAgentsDir $aName
     $dstAgentDir = Join-Path $dstAgents $aName
     if (Test-Path -LiteralPath $srcAgentDir) {
-        $srcFiles = @(Get-ChildItem -LiteralPath $srcAgentDir -Recurse -File | ForEach-Object {
-            $_.FullName.Substring($srcAgentDir.Length).Replace('\', '/')
+        $srcFiles = @(Get-ChildItem -LiteralPath $srcAgentDir -Recurse -File -Force | ForEach-Object {
+            $_.FullName.Substring($srcAgentDir.TrimEnd('\', '/').Length).Replace('\', '/')
         })
         if ($srcFiles.Count -gt 0) {
-            Get-ChildItem -LiteralPath $dstAgentDir -Recurse -File | ForEach-Object {
-                $rel = $_.FullName.Substring($dstAgentDir.Length).Replace('\', '/')
+            Get-ChildItem -LiteralPath $dstAgentDir -Recurse -File -Force | ForEach-Object {
+                $rel = $_.FullName.Substring($dstAgentDir.TrimEnd('\', '/').Length).Replace('\', '/')
                 if ($rel -notin $srcFiles) {
                     Remove-Item -LiteralPath $_.FullName -Force
                     Write-Host "[CLEANUP] Pruned orphan agent file from repo: $aName$rel" -ForegroundColor DarkGray
                 }
             }
-            Copy-Item -Path (Join-Path $srcAgentDir "*") -Destination $dstAgentDir -Recurse -Force
+            Get-ChildItem -LiteralPath $dstAgentDir -Recurse -Directory -Force | Sort-Object -Property FullName -Descending | ForEach-Object {
+                if (@(Get-ChildItem -LiteralPath $_.FullName -Force).Count -eq 0) {
+                    Remove-Item -LiteralPath $_.FullName -Force
+                }
+            }
+            Copy-DirectoryContentsLiteral -SourceDir $srcAgentDir -DestDir $dstAgentDir
             $syncedAgents++
         }
     }
@@ -170,23 +198,23 @@ foreach ($sName in $trackedSkillNames) {
     $srcSkillDir = Join-Path $srcSkillsDir $sName
     $dstSkillDir = Join-Path $dstSkills $sName
     if (Test-Path -LiteralPath $srcSkillDir) {
-        $srcFiles = @(Get-ChildItem -LiteralPath $srcSkillDir -Recurse -File | ForEach-Object {
-            $_.FullName.Substring($srcSkillDir.Length).Replace('\', '/')
+        $srcFiles = @(Get-ChildItem -LiteralPath $srcSkillDir -Recurse -File -Force | ForEach-Object {
+            $_.FullName.Substring($srcSkillDir.TrimEnd('\', '/').Length).Replace('\', '/')
         })
         if ($srcFiles.Count -gt 0) {
-            Get-ChildItem -LiteralPath $dstSkillDir -Recurse -File | ForEach-Object {
-                $rel = $_.FullName.Substring($dstSkillDir.Length).Replace('\', '/')
+            Get-ChildItem -LiteralPath $dstSkillDir -Recurse -File -Force | ForEach-Object {
+                $rel = $_.FullName.Substring($dstSkillDir.TrimEnd('\', '/').Length).Replace('\', '/')
                 if ($rel -notin $srcFiles) {
                     Remove-Item -LiteralPath $_.FullName -Force
                     Write-Host "[CLEANUP] Pruned orphan skill file from repo: $sName$rel" -ForegroundColor DarkGray
                 }
             }
-            Get-ChildItem -LiteralPath $dstSkillDir -Recurse -Directory | Sort-Object -Property FullName -Descending | ForEach-Object {
+            Get-ChildItem -LiteralPath $dstSkillDir -Recurse -Directory -Force | Sort-Object -Property FullName -Descending | ForEach-Object {
                 if (@(Get-ChildItem -LiteralPath $_.FullName -Force).Count -eq 0) {
                     Remove-Item -LiteralPath $_.FullName -Force
                 }
             }
-            Copy-Item -Path (Join-Path $srcSkillDir "*") -Destination $dstSkillDir -Recurse -Force
+            Copy-DirectoryContentsLiteral -SourceDir $srcSkillDir -DestDir $dstSkillDir
             $syncedSkills++
         }
     }

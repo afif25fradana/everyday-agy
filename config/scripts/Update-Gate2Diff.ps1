@@ -10,6 +10,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $PSNativeCommandUseErrorActionPreference = $false
+try { [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false) } catch {}
 
 function Sanitize-DiffContent {
     param(
@@ -22,19 +23,19 @@ function Sanitize-DiffContent {
     }
 
     # Bearer tokens
-    $Content = [System.Text.RegularExpressions.Regex]::Replace($Content, '(?i)Bearer\s+(?!<)[A-Za-z0-9_\-\.]{12,}', 'Bearer <TEST_HASH_SANITIZED>')
+    $Content = [System.Text.RegularExpressions.Regex]::Replace($Content, '(?i)Bearer\s+(?!<)[A-Za-z0-9_\-\.+/=]{12,}', 'Bearer <TEST_HASH_SANITIZED>')
 
     # Quoted key-value tokens
-    $Content = [System.Text.RegularExpressions.Regex]::Replace($Content, '(?i)(["'']?(?:api[_-]?key|access[_-]?token|secret[_-]?key|token)["'']?\s*[:=]\s*["''])(?!<)[^\s"'']{16,}(["''])', '${1}<TEST_HASH_SANITIZED>${2}')
+    $Content = [System.Text.RegularExpressions.Regex]::Replace($Content, '(?i)(["'']?(?:[A-Za-z0-9_]*_)?(?:api[_-]?key|access[_-]?token|secret[_-]?key|token)[A-Za-z0-9_-]*["'']?\s*[:=]\s*["''])(?!<)[^\s"'']{16,}(["''])', '${1}<TEST_HASH_SANITIZED>${2}')
 
     # Unquoted env-style key-values (matching diff + / - line prefixes)
-    $Content = [System.Text.RegularExpressions.Regex]::Replace($Content, '(?mi)(^[+\-\s]*(?:[A-Za-z0-9_]*_)?(?:api[_-]?key|access[_-]?token|secret[_-]?key)\s*[:=]\s*)(?!<)[A-Za-z0-9_\-\.]{20,}(\s*$)', '${1}<TEST_HASH_SANITIZED>${2}')
+    $Content = [System.Text.RegularExpressions.Regex]::Replace($Content, '(?mi)(^[+\-\s]*(?:[A-Za-z0-9_]*_)?(?:api[_-]?key|access[_-]?token|secret[_-]?key|token)(?:_[A-Za-z0-9_]+)?\s*[:=]\s*)(?!<)[A-Za-z0-9_\-\.+/=]{20,}(\s*$)', '${1}<TEST_HASH_SANITIZED>${2}')
 
     # GitHub tokens
     $Content = [System.Text.RegularExpressions.Regex]::Replace($Content, '\b(ghp|github_pat|gho|ghu|ghs|ghr)_[A-Za-z0-9_]{20,}', '<TEST_HASH_SANITIZED>')
 
     # Private keys (two-stage sanitization: multiline block first, then unclosed header fallback)
-    $Content = [System.Text.RegularExpressions.Regex]::Replace($Content, '(?ms)-----BEGIN\s+([A-Z0-9_-]+\s+)?PRIVATE\s+KEY-----.*?-----END\s+([A-Z0-9_-]+\s+)?PRIVATE\s+KEY-----', '-----BEGIN PRIVATE KEY <TEST_HASH_SANITIZED>-----`n[SANITIZED PRIVATE KEY BLOCK]`n-----END PRIVATE KEY-----')
+    $Content = [System.Text.RegularExpressions.Regex]::Replace($Content, '(?ms)-----BEGIN\s+([A-Z0-9_-]+\s+)?PRIVATE\s+KEY-----.*?-----END\s+([A-Z0-9_-]+\s+)?PRIVATE\s+KEY-----', "-----BEGIN PRIVATE KEY <TEST_HASH_SANITIZED>-----`n[SANITIZED PRIVATE KEY BLOCK]`n-----END PRIVATE KEY-----")
     $Content = [System.Text.RegularExpressions.Regex]::Replace($Content, '(?i)-----BEGIN\s+([A-Z0-9_-]+\s+)?PRIVATE\s+KEY-----', '-----BEGIN PRIVATE KEY <TEST_HASH_SANITIZED>-----')
 
     # Cloud API keys
@@ -65,6 +66,9 @@ try {
     }
 
     $repoRoot = (git rev-parse --show-toplevel).Trim()
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($repoRoot)) {
+        throw "Failed to resolve git repository root (exit code $LASTEXITCODE)."
+    }
     Set-Location -LiteralPath $repoRoot
 
     $artifactContent = [System.IO.File]::ReadAllText($resolvedArtifact, [System.Text.Encoding]::UTF8)
@@ -75,14 +79,24 @@ try {
         return
     }
 
-    $untracked = @(git -c core.quotePath=false ls-files --others --exclude-standard | Where-Object { -not [string]::IsNullOrWhiteSpace($_) -and (Test-Path -LiteralPath $_ -PathType Leaf) })
+    $lsOut = @(git -c core.quotePath=false ls-files --others --exclude-standard)
+    if ($LASTEXITCODE -ne 0) {
+        throw "git ls-files failed with exit code $LASTEXITCODE"
+    }
+    $untracked = @($lsOut | Where-Object { -not [string]::IsNullOrWhiteSpace($_) -and (Test-Path -LiteralPath $_ -PathType Leaf) })
 
-    $tempDiff = [System.IO.Path]::GetTempFileName()
-    $tempStat = [System.IO.Path]::GetTempFileName()
+    $tempDiff = $null
+    $tempStat = $null
 
     try {
+        $tempDiff = [System.IO.Path]::GetTempFileName()
+        $tempStat = [System.IO.Path]::GetTempFileName()
+
         if ($untracked.Count -gt 0) {
             git add -N -- $untracked
+            if ($LASTEXITCODE -ne 0) {
+                throw "git add -N failed with exit code $LASTEXITCODE"
+            }
         }
 
         git --no-pager -c core.quotePath=false diff --output=$tempDiff HEAD
@@ -110,14 +124,21 @@ try {
         [System.IO.File]::WriteAllText($resolvedArtifact, $artifactContent, [System.Text.UTF8Encoding]::new($false))
     }
     finally {
+        $resetFailedMsg = $null
         if ($untracked.Count -gt 0) {
-            git reset -q HEAD -- $untracked 2>$null
+            $resetOut = git reset -q HEAD -- $untracked 2>&1
+            if ($LASTEXITCODE -ne 0) {
+                $resetFailedMsg = "git reset -q HEAD failed with exit code $LASTEXITCODE`: $resetOut"
+            }
         }
         if ($tempDiff -and (Test-Path -LiteralPath $tempDiff)) {
             Remove-Item -LiteralPath $tempDiff -Force -ErrorAction SilentlyContinue
         }
         if ($tempStat -and (Test-Path -LiteralPath $tempStat)) {
             Remove-Item -LiteralPath $tempStat -Force -ErrorAction SilentlyContinue
+        }
+        if ($resetFailedMsg) {
+            throw $resetFailedMsg
         }
     }
 }

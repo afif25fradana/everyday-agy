@@ -12,7 +12,7 @@
         ]
       },
       {
-        "matcher": "view_file|replace_file_content|multi_replace_file_content|write_to_file",
+        "matcher": "view_file|read_file|replace_file_content|multi_replace_file_content|edit_file|write_to_file|write_file|create_file",
         "hooks": [
           {
             "type": "command",
@@ -24,7 +24,7 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "write_to_file|replace_file_content|multi_replace_file_content",
+        "matcher": "write_to_file|write_file|create_file|replace_file_content|multi_replace_file_content|edit_file",
         "hooks": [
           {
             "type": "command",

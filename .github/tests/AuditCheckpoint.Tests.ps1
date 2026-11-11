@@ -1,4 +1,4 @@
-# AuditCheckpoint.Tests.ps1
+﻿# AuditCheckpoint.Tests.ps1
 # Unit verification suite for New-AuditCheckpoint.ps1 and Restore-AuditCheckpoint.ps1
 # Compatible with Windows PowerShell 5.1 and PowerShell 7.x
 
@@ -9,10 +9,10 @@ $repoRoot = if ($PSScriptRoot) {
 } else {
     (Get-Location).Path
 }
-$orchestratorScriptsDir = Join-Path (Join-Path (Join-Path (Join-Path $repoRoot "config") "skills") "orchestrator") "scripts"
-$newScript = Join-Path $orchestratorScriptsDir "New-AuditCheckpoint.ps1"
-$restoreScript = Join-Path $orchestratorScriptsDir "Restore-AuditCheckpoint.ps1"
-$updateScript = Join-Path $orchestratorScriptsDir "Update-Gate2Diff.ps1"
+$configScriptsDir = Join-Path (Join-Path $repoRoot "config") "scripts"
+$newScript = Join-Path $configScriptsDir "New-AuditCheckpoint.ps1"
+$restoreScript = Join-Path $configScriptsDir "Restore-AuditCheckpoint.ps1"
+$updateScript = Join-Path $configScriptsDir "Update-Gate2Diff.ps1"
 foreach ($requiredScript in @($newScript, $restoreScript, $updateScript)) {
     if (-not (Test-Path -LiteralPath $requiredScript)) {
         Write-Error "Required script not found at $requiredScript!"
@@ -147,6 +147,82 @@ try {
     $restoredCorrupt = (Get-Content -Path $corruptFile -Raw).Trim()
     $corruptRejected = $corruptFailed -and ($restoredCorrupt -eq "clean original content")
     Assert-Test -Name "File mode restore rejects corrupted backup against hashes.txt" -Condition $corruptRejected
+
+    # Test 4c: Fail-closed hashes.txt enforcement when manifest is missing or lacks entry
+    $missingHashesTask = "missinghashes-$taskName"
+    $missingHashesScratch = Join-Path $userHome ".gemini/antigravity/scratch/$missingHashesTask"
+    $missingHashesFile = Join-Path $testDir "missing_hashes.txt"
+    Set-Content -LiteralPath $missingHashesFile -Value "original safe content" -Encoding utf8
+    & $newScript -Task $missingHashesTask -FilePath $missingHashesFile | Out-Null
+    Set-Content -LiteralPath $missingHashesFile -Value "tampered content" -Encoding utf8
+    Remove-Item -LiteralPath (Join-Path $missingHashesScratch "hashes.txt") -Force
+
+    $global:LASTEXITCODE = 0
+    $missingHashesFailed = $false
+    try {
+        & $restoreScript -Task $missingHashesTask -FilePath $missingHashesFile 2>&1 | Out-Null
+        if ($LASTEXITCODE -ne 0) { $missingHashesFailed = $true }
+    } catch {
+        $missingHashesFailed = $true
+    }
+    $afterMissingHashes = (Get-Content -LiteralPath $missingHashesFile -Raw).Trim()
+    Assert-Test -Name "File mode restore fails closed when hashes.txt is missing" -Condition ($missingHashesFailed -and $afterMissingHashes -eq "tampered content") -Details "failed=$missingHashesFailed content=$afterMissingHashes"
+
+    $noEntryTask = "noentry-$taskName"
+    $noEntryScratch = Join-Path $userHome ".gemini/antigravity/scratch/$noEntryTask"
+    $noEntryFile = Join-Path $testDir "no_entry.txt"
+    Set-Content -LiteralPath $noEntryFile -Value "original safe content" -Encoding utf8
+    & $newScript -Task $noEntryTask -FilePath $noEntryFile | Out-Null
+    Set-Content -LiteralPath $noEntryFile -Value "tampered noentry content" -Encoding utf8
+    Set-Content -LiteralPath (Join-Path $noEntryScratch "hashes.txt") -Value "0000000000000000000000000000000000000000000000000000000000000000  C:\other\none.bak  C:\other\none" -Encoding utf8
+
+    $global:LASTEXITCODE = 0
+    $noEntryFailed = $false
+    try {
+        & $restoreScript -Task $noEntryTask -FilePath $noEntryFile 2>&1 | Out-Null
+        if ($LASTEXITCODE -ne 0) { $noEntryFailed = $true }
+    } catch {
+        $noEntryFailed = $true
+    }
+    $afterNoEntry = (Get-Content -LiteralPath $noEntryFile -Raw).Trim()
+    Assert-Test -Name "File mode restore fails closed when hashes.txt lacks backup entry" -Condition ($noEntryFailed -and $afterNoEntry -eq "tampered noentry content") -Details "failed=$noEntryFailed content=$afterNoEntry"
+
+    # Test 4d: Task alphanumeric validation, directory rejection, and literal comma filename support
+    $global:LASTEXITCODE = 0
+    $badTaskRejected = $false
+    try {
+        & $newScript -Task "..." -FilePath $testFile 2>&1 | Out-Null
+        if ($LASTEXITCODE -ne 0) { $badTaskRejected = $true }
+    } catch {
+        $badTaskRejected = $true
+    }
+    Assert-Test -Name "New-AuditCheckpoint rejects Task with no alphanumeric characters" -Condition $badTaskRejected
+
+    $global:LASTEXITCODE = 0
+    $dirRejected = $false
+    try {
+        & $newScript -Task "dir-reject-$testId" -FilePath $testDir 2>&1 | Out-Null
+        if ($LASTEXITCODE -ne 0) { $dirRejected = $true }
+    } catch {
+        $dirRejected = $true
+    }
+    Assert-Test -Name "New-AuditCheckpoint rejects directory path in -FilePath" -Condition $dirRejected
+
+    $commaFile = Join-Path $testDir "a,b.txt"
+    $commaTask = "comma-$taskName"
+    Set-Content -LiteralPath $commaFile -Value "comma original" -Encoding utf8
+    $commaOk = $true
+    try {
+        & $newScript -Task $commaTask -FilePath $commaFile | Out-Null
+        if ($LASTEXITCODE -ne 0) { $commaOk = $false }
+        Set-Content -LiteralPath $commaFile -Value "comma modified" -Encoding utf8
+        & $restoreScript -Task $commaTask -FilePath $commaFile | Out-Null
+        if ($LASTEXITCODE -ne 0) { $commaOk = $false }
+    } catch {
+        $commaOk = $false
+    }
+    $commaRestored = if (Test-Path -LiteralPath $commaFile) { (Get-Content -LiteralPath $commaFile -Raw).Trim() } else { "" }
+    Assert-Test -Name "File mode preserves literal comma filename a,b.txt without splitting" -Condition ($commaOk -and $commaRestored -eq "comma original")
 
     # Test 5: Git mode fail-closed when untracked_baseline.txt is missing (GAP-REL-03)
     # Initialize a temporary git repository
@@ -340,6 +416,9 @@ try {
         $mojibake = "$([char]0x00E2)$([char]0x20AC)"
         $mockGhp = "ghp_" + ("mocktoken1234567890" * 2)
         $mockBearer = "Bearer " + "secret_mock_val_12345"
+        $mockBase64Bearer = "Bearer " + "ab+cd/ef==123456"
+        $mockQuotedV2 = '"my_api_key_v2"' + ': "super_secret_key_value_123"'
+        $mockUnquotedToken = "TOKEN" + "=unquoted_secret_token_val_123456"
         $mockJwt = "eyJ" + "mockheader.eyJmockpayload.mocksignature12345"
         $mockPrivateKeyPayload = "MIIEowIBAAKCAQEA0mockprivkeysecretpayload123456789"
         $mockClosedKey = ("-----" + "BEGIN RSA " + "PRIVATE KEY-----") + "`r`n$mockPrivateKeyPayload`r`n" + ("-----" + "END RSA " + "PRIVATE KEY-----")
@@ -349,6 +428,9 @@ try {
             'Regex and PS: $Matches[1] and $& and $_',
             "GitHub Token: $mockGhp",
             "Bearer Token: $mockBearer",
+            "Base64 Bearer: $mockBase64Bearer",
+            "Quoted V2 Key: $mockQuotedV2",
+            $mockUnquotedToken,
             "JWT Token: $mockJwt",
             "Closed Key: $mockClosedKey",
             "Unclosed Key: $mockUnclosedKeyHeader",
@@ -398,9 +480,12 @@ try {
         $backrefsPreserved = $updatedArtifact.Contains('$Matches[1]') -and $updatedArtifact.Contains('$&') -and $updatedArtifact.Contains('$_')
         $secretsSanitized = (-not $updatedArtifact.Contains($mockGhp)) -and `
                             (-not $updatedArtifact.Contains($mockBearer)) -and `
+                            (-not $updatedArtifact.Contains("ab+cd/ef==123456")) -and `
+                            (-not $updatedArtifact.Contains("super_secret_key_value_123")) -and `
+                            (-not $updatedArtifact.Contains("unquoted_secret_token_val_123456")) -and `
                             (-not $updatedArtifact.Contains($mockJwt)) -and `
                             $updatedArtifact.Contains("<TEST_HASH_SANITIZED>")
-        $privateKeyRedacted = (-not $updatedArtifact.Contains($mockPrivateKeyPayload)) -and $updatedArtifact.Contains("[SANITIZED PRIVATE KEY BLOCK]")
+        $privateKeyRedacted = (-not $updatedArtifact.Contains($mockPrivateKeyPayload)) -and $updatedArtifact.Contains("[SANITIZED PRIVATE KEY BLOCK]") -and (-not $updatedArtifact.Contains('`n['))
         $unclosedHeaderRedacted = (-not $updatedArtifact.Contains($mockUnclosedKeyHeader)) -and $updatedArtifact.Contains("-----BEGIN PRIVATE KEY <TEST_HASH_SANITIZED>-----")
         $hashesIntact = $updatedArtifact.Contains("da39a3ee5e6b4b0d3255bfef95601890afd80709") -and `
                         $updatedArtifact.Contains("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
@@ -474,24 +559,28 @@ try {
         # Create multibyte untracked file
         $mbUntracked = Join-Path $mbRepoDir "café_測試.txt"
         Set-Content -LiteralPath $mbUntracked -Value "precious multibyte data" -Encoding utf8
+        $mbNewRogue = Join-Path $mbRepoDir "new_$([char]0x00E9)_$([char]0x6E2C).txt"
 
-        # Create scratch baseline directly with UTF-8 No-BOM to test reader decoding
-        New-Item -ItemType Directory -Path $mbScratchDir -Force | Out-Null
-        $mbBaseline = Join-Path $mbScratchDir "untracked_baseline.txt"
-        [System.IO.File]::WriteAllLines($mbBaseline, [string[]]@("café_測試.txt"), [System.Text.UTF8Encoding]::new($false))
-        git branch "checkpoint-$mbTask" HEAD
-
-        # Run restore in Windows PowerShell 5.1 to verify PS 5.1 encoding handling
+        # Verify both New-AuditCheckpoint and Restore-AuditCheckpoint under forced CP437 output encoding
         $isWin = $IsWindows -or (-not (Get-Variable -Name IsWindows -ErrorAction SilentlyContinue))
         if ($isWin) {
-            $ps5Cmd = "& '$restoreScript' -Task '$mbTask' -RepoPath '$mbRepoDir'"
-            powershell.exe -NoProfile -ExecutionPolicy Bypass -Command $ps5Cmd 2>&1 | Out-Null
-            $mbPreserved = Test-Path -LiteralPath $mbUntracked
-            Assert-Test -Name "Untracked multibyte UTF-8 baseline reading in PS 5.1 preserves file" -Condition $mbPreserved
+            $newCmd437 = "[Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding(437); & '$newScript' -Task '$mbTask' -RepoPath '$mbRepoDir'"
+            powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command $newCmd437 2>&1 | Out-Null
+            $mbNewRc = $LASTEXITCODE
+            Set-Content -LiteralPath $mbNewRogue -Value "post-checkpoint rogue multibyte" -Encoding utf8
+            $restoreCmd437 = "[Console]::OutputEncoding = [System.Text.Encoding]::GetEncoding(437); & '$restoreScript' -Task '$mbTask' -RepoPath '$mbRepoDir'"
+            powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command $restoreCmd437 2>&1 | Out-Null
+            $mbRestoreRc = $LASTEXITCODE
+            $mbPreserved = ($mbNewRc -eq 0) -and ($mbRestoreRc -eq 0) -and (Test-Path -LiteralPath $mbUntracked) -and (-not (Test-Path -LiteralPath $mbNewRogue))
+            Assert-Test -Name "New and Restore preserve pre-existing multibyte file and prune rogue multibyte file under CP437 in PS 5.1" -Condition $mbPreserved -Details "newRc=$mbNewRc restoreRc=$mbRestoreRc preserved=$(Test-Path -LiteralPath $mbUntracked) rogueGone=$(-not (Test-Path -LiteralPath $mbNewRogue))"
         } else {
+            & $newScript -Task $mbTask -RepoPath $mbRepoDir | Out-Null
+            $mbNewRc = $LASTEXITCODE
+            Set-Content -LiteralPath $mbNewRogue -Value "post-checkpoint rogue multibyte" -Encoding utf8
             & $restoreScript -Task $mbTask -RepoPath $mbRepoDir | Out-Null
-            $mbPreserved = Test-Path -LiteralPath $mbUntracked
-            Assert-Test -Name "Untracked multibyte UTF-8 baseline reading preserves file" -Condition $mbPreserved
+            $mbRestoreRc = $LASTEXITCODE
+            $mbPreserved = ($mbNewRc -eq 0) -and ($mbRestoreRc -eq 0) -and (Test-Path -LiteralPath $mbUntracked) -and (-not (Test-Path -LiteralPath $mbNewRogue))
+            Assert-Test -Name "New and Restore preserve pre-existing multibyte file and prune rogue multibyte file" -Condition $mbPreserved
         }
     } finally {
         Set-Location -LiteralPath $mbOrigPwd
@@ -500,41 +589,108 @@ try {
         }
     }
 
+    # Test 12: base_branch.txt restores detached HEAD back to base branch and remains optional when absent
+    $bbRepoDir = Join-Path $testDir "git_basebranch_repo"
+    New-Item -ItemType Directory -Path $bbRepoDir -Force | Out-Null
+    $bbOrigPwd = Get-Location
+    $bbTask = "basebranch-$testId"
+    $bbScratchDir = Join-Path $userHome ".gemini/antigravity/scratch/$bbTask"
+    try {
+        Set-Location -LiteralPath $bbRepoDir
+        git init --quiet
+        git config user.name "TestRunner"
+        git config user.email "test@example.com"
+        $bbFile = Join-Path $bbRepoDir "tracked.txt"
+        Set-Content -LiteralPath $bbFile -Value "v1" -Encoding utf8
+        git add tracked.txt
+        git commit -m "init" --quiet
+        $initialBranch = (git symbolic-ref --quiet --short HEAD).Trim()
+
+        & $newScript -Task $bbTask -RepoPath $bbRepoDir | Out-Null
+        $bbFilePath = Join-Path $bbScratchDir "base_branch.txt"
+        $savedBranch = if (Test-Path -LiteralPath $bbFilePath) { (Get-Content -LiteralPath $bbFilePath -Raw -Encoding utf8).Trim() } else { "" }
+
+        git checkout --detach HEAD --quiet
+        Set-Content -LiteralPath $bbFile -Value "dirty" -Encoding utf8
+        $global:LASTEXITCODE = 0
+        & $restoreScript -Task $bbTask -RepoPath $bbRepoDir | Out-Null
+        $bbRc1 = $LASTEXITCODE
+        $restoredBranch = (git symbolic-ref --quiet --short HEAD 2>$null | Out-String).Trim()
+        Assert-Test -Name "Restore-AuditCheckpoint returns detached HEAD to base_branch.txt" -Condition ($bbRc1 -eq 0 -and $savedBranch -eq $initialBranch -and $restoredBranch -eq $initialBranch) -Details "saved=$savedBranch restored=$restoredBranch rc=$bbRc1"
+
+        # Backward compatibility: base_branch.txt is optional when absent
+        if (Test-Path -LiteralPath $bbFilePath) {
+            Remove-Item -LiteralPath $bbFilePath -Force
+        }
+        Set-Content -LiteralPath $bbFile -Value "dirty2" -Encoding utf8
+        $global:LASTEXITCODE = 0
+        & $restoreScript -Task $bbTask -RepoPath $bbRepoDir | Out-Null
+        $bbRc2 = $LASTEXITCODE
+        $bbContent2 = (Get-Content -LiteralPath $bbFile -Raw).Trim()
+        Assert-Test -Name "Restore-AuditCheckpoint succeeds when base_branch.txt is absent" -Condition ($bbRc2 -eq 0 -and $bbContent2 -eq "v1") -Details "rc=$bbRc2 content=$bbContent2"
+    } finally {
+        Set-Location -LiteralPath $bbOrigPwd
+        if (Test-Path -LiteralPath $bbScratchDir) {
+            Remove-Item -LiteralPath $bbScratchDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    # Test 13: Safe ReparsePoint (NTFS junction) cleanup does not follow links into target directories
+    $juncRepoDir = Join-Path $testDir "git_junc_repo"
+    $outsidePrecious = Join-Path $testDir "outside_precious"
+    New-Item -ItemType Directory -Path $juncRepoDir, $outsidePrecious -Force | Out-Null
+    $preciousTargetFile = Join-Path $outsidePrecious "precious.txt"
+    Set-Content -LiteralPath $preciousTargetFile -Value "do not delete via junction" -Encoding utf8
+    $juncOrigPwd = Get-Location
+    $juncTask = "junc-$testId"
+    $juncScratchDir = Join-Path $userHome ".gemini/antigravity/scratch/$juncTask"
+    try {
+        Set-Location -LiteralPath $juncRepoDir
+        git init --quiet
+        git config user.name "TestRunner"
+        git config user.email "test@example.com"
+        $jInit = Join-Path $juncRepoDir "init.txt"
+        Set-Content -LiteralPath $jInit -Value "init" -Encoding utf8
+        git add init.txt
+        git commit -m "init" --quiet
+
+        & $newScript -Task $juncTask -RepoPath $juncRepoDir | Out-Null
+
+        $rogueParent = Join-Path $juncRepoDir "rogue_dir"
+        New-Item -ItemType Directory -Path $rogueParent -Force | Out-Null
+        $nestedJunc = Join-Path $rogueParent "junc_out"
+        $directJunc = Join-Path $juncRepoDir "direct_junc"
+        $null = New-Item -ItemType Junction -Path $nestedJunc -Target $outsidePrecious
+        $null = New-Item -ItemType Junction -Path $directJunc -Target $outsidePrecious
+
+        $global:LASTEXITCODE = 0
+        & $restoreScript -Task $juncTask -RepoPath $juncRepoDir | Out-Null
+        $jRc = $LASTEXITCODE
+        $juncGone = (-not (Test-Path -LiteralPath $nestedJunc)) -and (-not (Test-Path -LiteralPath $directJunc))
+        $targetSurvived = (Test-Path -LiteralPath $preciousTargetFile) -and ((Get-Content -LiteralPath $preciousTargetFile -Raw).Trim() -eq "do not delete via junction")
+        Assert-Test -Name "Restore-AuditCheckpoint unlinks untracked junctions without deleting target files" -Condition ($jRc -eq 0 -and $juncGone -and $targetSurvived) -Details "rc=$jRc juncGone=$juncGone targetSurvived=$targetSurvived"
+    } finally {
+        foreach ($jp in @($nestedJunc, $directJunc)) {
+            if ($jp -and (Test-Path -LiteralPath $jp)) {
+                try { [System.IO.Directory]::Delete($jp, $false) } catch {}
+            }
+        }
+        Set-Location -LiteralPath $juncOrigPwd
+        if (Test-Path -LiteralPath $juncScratchDir) {
+            Remove-Item -LiteralPath $juncScratchDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
 } finally {
     # Cleanup temporary directories and test-created scratch locations
-    if (Test-Path -Path $scratchDir) {
-        Remove-Item -Path $scratchDir -Recurse -Force -ErrorAction SilentlyContinue
+    foreach ($extraTask in @($taskName, "multi-$taskName", "corrupt-$taskName", "missinghashes-$taskName", "noentry-$taskName", "comma-$taskName", "status-fail-$testId", "ls-fail-$testId", "nested-$taskName", "bracket-$taskName", "fail-nongit-$testId")) {
+        $extraScratch = Join-Path $userHome ".gemini/antigravity/scratch/$extraTask"
+        if (Test-Path -LiteralPath $extraScratch) {
+            Remove-Item -LiteralPath $extraScratch -Recurse -Force -ErrorAction SilentlyContinue
+        }
     }
-    $multiScratchDir = Join-Path $userHome ".gemini/antigravity/scratch/multi-$taskName"
-    if (Test-Path -LiteralPath $multiScratchDir) {
-        Remove-Item -LiteralPath $multiScratchDir -Recurse -Force -ErrorAction SilentlyContinue
-    }
-    $corruptScratchDir = Join-Path $userHome ".gemini/antigravity/scratch/corrupt-$taskName"
-    if (Test-Path -Path $corruptScratchDir) {
-        Remove-Item -Path $corruptScratchDir -Recurse -Force -ErrorAction SilentlyContinue
-    }
-    $statusFailScratch = Join-Path $userHome ".gemini/antigravity/scratch/status-fail-$testId"
-    if (Test-Path -Path $statusFailScratch) {
-        Remove-Item -Path $statusFailScratch -Recurse -Force -ErrorAction SilentlyContinue
-    }
-    $lsFailScratch = Join-Path $userHome ".gemini/antigravity/scratch/ls-fail-$testId"
-    if (Test-Path -Path $lsFailScratch) {
-        Remove-Item -Path $lsFailScratch -Recurse -Force -ErrorAction SilentlyContinue
-    }
-    $nestedScratchDir = Join-Path $userHome ".gemini/antigravity/scratch/nested-$taskName"
-    if (Test-Path -Path $nestedScratchDir) {
-        Remove-Item -Path $nestedScratchDir -Recurse -Force -ErrorAction SilentlyContinue
-    }
-    $bracketScratchDir = Join-Path $userHome ".gemini/antigravity/scratch/bracket-$taskName"
-    if (Test-Path -LiteralPath $bracketScratchDir) {
-        Remove-Item -LiteralPath $bracketScratchDir -Recurse -Force -ErrorAction SilentlyContinue
-    }
-    $failScratch = Join-Path $userHome ".gemini/antigravity/scratch/fail-nongit-$testId"
-    if (Test-Path -Path $failScratch) {
-        Remove-Item -Path $failScratch -Recurse -Force -ErrorAction SilentlyContinue
-    }
-    if (Test-Path -Path $testDir) {
-        Remove-Item -Path $testDir -Recurse -Force -ErrorAction SilentlyContinue
+    if (Test-Path -LiteralPath $testDir) {
+        Remove-Item -LiteralPath $testDir -Recurse -Force -ErrorAction SilentlyContinue
     }
 }
 

@@ -15,8 +15,8 @@ $repoRoot = if ($PSScriptRoot) {
 } else {
     (Get-Location).Path
 }
-$orchestratorScriptsDir = Join-Path (Join-Path (Join-Path (Join-Path $repoRoot "config") "skills") "orchestrator") "scripts"
-$safetyValidator = Join-Path $orchestratorScriptsDir "Test-PowerShellCommandSafety.ps1"
+$configScriptsDir = Join-Path (Join-Path $repoRoot "config") "scripts"
+$safetyValidator = Join-Path $configScriptsDir "Test-PowerShellCommandSafety.ps1"
 
 if (-not (Test-Path -LiteralPath $safetyValidator)) {
     Write-Error "Test-PowerShellCommandSafety.ps1 not found at $safetyValidator!"
@@ -265,7 +265,52 @@ $testCases = @(
     @{ Expected = "ALLOW"; Cmd = 'git checkout --orphan new-branch'; Reason = "git checkout --orphan branch" },
 
     # Allowed: Filtered wildcard cleanup (SEC-03)
-    @{ Expected = "ALLOW"; Cmd = 'Remove-Item *.log'; Reason = "Remove-Item filtered wildcard cleanup" }
+    @{ Expected = "ALLOW"; Cmd = 'Remove-Item *.log'; Reason = "Remove-Item filtered wildcard cleanup" },
+
+    # Blocked: PowerShell AST parameter, pipeline, and reflection bypasses
+    @{ Expected = "BLOCK"; Cmd = 'Remove-Item -Recurse:1 C:\test'; Reason = "Remove-Item -Recurse:1 numeric truthy" },
+    @{ Expected = "BLOCK"; Cmd = 'Remove-Item -Recurse:($true) C:\test'; Reason = "Remove-Item -Recurse:(`$true) parenthesized" },
+    @{ Expected = "BLOCK"; Cmd = "Remove-Item $([char]0x2013)Recurse C:\test"; Reason = "Remove-Item Unicode en-dash U+2013 Recurse" },
+    @{ Expected = "BLOCK"; Cmd = "Remove-Item $([char]0x2014)Recurse C:\test"; Reason = "Remove-Item Unicode em-dash U+2014 Recurse" },
+    @{ Expected = "BLOCK"; Cmd = 'Remove-Item -pa:C:\*'; Reason = "Remove-Item abbreviated -pa: colon root wildcard" },
+    @{ Expected = "BLOCK"; Cmd = 'Remove-Item ${HOME}\*'; Reason = "Remove-Item `${HOME}\* braced home wildcard" },
+    @{ Expected = "BLOCK"; Cmd = 'Remove-Item ${env:USERPROFILE}\*'; Reason = "Remove-Item `${env:USERPROFILE}\* braced wildcard" },
+    @{ Expected = "BLOCK"; Cmd = 'Remove-Item ${env:SystemDrive}\*'; Reason = "Remove-Item `${env:SystemDrive}\* braced wildcard" },
+    @{ Expected = "BLOCK"; Cmd = 'Get-ChildItem -Recurse C:\test | ForEach-Object { Remove-Item $_.FullName -Force }'; Reason = "Nested PipelineAst upstream -Recurse into ForEach-Object" },
+    @{ Expected = "BLOCK"; Cmd = 'Get-ChildItem C:\test -Depth 3 | ForEach-Object { Remove-Item $_.FullName }'; Reason = "Nested PipelineAst upstream -Depth into ForEach-Object" },
+    @{ Expected = "BLOCK"; Cmd = 'Get-ChildItem C:\test | ForEach-Object Delete'; Reason = "ForEach-Object Delete member invocation" },
+    @{ Expected = "BLOCK"; Cmd = 'Get-ChildItem C:\test | % Delete'; Reason = "Percent alias Delete member invocation" },
+    @{ Expected = "BLOCK"; Cmd = '(Get-Item C:\test).("Delete")()'; Reason = "Parenthesized quoted member Delete invocation" },
+    @{ Expected = "BLOCK"; Cmd = '([type]"System.Diagnostics.Process")::Start("calc")'; Reason = "Cast type expression Process::Start" },
+    @{ Expected = "BLOCK"; Cmd = '[PowerShell]::Create().AddScript("whoami").BeginInvoke()'; Reason = "PowerShell BeginInvoke dynamic execution" },
+    @{ Expected = "BLOCK"; Cmd = '$ExecutionContext.InvokeCommand.ExpandString("$(whoami)")'; Reason = "InvokeCommand.ExpandString dynamic execution" },
+
+    # Blocked: Git AST clustered flag, config-env, and branch target bypasses
+    @{ Expected = "BLOCK"; Cmd = 'git push -uf origin main'; Reason = "git push clustered -uf force flag" },
+    @{ Expected = "BLOCK"; Cmd = 'git push -ud origin main'; Reason = "git push clustered -ud delete flag" },
+    @{ Expected = "BLOCK"; Cmd = 'git push origin :feat+1'; Reason = "git push remote deletion with + in branch name" },
+    @{ Expected = "BLOCK"; Cmd = 'git --config-env=core.hooksPath=EVIL status'; Reason = "git --config-env= inline security override" },
+    @{ Expected = "BLOCK"; Cmd = 'git --config-env core.editor=EVIL commit -m "hi"'; Reason = "git --config-env split security override" },
+    @{ Expected = "BLOCK"; Cmd = 'git commit -nm "bypass"'; Reason = "git commit clustered -nm no-verify flag" },
+    @{ Expected = "BLOCK"; Cmd = 'git restore -qW .'; Reason = "git restore clustered -qW worktree discard" },
+    @{ Expected = "BLOCK"; Cmd = 'git checkout -mf'; Reason = "git checkout clustered -mf force discard" },
+    @{ Expected = "BLOCK"; Cmd = 'git switch -qf main'; Reason = "git switch clustered -qf force discard" },
+    @{ Expected = "BLOCK"; Cmd = 'git switch -C main'; Reason = "git switch -C force create overwrite" },
+    @{ Expected = "BLOCK"; Cmd = 'git branch -M old-branch main'; Reason = "git branch -M overwriting destination main" },
+    @{ Expected = "BLOCK"; Cmd = 'git branch -c -f new-dest main'; Reason = "git branch -c -f overwriting destination main" },
+    @{ Expected = "BLOCK"; Cmd = 'git branch -f main checkpoint-ok'; Reason = "git branch -f overwriting first arg main" },
+
+    # Allowed: Explicit non-recursive opt-outs and benign git flags
+    @{ Expected = "ALLOW"; Cmd = 'Remove-Item -Recurse:($false) temp.txt'; Reason = "Remove-Item -Recurse:(`$false) explicit opt-out" },
+    @{ Expected = "ALLOW"; Cmd = 'Remove-Item -Recurse:$false temp.txt'; Reason = "Remove-Item -Recurse:`$false explicit opt-out" },
+    @{ Expected = "ALLOW"; Cmd = 'Remove-Item -Recurse:0 temp.txt'; Reason = "Remove-Item -Recurse:0 explicit opt-out" },
+    @{ Expected = "ALLOW"; Cmd = 'git restore -h'; Reason = "git restore -h lone help flag" },
+    @{ Expected = "ALLOW"; Cmd = 'git restore --help'; Reason = "git restore --help lone help flag" },
+    @{ Expected = "ALLOW"; Cmd = 'git --no-optional-locks status'; Reason = "git --no-optional-locks global boolean" },
+    @{ Expected = "ALLOW"; Cmd = 'git commit -am "fix -n flag docs"'; Reason = "git commit -am message containing -n" },
+    @{ Expected = "ALLOW"; Cmd = 'git push -n origin main'; Reason = "git push -n dry-run" },
+    @{ Expected = "ALLOW"; Cmd = 'git branch -M old-branch checkpoint-dest'; Reason = "git branch -M to checkpoint-* destination" },
+    @{ Expected = "ALLOW"; Cmd = 'git -h'; Reason = "git -h global help" }
 )
 
 $passed = 0
@@ -274,8 +319,10 @@ $failed = 0
 Write-Host ">>> Running Test-PowerShellCommandSafety Test Suite..." -ForegroundColor Cyan
 
 foreach ($tc in $testCases) {
+    $global:LASTEXITCODE = 0
     $wasBlocked = $false
     $errMsg = ""
+    $result = $null
 
     try {
         $result = & $safetyValidator -CommandLine $tc.Cmd 2>&1
@@ -297,14 +344,101 @@ foreach ($tc in $testCases) {
             $failed++
         }
     } elseif ($tc.Expected -eq "ALLOW") {
-        if (-not $wasBlocked) {
+        if (-not $wasBlocked -and ($result | Select-Object -Last 1) -eq $true) {
             Write-Host "  [PASS] Allowed: $($tc.Reason)" -ForegroundColor Green
             $passed++
         } else {
-            Write-Host "  [FAIL] Expected ALLOW, but command was BLOCKED: $($tc.Cmd) ($errMsg)" -ForegroundColor Red
+            Write-Host "  [FAIL] Expected ALLOW with `$true result, but command failed: $($tc.Cmd) (wasBlocked=$wasBlocked, result=$result, err=$errMsg)" -ForegroundColor Red
             $failed++
         }
     }
+}
+
+# Stdin non-blocking -File, [AllowEmptyString()], and multi-item pipeline regression tests
+$safetyPsExe = if ($PSVersionTable.PSEdition -eq "Core") { (Get-Process -Id $PID).Path } else { Join-Path $PSHOME "powershell.exe" }
+$stdinPsi = New-Object System.Diagnostics.ProcessStartInfo
+$stdinPsi.FileName = $safetyPsExe
+$stdinPsi.Arguments = "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File `"$safetyValidator`" -CommandLine `"git status`""
+$stdinPsi.UseShellExecute = $false
+$stdinPsi.RedirectStandardInput = $true
+$stdinPsi.RedirectStandardOutput = $true
+$stdinPsi.RedirectStandardError = $true
+$stdinProc = [System.Diagnostics.Process]::Start($stdinPsi)
+$stdinOutTask = $stdinProc.StandardOutput.ReadToEndAsync()
+$stdinErrTask = $stdinProc.StandardError.ReadToEndAsync()
+$stdinExited = $stdinProc.WaitForExit(2000)
+if (-not $stdinExited) {
+    try { $stdinProc.Kill() } catch {}
+    try { $null = $stdinProc.WaitForExit(1000) } catch {}
+} else {
+    try { $stdinProc.StandardInput.Close() } catch {}
+}
+$stdinOutText = if ($stdinExited) { $stdinOutTask.Result.Trim() } else { "<TIMED_OUT>" }
+if ($stdinExited -and $stdinProc.ExitCode -eq 0 -and $stdinOutText -eq "True") {
+    Write-Host "  [PASS] Safety validator exits immediately without draining open stdin" -ForegroundColor Green
+    $passed++
+} else {
+    Write-Host "  [FAIL] Safety validator hung or failed with open stdin (exited=$stdinExited, code=$(if ($stdinExited) { $stdinProc.ExitCode } else { 'N/A' }), out=$stdinOutText)" -ForegroundColor Red
+    $failed++
+}
+
+$global:LASTEXITCODE = 0
+$emptyFailed = $false
+$emptyRes = $null
+try {
+    $emptyRes = & $safetyValidator -CommandLine "" 2>&1
+    if ($LASTEXITCODE -ne 0) { $emptyFailed = $true }
+} catch {
+    $emptyFailed = $true
+}
+if (-not $emptyFailed -and ($emptyRes | Select-Object -Last 1) -eq $true) {
+    Write-Host "  [PASS] Safety validator accepts empty string via [AllowEmptyString()]" -ForegroundColor Green
+    $passed++
+} else {
+    Write-Host "  [FAIL] Safety validator rejected empty CommandLine string (failed=$emptyFailed, res=$emptyRes)" -ForegroundColor Red
+    $failed++
+}
+
+$global:LASTEXITCODE = 0
+$pipeBlocked = $false
+$pipeMsg = ""
+try {
+    $pipeRes = @("", "Remove-Item -Recurse C:\*") | & $safetyValidator 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        $pipeBlocked = $true
+        $pipeMsg = "$pipeRes"
+    }
+} catch {
+    $pipeBlocked = $true
+    $pipeMsg = $_.Exception.Message
+}
+if ($pipeBlocked -and $pipeMsg -match 'Safety Violation:') {
+    Write-Host "  [PASS] Multi-item pipeline (@('', destructive)) blocks element 2 with exit 1" -ForegroundColor Green
+    $passed++
+} else {
+    Write-Host "  [FAIL] Multi-item pipeline (@('', destructive)) failed to block element 2 (blocked=$pipeBlocked, msg=$pipeMsg)" -ForegroundColor Red
+    $failed++
+}
+
+$global:LASTEXITCODE = 0
+$pipeFirstBlocked = $false
+$pipeFirstMsg = ""
+try {
+    $pipeFirstRes = @("Remove-Item -Recurse C:\*", "git status") | & $safetyValidator 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        $pipeFirstBlocked = $true
+        $pipeFirstMsg = "$pipeFirstRes"
+    }
+} catch {
+    $pipeFirstBlocked = $true
+    $pipeFirstMsg = $_.Exception.Message
+}
+if ($pipeFirstBlocked -and $pipeFirstMsg -match 'Safety Violation:') {
+    Write-Host "  [PASS] Multi-item pipeline (@(destructive, safe)) blocks element 1 with exit 1" -ForegroundColor Green
+    $passed++
+} else {
+    Write-Host "  [FAIL] Multi-item pipeline (@(destructive, safe)) failed to block element 1 (blocked=$pipeFirstBlocked, msg=$pipeFirstMsg)" -ForegroundColor Red
+    $failed++
 }
 
 Write-Host "`n>>> Running Invoke-AntigravityHook Router & Guard Test Suite..." -ForegroundColor Cyan
@@ -447,7 +581,15 @@ try {
         @{ Tool = "view_file"; Key = "AbsolutePath"; Path = "C:\\Users\\Alice\\.gemini\\antigravity\\mcp\\context7\\token.json"; Expected = "deny"; Label = "Antigravity mcp/** token config" },
         @{ Tool = "write_to_file"; Key = "TargetFile"; Path = "~/.gemini/antigravity/mcp/oauth.json"; Expected = "deny"; Label = "~/antigravity/mcp/** token config" },
         @{ Tool = "view_file"; Key = "AbsolutePath"; Path = "D:\\repo\\src\\mcp\\server.ts"; Expected = "allow"; Label = "Normal repo src/mcp/ file allowed" },
-        @{ Tool = "write_to_file"; Key = "TargetFile"; Path = "D:\\repo\\src\\index.ts"; Expected = "allow"; Label = "Normal source write allowed regardless of role" }
+        @{ Tool = "write_to_file"; Key = "TargetFile"; Path = "D:\\repo\\src\\index.ts"; Expected = "allow"; Label = "Normal source write allowed regardless of role" },
+        @{ Tool = "read_file"; Key = "Path"; Path = "~/.gemini/config/mcp_config.json"; Expected = "deny"; Label = "read_file on ~/.gemini/config/mcp_config.json" },
+        @{ Tool = "write_file"; Key = "file_path"; Path = "~/.gemini/antigravity/mcp_config.json"; Expected = "deny"; Label = "write_file on ~/.gemini/antigravity/mcp_config.json" },
+        @{ Tool = "edit_file"; Key = "Path"; Path = "C:.env"; Expected = "deny"; Label = "edit_file on drive-relative C:.env" },
+        @{ Tool = "create_file"; Key = "TargetFile"; Path = "C:\\repo\\private.key:stream:`$DATA"; Expected = "deny"; Label = "create_file on multi-colon NTFS ADS private.key:stream:`$DATA" },
+        @{ Tool = "view_file"; Key = "AbsolutePath"; Path = "C:\\repo\\.env.example::`$DATA"; Expected = "allow"; Label = "view_file on .env.example ADS exception" },
+        @{ Tool = "read_file"; Key = "file_path"; Path = "file:///C:/Users/Alice/.ssh/id_rsa"; Expected = "deny"; Label = "read_file on file:/// URI to .ssh" },
+        @{ Tool = "write_file"; Key = "Path"; Path = "D:\\repo\\tdd-guide\\feature.ts"; Expected = "allow"; Label = "write_file allowed for non-secret tdd-guide path" },
+        @{ Tool = "edit_file"; Key = "Path"; Path = "D:\\repo\\DISPATCH.md"; Expected = "allow"; Label = "edit_file allowed for non-secret teamwork artifact" }
     )
 
     foreach ($g2 in $guard2Cases) {
@@ -462,6 +604,35 @@ try {
         $jsonPayload = $payloadObj | ConvertTo-Json -Depth 5 -Compress
         $res = Invoke-HookCli -EventName "PreToolUse" -HomeOverride $isolatedHome -JsonInput $jsonPayload
         Assert-HookCondition -Name "Guard 2 ($($g2.Tool)): $($g2.Label) -> $($g2.Expected)" -Condition ($res.ExitCode -eq 0 -and $res.SingleJson -and $res.Parsed.decision -eq $g2.Expected) -Details "out=$($res.StdOut)"
+    }
+
+    # Guard 2 ReparsePoint (NTFS junction) tests
+    $juncStage = Join-Path $hookTempDir "junc_stage"
+    $secretOrigin = Join-Path $juncStage "secret_origin"
+    $secretSsh = Join-Path $secretOrigin ".ssh"
+    $normalOrigin = Join-Path $juncStage "normal_origin"
+    $safeLinks = Join-Path $juncStage "safe_links"
+    New-Item -ItemType Directory -Path $secretSsh, $normalOrigin, $safeLinks -Force | Out-Null
+    Set-Content -LiteralPath (Join-Path $secretSsh "id_rsa") -Value "PRIVATE" -Encoding utf8
+    Set-Content -LiteralPath (Join-Path $normalOrigin "app.ts") -Value "export const ok = true;" -Encoding utf8
+
+    $leafJunc = Join-Path $safeLinks "junc_ssh"
+    $rootJunc = Join-Path $safeLinks "junc_root"
+    $normalJunc = Join-Path $safeLinks "junc_normal"
+    $null = New-Item -ItemType Junction -Path $leafJunc -Target $secretSsh
+    $null = New-Item -ItemType Junction -Path $rootJunc -Target $secretOrigin
+    $null = New-Item -ItemType Junction -Path $normalJunc -Target $normalOrigin
+
+    $juncCases = @(
+        @{ Tool = "view_file"; Key = "AbsolutePath"; Path = (Join-Path $leafJunc "id_rsa"); Expected = "deny"; Label = "Leaf junction pointing to .ssh/id_rsa" },
+        @{ Tool = "write_file"; Key = "Path"; Path = (Join-Path (Join-Path $rootJunc ".ssh") "brand_new_key.txt"); Expected = "deny"; Label = "Non-existent write under ancestor junction to .ssh" },
+        @{ Tool = "write_file"; Key = "Path"; Path = (Join-Path (Join-Path $leafJunc "nested") "brand_new_key.txt"); Expected = "deny"; Label = "Non-existent nested write under leaf .ssh junction" },
+        @{ Tool = "read_file"; Key = "Path"; Path = (Join-Path $normalJunc "app.ts"); Expected = "allow"; Label = "Benign junction to normal directory allowed" }
+    )
+    foreach ($jc in $juncCases) {
+        $jPayload = @{ toolCall = @{ name = $jc.Tool; args = @{ $jc.Key = $jc.Path } } } | ConvertTo-Json -Depth 5 -Compress
+        $jRes = Invoke-HookCli -EventName "PreToolUse" -HomeOverride $isolatedHome -JsonInput $jPayload
+        Assert-HookCondition -Name "Guard 2 ReparsePoint ($($jc.Tool)): $($jc.Label) -> $($jc.Expected)" -Condition ($jRes.ExitCode -eq 0 -and $jRes.SingleJson -and $jRes.Parsed.decision -eq $jc.Expected) -Details "out=$($jRes.StdOut)"
     }
 
     # Guard 3 removed: invoke_subagent passes through without 4-slot tag or model blocking
@@ -596,6 +767,60 @@ try {
     $g4SuffixText = [System.IO.File]::ReadAllText($nonGate2File, [System.Text.Encoding]::UTF8)
     Assert-HookCondition -Name "Guard 4 does not inject diff into foo_gate2_handoff.md" -Condition ($g4SuffixRes.ExitCode -eq 0 -and $g4SuffixRes.StdOut.Trim() -eq "{}" -and $g4SuffixText.Contains("{{VERBATIM_GIT_DIFF}}") -and (-not $g4SuffixText.Contains("line2_hook_test"))) -Details "out=$($g4SuffixRes.StdOut) text=$g4SuffixText"
 
+    # Guard 4 canonical tool names, falsy/empty error values, trailing whitespace, and failure surfacing
+    $g4WriteFileDir = Join-Path $postArtifactDir "write_file_dir"
+    New-Item -ItemType Directory -Path $g4WriteFileDir -Force | Out-Null
+    $g4WriteFilePath = Join-Path $g4WriteFileDir "gate2_handoff.md"
+    [System.IO.File]::WriteAllText($g4WriteFilePath, $gate2Template, [System.Text.UTF8Encoding]::new($false))
+    $g4WriteFileRes = Invoke-HookCli -EventName "PostToolUse" -HomeOverride $isolatedHome -WorkDir $postRepo -JsonInput (@{
+        workspacePaths = @($postRepo)
+        error = $false
+        toolCall = @{
+            name = "write_file"
+            args = @{
+                Path = "  $g4WriteFilePath  "
+            }
+        }
+    } | ConvertTo-Json -Depth 6 -Compress)
+    $g4WriteFileText = [System.IO.File]::ReadAllText($g4WriteFilePath, [System.Text.Encoding]::UTF8)
+    Assert-HookCondition -Name "Guard 4 injects diff for write_file with trimmed Path and error=false" -Condition ($g4WriteFileRes.ExitCode -eq 0 -and $g4WriteFileRes.StdOut.Trim() -eq "{}" -and $g4WriteFileText.Contains("line2_hook_test") -and (-not $g4WriteFileText.Contains("{{VERBATIM_GIT_DIFF}}"))) -Details "out=$($g4WriteFileRes.StdOut)"
+
+    $g4EditFileDir = Join-Path $postArtifactDir "edit_file_dir"
+    New-Item -ItemType Directory -Path $g4EditFileDir -Force | Out-Null
+    $g4EditFilePath = Join-Path $g4EditFileDir "gate2_handoff.md"
+    [System.IO.File]::WriteAllText($g4EditFilePath, $gate2Template, [System.Text.UTF8Encoding]::new($false))
+    $g4EditFileRes = Invoke-HookCli -EventName "PostToolUse" -HomeOverride $isolatedHome -WorkDir $postRepo -JsonInput (@{
+        workspacePaths = @($postRepo)
+        error = @{}
+        toolCall = @{
+            name = "edit_file"
+            args = @{
+                file_path = $g4EditFilePath
+            }
+        }
+    } | ConvertTo-Json -Depth 6 -Compress)
+    $g4EditFileText = [System.IO.File]::ReadAllText($g4EditFilePath, [System.Text.Encoding]::UTF8)
+    Assert-HookCondition -Name "Guard 4 injects diff for edit_file with snake_case file_path and empty error object" -Condition ($g4EditFileRes.ExitCode -eq 0 -and $g4EditFileRes.StdOut.Trim() -eq "{}" -and $g4EditFileText.Contains("line2_hook_test") -and (-not $g4EditFileText.Contains("{{VERBATIM_GIT_DIFF}}"))) -Details "out=$($g4EditFileRes.StdOut)"
+
+    $nonGitHookDir = Join-Path $hookTempDir "non_git_hook_dir"
+    $g4FailDir = Join-Path $postArtifactDir "g4_fail_dir"
+    New-Item -ItemType Directory -Path $nonGitHookDir, $g4FailDir -Force | Out-Null
+    $g4FailFile = Join-Path $g4FailDir "gate2_handoff.md"
+    [System.IO.File]::WriteAllText($g4FailFile, $gate2Template, [System.Text.UTF8Encoding]::new($false))
+    $g4FailRes = Invoke-HookCli -EventName "PostToolUse" -HomeOverride $isolatedHome -WorkDir $nonGitHookDir -JsonInput (@{
+        workspacePaths = @($nonGitHookDir)
+        toolCall = @{
+            name = "create_file"
+            args = @{
+                TargetFile = $g4FailFile
+            }
+        }
+    } | ConvertTo-Json -Depth 6 -Compress)
+    $g4FailText = [System.IO.File]::ReadAllText($g4FailFile, [System.Text.Encoding]::UTF8)
+    $g4LogPath = Join-Path $isolatedHome ".gemini/antigravity/scratch/hooks.log"
+    $g4LogText = if (Test-Path -LiteralPath $g4LogPath) { [System.IO.File]::ReadAllText($g4LogPath, [System.Text.Encoding]::UTF8) } else { "" }
+    Assert-HookCondition -Name "Guard 4 surfaces Update-Gate2Diff failure in gate2_handoff.md and hooks.log while emitting {}" -Condition ($g4FailRes.ExitCode -eq 0 -and $g4FailRes.StdOut.Trim() -eq "{}" -and ($g4FailText -match '\[ERROR: Update-Gate2Diff\.ps1 failed') -and (-not $g4FailText.Contains("{{VERBATIM_GIT_DIFF}}")) -and ($g4LogText -match 'Guard4 Update-Gate2Diff failed')) -Details "out=$($g4FailRes.StdOut) text=$g4FailText"
+
     # UTF-8 BOM stripping & malformed JSON fallback & 5MB log cap
     $bomPayload = '{"toolCall":{"name":"run_command","args":{"CommandLine":"git status"}}}'
     $bomBytes = [byte[]](0xEF, 0xBB, 0xBF) + [System.Text.UTF8Encoding]::new($false).GetBytes($bomPayload)
@@ -635,9 +860,10 @@ try {
         (Join-Path $syncRepo "docs/adr"),
         (Join-Path $syncHome ".gemini/docs/adr"),
         (Join-Path $syncHome ".gemini/config/docs/adr"),
+        (Join-Path $syncHome ".gemini/config/scripts/stale_sub"),
         (Join-Path $syncHome ".gemini/config/skills/custom-external-skill"),
         (Join-Path $syncHome ".gemini/config/skills/audit-dev-workflow"),
-        (Join-Path $syncHome ".gemini/config/skills/orchestrator"),
+        (Join-Path $syncHome ".gemini/config/skills/orchestrator/scripts"),
         (Join-Path $syncHome ".gemini/config/agents/database-reviewer"),
         (Join-Path $syncHome ".gemini/config/plugins/my-marketplace-plugin") -Force | Out-Null
 
@@ -648,6 +874,10 @@ try {
     Set-Content -LiteralPath (Join-Path $syncRepo "config/GEMINI.md") -Value "# Repo GEMINI" -Encoding utf8
     Set-Content -LiteralPath (Join-Path $syncRepo "config/hooks.json") -Value "{}" -Encoding utf8
     Set-Content -LiteralPath (Join-Path $syncRepo "config/scripts/Invoke-AntigravityHook.ps1") -Value "# Hook script" -Encoding utf8
+    Set-Content -LiteralPath (Join-Path $syncRepo "config/scripts/Test-PowerShellCommandSafety.ps1") -Value "# Safety script" -Encoding utf8
+    Set-Content -LiteralPath (Join-Path $syncRepo "config/scripts/New-AuditCheckpoint.ps1") -Value "# New checkpoint script" -Encoding utf8
+    Set-Content -LiteralPath (Join-Path $syncRepo "config/scripts/Restore-AuditCheckpoint.ps1") -Value "# Restore checkpoint script" -Encoding utf8
+    Set-Content -LiteralPath (Join-Path $syncRepo "config/scripts/Update-Gate2Diff.ps1") -Value "# Gate2 diff script" -Encoding utf8
     Set-Content -LiteralPath (Join-Path $syncRepo "config/agents/tdd-guide/agent.md") -Value "name: tdd-guide" -Encoding utf8
     Set-Content -LiteralPath (Join-Path $syncRepo "config/skills/orchestrator/SKILL.md") -Value "name: orchestrator" -Encoding utf8
     Set-Content -LiteralPath (Join-Path $syncRepo "docs/adr/README.md") -Value "# ADR" -Encoding utf8
@@ -655,15 +885,19 @@ try {
     Set-Content -LiteralPath (Join-Path $syncHome ".gemini/docs/adr/0001-old.md") -Value "# Old ADR" -Encoding utf8
     Set-Content -LiteralPath (Join-Path $syncHome ".gemini/config/docs/adr/0001-old.md") -Value "# Legacy Old ADR" -Encoding utf8
     Set-Content -LiteralPath (Join-Path $syncHome ".gemini/config/hooks.json") -Value '{"old":true}' -Encoding utf8
+    Set-Content -LiteralPath (Join-Path $syncHome ".gemini/config/scripts/orphan-script.ps1") -Value "# Orphan script" -Encoding utf8
+    Set-Content -LiteralPath (Join-Path $syncHome ".gemini/config/scripts/stale_sub/retired.ps1") -Value "# Nested orphan script" -Encoding utf8
     Set-Content -LiteralPath (Join-Path $syncHome ".gemini/config/skills/custom-external-skill/SKILL.md") -Value "external" -Encoding utf8
     Set-Content -LiteralPath (Join-Path $syncHome ".gemini/config/skills/audit-dev-workflow/SKILL.md") -Value "retired" -Encoding utf8
     Set-Content -LiteralPath (Join-Path $syncHome ".gemini/config/skills/orchestrator/orphan.txt") -Value "stale" -Encoding utf8
+    Set-Content -LiteralPath (Join-Path $syncHome ".gemini/config/skills/orchestrator/scripts/Test-PowerShellCommandSafety.ps1") -Value "# Stale skill safety script" -Encoding utf8
+    Set-Content -LiteralPath (Join-Path $syncHome ".gemini/config/skills/orchestrator/scripts/Update-Gate2Diff.ps1") -Value "# Legacy skill gate2 diff script" -Encoding utf8
     Set-Content -LiteralPath (Join-Path $syncHome ".gemini/config/agents/database-reviewer/agent.md") -Value "retired" -Encoding utf8
     Set-Content -LiteralPath (Join-Path $syncHome ".gemini/config/plugins/my-marketplace-plugin/plugin.json") -Value "{}" -Encoding utf8
 
     $psExe = if ($PSVersionTable.PSEdition -eq "Core") { (Get-Process -Id $PID).Path } else { Join-Path $PSHOME "powershell.exe" }
     function Invoke-SandboxScript {
-        param([string]$ScriptPath)
+        param([string]$ScriptPath, [switch]$Detailed)
         $psi = New-Object System.Diagnostics.ProcessStartInfo
         $psi.FileName = $psExe
         $psi.Arguments = "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File `"$ScriptPath`""
@@ -676,35 +910,56 @@ try {
         $outTask = $proc.StandardOutput.ReadToEndAsync()
         $errTask = $proc.StandardError.ReadToEndAsync()
         $proc.WaitForExit()
-        $null = $outTask.Result
-        $null = $errTask.Result
+        $outText = $outTask.Result
+        $errText = $errTask.Result
+        if ($Detailed) {
+            return [PSCustomObject]@{
+                ExitCode = $proc.ExitCode
+                StdOut   = $outText
+                StdErr   = $errText
+            }
+        }
         return $proc.ExitCode
     }
 
-    $restoreExit = Invoke-SandboxScript -ScriptPath (Join-Path $syncRepo "restore.ps1")
+    $restoreRes = Invoke-SandboxScript -ScriptPath (Join-Path $syncRepo "restore.ps1") -Detailed
+    $restoreExit = $restoreRes.ExitCode
 
     $externalPreserved = Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/skills/custom-external-skill/SKILL.md")
     $pluginPreserved = Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/plugins/my-marketplace-plugin/plugin.json")
     $retiredAgentGone = -not (Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/agents/database-reviewer"))
     $retiredSkillGone = -not (Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/skills/audit-dev-workflow"))
     $orphanFileGone = -not (Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/skills/orchestrator/orphan.txt"))
+    $staleSkillSafetyGone = -not (Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/skills/orchestrator/scripts/Test-PowerShellCommandSafety.ps1"))
+    $staleSkillGate2Gone = -not (Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/skills/orchestrator/scripts/Update-Gate2Diff.ps1"))
+    $staleSkillScriptsDirGone = -not (Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/skills/orchestrator/scripts"))
     $hooksDeployed = Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/hooks.json")
     $scriptDeployed = Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/scripts/Invoke-AntigravityHook.ps1")
+    $safetyScriptDeployed = Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/scripts/Test-PowerShellCommandSafety.ps1")
+    $newCheckpointDeployed = Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/scripts/New-AuditCheckpoint.ps1")
+    $restoreCheckpointDeployed = Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/scripts/Restore-AuditCheckpoint.ps1")
+    $gate2DiffDeployed = Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/scripts/Update-Gate2Diff.ps1")
+    $orphanScriptGone = -not (Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/scripts/orphan-script.ps1"))
+    $orphanScriptSubGone = -not (Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/scripts/stale_sub"))
+    $reportedFiveScripts = $restoreRes.StdOut -match 'Restored 5 Config Scripts'
     $hooksBackedUp = @(Get-ChildItem -Path (Join-Path $syncHome ".gemini") -Filter "backup_*" -Directory | ForEach-Object { Join-Path $_.FullName "hooks.json" } | Where-Object { Test-Path $_ }).Count -gt 0
     $docsAdrGone = -not (Test-Path -LiteralPath (Join-Path $syncHome ".gemini/docs/adr"))
     $docsParentGone = -not (Test-Path -LiteralPath (Join-Path $syncHome ".gemini/docs"))
     $legacyDocsAdrGone = -not (Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/docs/adr"))
     $legacyDocsParentGone = -not (Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/docs"))
 
-    Assert-HookCondition -Name "restore.ps1 preserves unrecognized skills & plugins while pruning only retired repo names and skill orphans" -Condition ($restoreExit -eq 0 -and $externalPreserved -and $pluginPreserved -and $retiredAgentGone -and $retiredSkillGone -and $orphanFileGone) -Details "ext=$externalPreserved plug=$pluginPreserved retA=$retiredAgentGone retS=$retiredSkillGone orph=$orphanFileGone"
-    Assert-HookCondition -Name "restore.ps1 backs up and deploys hooks.json and scripts/" -Condition ($hooksDeployed -and $scriptDeployed -and $hooksBackedUp)
+    Assert-HookCondition -Name "restore.ps1 preserves unrecognized skills & plugins while pruning retired repo names, skill orphans, and legacy orchestrator/scripts/" -Condition ($restoreExit -eq 0 -and $externalPreserved -and $pluginPreserved -and $retiredAgentGone -and $retiredSkillGone -and $orphanFileGone -and $staleSkillSafetyGone -and $staleSkillGate2Gone -and $staleSkillScriptsDirGone) -Details "ext=$externalPreserved plug=$pluginPreserved retA=$retiredAgentGone retS=$retiredSkillGone orph=$orphanFileGone staleSafetyGone=$staleSkillSafetyGone staleGate2Gone=$staleSkillGate2Gone staleDirGone=$staleSkillScriptsDirGone"
+    Assert-HookCondition -Name "restore.ps1 backs up and deploys 5 Config Scripts while pruning orphan scripts/" -Condition ($hooksDeployed -and $scriptDeployed -and $safetyScriptDeployed -and $newCheckpointDeployed -and $restoreCheckpointDeployed -and $gate2DiffDeployed -and $orphanScriptGone -and $orphanScriptSubGone -and $reportedFiveScripts -and $hooksBackedUp) -Details "hook=$scriptDeployed safety=$safetyScriptDeployed newCkpt=$newCheckpointDeployed resCkpt=$restoreCheckpointDeployed gate2=$gate2DiffDeployed orphScr=$orphanScriptGone orphSub=$orphanScriptSubGone msg5=$reportedFiveScripts bak=$hooksBackedUp"
     Assert-HookCondition -Name "restore.ps1 prunes ~/.gemini/docs/adr, ~/.gemini/config/docs/adr, and empty parent docs/ directories" -Condition ($restoreExit -eq 0 -and $docsAdrGone -and $docsParentGone -and $legacyDocsAdrGone -and $legacyDocsParentGone) -Details "docsAdrGone=$docsAdrGone docsParentGone=$docsParentGone legacyAdrGone=$legacyDocsAdrGone legacyParentGone=$legacyDocsParentGone"
 
     # Verify sync.ps1 pulls back only tracked items and guards against empty source deletion
     New-Item -ItemType Directory -Path (Join-Path $syncHome ".gemini/config/agents/untracked-user-agent") -Force | Out-Null
     Set-Content -LiteralPath (Join-Path $syncHome ".gemini/config/agents/untracked-user-agent/agent.md") -Value "user-owned" -Encoding utf8
     Set-Content -LiteralPath (Join-Path $syncHome ".gemini/config/hooks.json") -Value '{"updatedByUser":true}' -Encoding utf8
+    Set-Content -LiteralPath (Join-Path $syncHome ".gemini/config/scripts/Test-PowerShellCommandSafety.ps1") -Value "# Updated safety script" -Encoding utf8
+    Set-Content -LiteralPath (Join-Path $syncHome ".gemini/config/scripts/untracked-script.ps1") -Value "# Untracked user script" -Encoding utf8
     Remove-Item -LiteralPath (Join-Path $syncHome ".gemini/config/skills/orchestrator/SKILL.md") -Force
+    Remove-Item -LiteralPath (Join-Path $syncHome ".gemini/config/scripts/Update-Gate2Diff.ps1") -Force
 
     $repoAdrReadme = Join-Path $syncRepo "docs/adr/README.md"
     $adrSentinelUtc = [datetime]::SpecifyKind([datetime]"2020-01-01T00:00:00", [System.DateTimeKind]::Utc)
@@ -714,12 +969,14 @@ try {
     $syncExit = Invoke-SandboxScript -ScriptPath (Join-Path $syncRepo "sync.ps1")
 
     $syncedHooks = (Get-Content -LiteralPath (Join-Path $syncRepo "config/hooks.json") -Raw).Trim() -eq '{"updatedByUser":true}'
+    $syncedSafetyScript = (Get-Content -LiteralPath (Join-Path $syncRepo "config/scripts/Test-PowerShellCommandSafety.ps1") -Raw).Trim() -eq "# Updated safety script"
+    $ignoredUntrackedScript = -not (Test-Path -LiteralPath (Join-Path $syncRepo "config/scripts/untracked-script.ps1"))
     $ignoredUntrackedAgent = -not (Test-Path -LiteralPath (Join-Path $syncRepo "config/agents/untracked-user-agent"))
     $ignoredExternalSkill = -not (Test-Path -LiteralPath (Join-Path $syncRepo "config/skills/custom-external-skill"))
-    $emptySourcePreserved = Test-Path -LiteralPath (Join-Path $syncRepo "config/skills/orchestrator/SKILL.md")
+    $emptySourcePreserved = (Test-Path -LiteralPath (Join-Path $syncRepo "config/skills/orchestrator/SKILL.md")) -and (Test-Path -LiteralPath (Join-Path $syncRepo "config/scripts/Update-Gate2Diff.ps1"))
     $adrReadmeUntouched = (Test-Path -LiteralPath $repoAdrReadme) -and ([System.IO.File]::GetLastWriteTimeUtc($repoAdrReadme) -eq $adrSentinelUtc) -and ((Get-Content -LiteralPath $repoAdrReadme -Raw).Trim() -eq "# ADR")
 
-    Assert-HookCondition -Name "sync.ps1 pulls back tracked hooks.json, ignores unrecognized agents/skills, and guards against empty source deletion" -Condition ($syncExit -eq 0 -and $syncedHooks -and $ignoredUntrackedAgent -and $ignoredExternalSkill -and $emptySourcePreserved) -Details "hooks=$syncedHooks ignA=$ignoredUntrackedAgent ignS=$ignoredExternalSkill emptyGuard=$emptySourcePreserved"
+    Assert-HookCondition -Name "sync.ps1 pulls back tracked hooks.json and scripts, ignores unrecognized items, and guards against empty source deletion" -Condition ($syncExit -eq 0 -and $syncedHooks -and $syncedSafetyScript -and $ignoredUntrackedScript -and $ignoredUntrackedAgent -and $ignoredExternalSkill -and $emptySourcePreserved) -Details "hooks=$syncedHooks safety=$syncedSafetyScript ignScr=$ignoredUntrackedScript ignA=$ignoredUntrackedAgent ignS=$ignoredExternalSkill emptyGuard=$emptySourcePreserved"
     Assert-HookCondition -Name "sync.ps1 neither creates nor touches repo docs/adr/README.md when ~/.gemini/docs/adr is absent" -Condition ($syncExit -eq 0 -and $adrAbsentBeforeSync -and $adrReadmeUntouched) -Details "adrAbsentBeforeSync=$adrAbsentBeforeSync adrReadmeUntouched=$adrReadmeUntouched"
 
     # Verify restore.ps1 preserves non-empty sibling files in docs/ and sync.ps1 ignores stale ~/.gemini/docs/adr
@@ -740,6 +997,11 @@ try {
     $legacySiblingPreserved = (Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/docs/notes.txt")) -and (-not (Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/docs/adr")))
     Assert-HookCondition -Name "restore.ps1 preserves non-empty sibling files in ~/.gemini/docs and ~/.gemini/config/docs while pruning adr/" -Condition ($restoreSiblingExit -eq 0 -and $docsSiblingPreserved -and $legacySiblingPreserved) -Details "docsSibling=$docsSiblingPreserved legacySibling=$legacySiblingPreserved"
 } finally {
+    foreach ($jp in @($leafJunc, $rootJunc, $normalJunc)) {
+        if ($jp -and (Test-Path -LiteralPath $jp)) {
+            try { [System.IO.Directory]::Delete($jp, $false) } catch {}
+        }
+    }
     if (Test-Path -LiteralPath $hookTempDir) {
         Remove-Item -LiteralPath $hookTempDir -Recurse -Force -ErrorAction SilentlyContinue
     }

@@ -1,12 +1,18 @@
 # everyday-agy
 
-My personal configuration for Google Antigravity, built around the coding workflows and pair-programming habits I use in everyday development.
+My personal configuration for Google Antigravity, built around how I actually code and pair with AI day to day.
 
-This repository collects my specialized agent roles, reusable workflow skills, PowerShell AST security guardrails, and architectural decision records (ADRs). It also includes utility scripts to synchronize configurations between my local environment (`~/.gemini/`) and Git, backed by pre-flight credential scanning and automated regression tests.
+It holds my specialized agent roles, workflow skills, PowerShell AST security guardrails, and architectural decision records (ADRs). It also includes sync scripts to mirror configurations between my local environment (`~/.gemini/`) and Git, backed by pre-flight credential scanning and automated regression tests.
 
-The setup evolves continuously as I test new patterns and run into edge cases. Some components are adapted from community tools (Ponytail, Trail of Bits, Spec-Kit, Superpowers), while others address my own project needs. This is a single-developer personal environment, and LLM behavior remains non-deterministic and requires human review.
+I tweak this setup constantly as I try new patterns and hit edge cases. Some parts are adapted from community tools (Ponytail, Trail of Bits, Spec-Kit, Superpowers); the rest solves specific quirks in my own stack. This is a personal setup built for one developer—LLMs are inherently non-deterministic, so always review what they generate.
 
-**Heads up before you clone or run anything:** Do not blindly run `restore.ps1` on your machine. Even though it saves a timestamped backup first, it still overwrites your global `~/.gemini/GEMINI.md` and `~/.gemini/config/` with my personal paths (`D:\Github`), WSL2 Arch Linux assumptions (`wsl -d archlinux`), and strict workflow hooks (`config/hooks.json`). If you just want the core ideas, point your own AI coding agent at this repository and ask it to distill or adapt the specific rules, hooks, or skills that fit your setup.
+> [!CAUTION]
+> **Heads up before you clone or run anything:** Do not blindly run `restore.ps1` on your machine. Even though it saves a timestamped backup first, it overwrites your global `~/.gemini/GEMINI.md` and `~/.gemini/config/` with my personal environment configurations:
+> - **Personal paths:** Deploys hardcoded paths (`D:\Github`) and user-specific working directory assumptions across operational rules.
+> - **WSL2 Arch Linux environment:** Assumes an active Arch Linux distribution under WSL2 (`wsl -d archlinux`) for Linux tool execution and fallback shells.
+> - **AST command hooks:** Installs strict runtime hook routing (`config/hooks.json`) and PowerShell AST safety filters (`config/scripts/Test-PowerShellCommandSafety.ps1`) that intercept shell executions, reject destructive primitives, and restrict sensitive file paths.
+>
+> If you just want the core ideas, point your own AI coding agent at this repository and ask it to distill or adapt the specific rules, hooks, or skills that fit your setup.
 
 > [!NOTE]
 > **Btw, feel free to ignore `academic-council` (or don't, if you're also fighting an empirical thesis):**  
@@ -20,7 +26,7 @@ The setup evolves continuously as I test new patterns and run into edge cases. S
 
 ## Architecture
 
-The repository partitions rules, agents, skills, and decision records to prevent context window dilution.
+Rules, agents, skills, and decision records are kept strictly separated so they only load when needed, keeping context windows lean.
 
 ```text
 everyday-agy/
@@ -31,7 +37,7 @@ everyday-agy/
 ├── config/
 │   ├── GEMINI.md        # Tracked global operational rules deployed to ~/.gemini/GEMINI.md
 │   ├── hooks.json       # Native Antigravity PreToolUse/PostToolUse hook definitions
-│   ├── scripts/         # Native hook router script (Invoke-AntigravityHook.ps1)
+│   ├── scripts/         # Native hook router, AST command safety, checkpoints & diffs (5 scripts)
 │   ├── agents/          # 10 specialized subagents with hybrid model tiering (ADR-0002)
 │   └── skills/          # 15 bespoke and engine-adapted workflow skills
 ├── docs/
@@ -41,7 +47,7 @@ everyday-agy/
 ```
 
 ### Operational Guardrails (`config/GEMINI.md` → `~/.gemini/GEMINI.md`)
-The global rules file stays compact by defining only active behavioral boundaries:
+The global rules file stays intentionally lean—focusing on active boundaries rather than prompt bloat:
 - Investigate first: trace callers with `rtk rg` before proposing or editing code.
 - Checkpoint-gated execution: autonomous execution and verification for small fixes (Tier 0/1); explicit approval before multi-file or architectural changes (Tier 2/3, ADR-0001).
 - Rollback safety: maintain a clean git checkpoint before modifying files.
@@ -50,18 +56,18 @@ The global rules file stays compact by defining only active behavioral boundarie
 
 ### Specialized Agent Roles (`config/agents/`)
 
-I set up these 10 custom subagents with an 8 `model: inherit` / 2 `model: flash` split (ADR-0002) plus native `hooks.json` enforcement mainly because Google Antigravity's official documentation barely explains how its subagent engine, `model: flash` routing, or thinking budgets actually behave under the hood. Subagent YAML frontmatter also does not expose specific model variants or thinking effort flags.
+I run 10 custom subagents with an 8 `model: inherit` / 2 `model: flash` split (ADR-0002) backed by native `hooks.json` enforcement. Google Antigravity's official docs barely explain how subagent routing or thinking budgets actually work under the hood, and subagent frontmatter doesn't let you pick specific model variants or thinking effort levels.
 
-I run `Gemini 3.8 Flash (High)` as my daily driver on a free/Jio trial plan instead of token-hungry `Gemini 4 Argon`. Because Flash as a parent orchestrator can still drop multi-step constraints on its own, `hooks.json` enforces hard runtime checks while `model: inherit` keeps the 8 reasoning and craft specialists on `High` thinking from the main session instead of falling back to a weaker default Flash worker:
+I use `Gemini 3.8 Flash (High)` as my daily driver on a free/Jio trial tier instead of burning tokens on `Gemini 4 Argon`. Flash works well, but as a parent orchestrator it occasionally drops multi-step constraints. Native `hooks.json` guards catch those slips at runtime, while `model: inherit` keeps the 8 reasoning and craft specialists on `High` thinking from the main session rather than dropping them into a weaker default Flash worker:
 
 - **Analytical, Craft & Architecture Roles** (`model: inherit`): Inherit the primary session model for planning, audits, test design, documentation, localization, and UI craft (`system-architect`, `code-auditor`, `silent-failure-hunter`, `spec-verifier`, `tdd-guide`, `docs-architect`, `l10n-humanizer`, `ui-crafter`).
 - **Build Fix & Maintenance Roles** (`model: flash`): Run on Flash for fast single-file compiler fixes and dependency maintenance (`build-error-resolver`, `maintenance-bot`).
 
 For the full agent directory, tool boundaries, and delegation parameters, see **[Custom Subagents Fleet in TOOLKIT.md](./TOOLKIT.md#5-custom-subagents)**.
 
-### Workflow Skills and Provenance (`config/skills/`)
+### Workflow Skills (`config/skills/`)
 
-Fifteen workflow skills are maintained directly in `config/skills/`. Third-party suites (`ponytail`, `taste-skill`, `antislop`, and Chrome DevTools) are decoupled from git tracking per ADR-0002 and installed directly from their upstream repositories:
+I maintain 15 workflow skills directly in `config/skills/`. Third-party suites (`ponytail`, `taste-skill`, `antislop`, and Chrome DevTools) are kept outside git tracking per ADR-0002 and installed straight from their upstream repos:
 
 | Category | Count | Included Skills | Origin / Licensing |
 |---|:---:|---|---|
@@ -70,12 +76,12 @@ Fifteen workflow skills are maintained directly in `config/skills/`. Third-party
 
 For trigger commands, detailed skill descriptions, and upstream installation links, see:
 - [**Tracked Skills Catalog**](./TOOLKIT.md#3-custom-skills-catalog)
-- [**Recommended Upstream Skills & Plugins**](./TOOLKIT.md#4-recommended-upstream-skills--plugins-decoupled-per-adr-0002)
+- [**Recommended Upstream Skills & Plugins**](./TOOLKIT.md#4-recommended-upstream-skills-plugins-decoupled-per-adr-0002)
 
 ### Architectural Decision Records (`docs/adr/`)
-I record key architectural decisions and operational trade-offs in Michael Nygard format under `docs/adr/`.
+I track key architectural decisions and operational trade-offs using Michael Nygard's ADR format under `docs/adr/`.
 
-Living Domain ADRs covering orchestrator delegation, fleet model tiering, runtime safety hooks, review councils, and documentation sync boundaries are updated in place and indexed in the **[ADR Catalog](./docs/adr/README.md)**, with superseded revisions kept in Git history.
+These live documents cover orchestrator delegation, fleet model tiering, runtime safety hooks, review councils, and documentation sync boundaries. They are maintained in place and indexed in the **[ADR Catalog](./docs/adr/README.md)**, leaving past versions to Git history.
 
 ## Quick Start
 
@@ -114,7 +120,7 @@ Living Domain ADRs covering orchestrator delegation, fleet model tiering, runtim
 
 ## Tooling & Command Execution
 
-External CLI commands (`git`, `npm`, `npx`, `pip`, `ripgrep`) execute through [`rtk`](https://github.com/rtk-ai/rtk) when available to compress command output and reduce token usage before reaching the model.
+External CLI tools (`git`, `npm`, `npx`, `pip`, `ripgrep`) run through [`rtk`](https://github.com/rtk-ai/rtk) when installed to strip terminal noise and cut token usage before output reaches the model.
 
 For the complete catalog of verified CLI tools, official repositories, and an automated Windows administrator installer script, see **[Verified CLI Tools in TOOLKIT.md](./TOOLKIT.md#1-verified-cli-tools)**.
 

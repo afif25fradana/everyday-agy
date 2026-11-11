@@ -426,6 +426,7 @@ try {
         $untrackedLines = @(
             "Multibyte: Phases 1$($enDash)3 and A $($rightArrow) B",
             'Regex and PS: $Matches[1] and $& and $_',
+            'Markdown Fence: ```text sample ```',
             "GitHub Token: $mockGhp",
             "Bearer Token: $mockBearer",
             "Base64 Bearer: $mockBase64Bearer",
@@ -489,6 +490,8 @@ try {
         $unclosedHeaderRedacted = (-not $updatedArtifact.Contains($mockUnclosedKeyHeader)) -and $updatedArtifact.Contains("-----BEGIN PRIVATE KEY <TEST_HASH_SANITIZED>-----")
         $hashesIntact = $updatedArtifact.Contains("da39a3ee5e6b4b0d3255bfef95601890afd80709") -and `
                         $updatedArtifact.Contains("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+        $fenceExpanded = [System.Text.RegularExpressions.Regex]::IsMatch($updatedArtifact, '(?m)^`{5,}diff\r?\n') -and [System.Text.RegularExpressions.Regex]::IsMatch($updatedArtifact, '(?m)^`{5,}\s*$')
+        $diffNotPrematurelyClosed = (-not [System.Text.RegularExpressions.Regex]::IsMatch($updatedArtifact, '(?m)^`{3}diff'))
 
         Assert-Test -Name "Update-Gate2Diff executes successfully" -Condition (-not $updateFailed)
         Assert-Test -Name "Untracked file is present in diff output" -Condition $untrackedInDiff
@@ -500,6 +503,8 @@ try {
         Assert-Test -Name "Multiline private key payload is completely redacted" -Condition $privateKeyRedacted
         Assert-Test -Name "Unclosed private key header fallback is sanitized" -Condition $unclosedHeaderRedacted
         Assert-Test -Name "Legitimate Git SHA and SHA256 hashes are not sanitized" -Condition $hashesIntact
+        Assert-Test -Name "Diff code block fence dynamically expands to at least 5 backticks" -Condition $fenceExpanded
+        Assert-Test -Name "Diff is not prematurely closed by inner code block backticks" -Condition $diffNotPrematurelyClosed
     } finally {
         Set-Location -LiteralPath $origPwd
         $gitScratchDir = Join-Path $userHome ".gemini/antigravity/scratch/git-fail-closed-$testId"

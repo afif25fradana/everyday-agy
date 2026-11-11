@@ -118,7 +118,31 @@ try {
             $artifactContent = $artifactContent.Replace("{{VERBATIM_GIT_DIFFSTAT}}", $sanitizedStat)
         }
         if ($hasDiffPlaceholder) {
-            $artifactContent = $artifactContent.Replace("{{VERBATIM_GIT_DIFF}}", $sanitizedDiff)
+            $maxBackticksInDiff = 0
+            $backtickMatches = [System.Text.RegularExpressions.Regex]::Matches($sanitizedDiff, '`{3,}')
+            foreach ($m in $backtickMatches) {
+                if ($m.Length -gt $maxBackticksInDiff) {
+                    $maxBackticksInDiff = $m.Length
+                }
+            }
+
+            if ($maxBackticksInDiff -ge 3) {
+                $fencePattern = '(?m)^(?<open>`{3,})(?<lang>diff[^\r\n]*)?\r?\n\{\{VERBATIM_GIT_DIFF\}\}\r?\n(?<close>`{3,})\r?$'
+                $fenceMatch = [System.Text.RegularExpressions.Regex]::Match($artifactContent, $fencePattern)
+                if ($fenceMatch.Success -and ($fenceMatch.Groups['open'].Length -le $maxBackticksInDiff)) {
+                    $neededBackticks = [Math]::Max(5, $maxBackticksInDiff + 1)
+                    $neededFence = '`' * $neededBackticks
+                    $lang = $fenceMatch.Groups['lang'].Value
+                    $nl = if ($fenceMatch.Value.Contains([string][char]13)) { "`r`n" } else { "`n" }
+                    $expandedBlock = "${neededFence}${lang}${nl}${sanitizedDiff}${nl}${neededFence}"
+                    $trailingNl = if ($fenceMatch.Value.EndsWith([string][char]13)) { "`r" } else { "" }
+                    $artifactContent = $artifactContent.Substring(0, $fenceMatch.Index) + $expandedBlock + $trailingNl + $artifactContent.Substring($fenceMatch.Index + $fenceMatch.Length)
+                } else {
+                    $artifactContent = $artifactContent.Replace("{{VERBATIM_GIT_DIFF}}", $sanitizedDiff)
+                }
+            } else {
+                $artifactContent = $artifactContent.Replace("{{VERBATIM_GIT_DIFF}}", $sanitizedDiff)
+            }
         }
 
         [System.IO.File]::WriteAllText($resolvedArtifact, $artifactContent, [System.Text.UTF8Encoding]::new($false))

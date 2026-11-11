@@ -28,16 +28,7 @@ This repository incorporates original works, engine-adapted ports, and curated
 community open-source skills. Individual subcomponents are subject to their
 respective upstream licenses:
 
-1. Trail of Bits Adapted Security Skills (CC BY-SA 4.0):
-   - config/skills/audit-context-building/
-   - config/skills/differential-review/
-   Original Author: Trail of Bits, Inc. (https://github.com/trailofbits/skills)
-   Licensed under the Creative Commons Attribution-ShareAlike 4.0 International
-   Public License (CC BY-SA 4.0).
-   See config/skills/audit-context-building/LICENSE and
-   config/skills/differential-review/LICENSE for complete license texts.
-
-2. Bespoke Workflow Skills (MIT License):
+1. Bespoke Workflow Skills & Architecture (MIT License):
    - config/skills/academic-council/
    - config/skills/audit-dev/
    - config/skills/clean-docs/
@@ -46,8 +37,42 @@ respective upstream licenses:
    - config/skills/orchestrator/
    - config/skills/sync-task-state/
    Licensed under the primary repository MIT License.
+   Copyright (c) 2026 Afif Fradana.
 
-3. External Recommended Tooling & Upstream Skills (Referenced):
+2. Spec-Kit Adapted Workflow Skill (MIT License):
+   - config/skills/spec-kit/
+   Adapted from GitHub Spec-Kit (https://github.com/github/spec-kit).
+   Copyright (c) 2024 GitHub, Inc.
+   Licensed under the MIT License:
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in all
+   copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.
+
+3. Trail of Bits Adapted Security Skills (CC BY-SA 4.0):
+   - config/skills/audit-context-building/
+   - config/skills/differential-review/
+   Original Author: Trail of Bits, Inc. (https://github.com/trailofbits/skills)
+   Licensed under the Creative Commons Attribution-ShareAlike 4.0 International
+   Public License (CC BY-SA 4.0).
+   See config/skills/audit-context-building/LICENSE and
+   config/skills/differential-review/LICENSE for complete license texts.
+
+4. External Recommended Tooling & Upstream Skills (Referenced):
    - Ponytail Suite: Copyright (c) 2026 DietrichGebert (https://github.com/DietrichGebert/ponytail, MIT License)
    - Frontend Taste-Skill: Copyright (c) 2026 Leonxlnx (https://github.com/Leonxlnx/taste-skill, MIT License)
    - Anti-Slop Suite: Copyright (c) 2026 Miqdad Badjuber (https://github.com/miqdadbadjuber/anti-slop, MIT License)

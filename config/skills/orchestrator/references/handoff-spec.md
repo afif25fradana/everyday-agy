@@ -93,7 +93,7 @@ The required structure for each gate payload is:
 ```
 
 ### 3.3 Gate 2 Schema (`# Review Request: Gate 2`)
-```markdown
+``````markdown
 # Review Request: Gate 2 (Post-Execution Handoff & Diff)
 - **Task**: <Task Title>
 - **Date**: <YYYY-MM-DD>
@@ -107,9 +107,9 @@ The required structure for each gate payload is:
 {{VERBATIM_GIT_DIFFSTAT}}
 
 ### Full Unified Diff
-```diff
+`````diff
 {{VERBATIM_GIT_DIFF}}
-```
+`````
 
 ## Mandatory Real Test Evidence
 - **CLI Test Command**: `<command>`
@@ -118,7 +118,7 @@ The required structure for each gate payload is:
 
 ## Five-Axis Pre-Flight Self-Audit
 - All 5 axes verified per [audit-dev SKILL.md](../../audit-dev/SKILL.md) (Correctness, Security, Ponytail, Edge Cases, Test Integrity).
-```
+``````
 
 ---
 

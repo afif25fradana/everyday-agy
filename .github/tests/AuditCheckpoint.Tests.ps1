@@ -726,9 +726,9 @@ try {
         Set-Content -LiteralPath $lowerItem -Value "lower dir item" -Encoding utf8
 
         & $newScript -Task $caseTask -FilePath @($upperFoo, $lowerFoo, $upperItem, $lowerItem) | Out-Null
-        $itemBackups = @(Get-ChildItem -LiteralPath $caseScratchDir -Filter "*_item.txt.bak")
-        $upperFooBak = Get-ChildItem -LiteralPath $caseScratchDir -Filter "*_Foo.txt.bak" | Select-Object -First 1
-        $lowerFooBak = Get-ChildItem -LiteralPath $caseScratchDir -Filter "*_foo.txt.bak" | Select-Object -First 1
+        $itemBackups = @(Get-ChildItem -LiteralPath $caseScratchDir | Where-Object { $_.Name -clike "*_item.txt.bak" })
+        $upperFooBak = Get-ChildItem -LiteralPath $caseScratchDir | Where-Object { $_.Name -clike "*_Foo.txt.bak" } | Select-Object -First 1
+        $lowerFooBak = Get-ChildItem -LiteralPath $caseScratchDir | Where-Object { $_.Name -clike "*_foo.txt.bak" } | Select-Object -First 1
         $upperPrefix = if ($upperFooBak) { ($upperFooBak.Name -split '_')[0] } else { "" }
         $lowerPrefix = if ($lowerFooBak) { ($lowerFooBak.Name -split '_')[0] } else { "" }
 

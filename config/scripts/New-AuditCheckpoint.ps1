@@ -54,7 +54,8 @@ try {
                 exit 1
             }
             $resolvedPath = (Resolve-Path -LiteralPath $target).Path
-            $pathBytes = [System.Text.Encoding]::UTF8.GetBytes($resolvedPath.ToLowerInvariant())
+            $pathHashKey = if ([System.IO.Path]::DirectorySeparatorChar -eq '\') { $resolvedPath.ToLowerInvariant() } else { $resolvedPath }
+            $pathBytes = [System.Text.Encoding]::UTF8.GetBytes($pathHashKey)
             $sha1 = [System.Security.Cryptography.SHA1]::Create()
             try {
                 $pathHash = ([BitConverter]::ToString($sha1.ComputeHash($pathBytes))).Replace('-', '').ToLower().Substring(0, 8)

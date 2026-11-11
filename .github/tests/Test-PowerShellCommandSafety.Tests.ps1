@@ -589,7 +589,10 @@ try {
         @{ Tool = "view_file"; Key = "AbsolutePath"; Path = "C:\\repo\\.env.example::`$DATA"; Expected = "allow"; Label = "view_file on .env.example ADS exception" },
         @{ Tool = "read_file"; Key = "file_path"; Path = "file:///C:/Users/Alice/.ssh/id_rsa"; Expected = "deny"; Label = "read_file on file:/// URI to .ssh" },
         @{ Tool = "write_file"; Key = "Path"; Path = "D:\\repo\\tdd-guide\\feature.ts"; Expected = "allow"; Label = "write_file allowed for non-secret tdd-guide path" },
-        @{ Tool = "edit_file"; Key = "Path"; Path = "D:\\repo\\DISPATCH.md"; Expected = "allow"; Label = "edit_file allowed for non-secret teamwork artifact" }
+        @{ Tool = "edit_file"; Key = "Path"; Path = "D:\\repo\\DISPATCH.md"; Expected = "allow"; Label = "edit_file allowed for non-secret teamwork artifact" },
+        @{ Tool = "view_file"; Key = "AbsolutePath"; Path = "C:\\"; Expected = "allow"; Label = "Windows root C:\ exits ancestor loop cleanly" },
+        @{ Tool = "view_file"; Key = "AbsolutePath"; Path = "/"; Expected = "allow"; Label = "POSIX root / exits ancestor loop cleanly" },
+        @{ Tool = "view_file"; Key = "AbsolutePath"; Path = "C:\\repo\\bad|dir\\app.ts"; Expected = "allow"; Label = "Non-existent path with illegal Win32 char does not trigger fallback error" }
     )
 
     foreach ($g2 in $guard2Cases) {
@@ -616,19 +619,34 @@ try {
     Set-Content -LiteralPath (Join-Path $secretSsh "id_rsa") -Value "PRIVATE" -Encoding utf8
     Set-Content -LiteralPath (Join-Path $normalOrigin "app.ts") -Value "export const ok = true;" -Encoding utf8
 
+    $bracketDir = Join-Path $safeLinks "dir[1]"
+    New-Item -ItemType Directory -Path $bracketDir -Force | Out-Null
     $leafJunc = Join-Path $safeLinks "junc_ssh"
     $rootJunc = Join-Path $safeLinks "junc_root"
     $normalJunc = Join-Path $safeLinks "junc_normal"
-    $null = New-Item -ItemType Junction -Path $leafJunc -Target $secretSsh
-    $null = New-Item -ItemType Junction -Path $rootJunc -Target $secretOrigin
-    $null = New-Item -ItemType Junction -Path $normalJunc -Target $normalOrigin
+    $bracketJunc = Join-Path $bracketDir "junc_ssh"
+    $relSshLink = Join-Path $safeLinks "rel_ssh"
+    $linkType = if ([System.IO.Path]::DirectorySeparatorChar -eq '\') { "Junction" } else { "SymbolicLink" }
+    $null = New-Item -ItemType $linkType -Path $leafJunc -Target $secretSsh -ErrorAction Stop
+    $null = New-Item -ItemType $linkType -Path $rootJunc -Target $secretOrigin -ErrorAction Stop
+    $null = New-Item -ItemType $linkType -Path $normalJunc -Target $normalOrigin -ErrorAction Stop
+    $null = New-Item -ItemType $linkType -Path $bracketJunc -Target $secretSsh -ErrorAction Stop
 
     $juncCases = @(
         @{ Tool = "view_file"; Key = "AbsolutePath"; Path = (Join-Path $leafJunc "id_rsa"); Expected = "deny"; Label = "Leaf junction pointing to .ssh/id_rsa" },
+        @{ Tool = "view_file"; Key = "AbsolutePath"; Path = (Join-Path $bracketJunc "id_rsa"); Expected = "deny"; Label = "Junction inside [1] bracketed folder pointing to .ssh/id_rsa" },
         @{ Tool = "write_file"; Key = "Path"; Path = (Join-Path (Join-Path $rootJunc ".ssh") "brand_new_key.txt"); Expected = "deny"; Label = "Non-existent write under ancestor junction to .ssh" },
         @{ Tool = "write_file"; Key = "Path"; Path = (Join-Path (Join-Path $leafJunc "nested") "brand_new_key.txt"); Expected = "deny"; Label = "Non-existent nested write under leaf .ssh junction" },
         @{ Tool = "read_file"; Key = "Path"; Path = (Join-Path $normalJunc "app.ts"); Expected = "allow"; Label = "Benign junction to normal directory allowed" }
     )
+    if ([System.IO.Path]::DirectorySeparatorChar -eq '/') {
+        $null = New-Item -ItemType SymbolicLink -Path $relSshLink -Target "../secret_origin/.ssh" -ErrorAction Stop
+        $mixedPath = ($leafJunc -replace '/', '\') + '\id_rsa'
+        $juncCases += @(
+            @{ Tool = "view_file"; Key = "AbsolutePath"; Path = (Join-Path $relSshLink "id_rsa"); Expected = "deny"; Label = "Relative POSIX symlink pointing to ../.ssh/id_rsa" },
+            @{ Tool = "view_file"; Key = "AbsolutePath"; Path = $mixedPath; Expected = "deny"; Label = "Mixed backslash path through POSIX symlink to .ssh/id_rsa" }
+        )
+    }
     foreach ($jc in $juncCases) {
         $jPayload = @{ toolCall = @{ name = $jc.Tool; args = @{ $jc.Key = $jc.Path } } } | ConvertTo-Json -Depth 5 -Compress
         $jRes = Invoke-HookCli -EventName "PreToolUse" -HomeOverride $isolatedHome -JsonInput $jPayload
@@ -997,7 +1015,7 @@ try {
     $legacySiblingPreserved = (Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/docs/notes.txt")) -and (-not (Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/docs/adr")))
     Assert-HookCondition -Name "restore.ps1 preserves non-empty sibling files in ~/.gemini/docs and ~/.gemini/config/docs while pruning adr/" -Condition ($restoreSiblingExit -eq 0 -and $docsSiblingPreserved -and $legacySiblingPreserved) -Details "docsSibling=$docsSiblingPreserved legacySibling=$legacySiblingPreserved"
 } finally {
-    foreach ($jp in @($leafJunc, $rootJunc, $normalJunc)) {
+    foreach ($jp in @($leafJunc, $rootJunc, $normalJunc, $bracketJunc, $relSshLink)) {
         if ($jp -and (Test-Path -LiteralPath $jp)) {
             try { [System.IO.Directory]::Delete($jp, $false) } catch {}
         }

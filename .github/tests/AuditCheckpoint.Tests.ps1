@@ -657,20 +657,47 @@ try {
         & $newScript -Task $juncTask -RepoPath $juncRepoDir | Out-Null
 
         $rogueParent = Join-Path $juncRepoDir "rogue_dir"
-        New-Item -ItemType Directory -Path $rogueParent -Force | Out-Null
+        $bracketRogueParent = Join-Path $juncRepoDir "dir[1]"
+        New-Item -ItemType Directory -Path $rogueParent, $bracketRogueParent -Force | Out-Null
         $nestedJunc = Join-Path $rogueParent "junc_out"
+        $bracketJunc = Join-Path $bracketRogueParent "junc_bracket"
         $directJunc = Join-Path $juncRepoDir "direct_junc"
-        $null = New-Item -ItemType Junction -Path $nestedJunc -Target $outsidePrecious
-        $null = New-Item -ItemType Junction -Path $directJunc -Target $outsidePrecious
+        $juncLinkType = if ([System.IO.Path]::DirectorySeparatorChar -eq '\') { "Junction" } else { "SymbolicLink" }
+        $null = New-Item -ItemType $juncLinkType -Path $nestedJunc -Target $outsidePrecious -ErrorAction Stop
+        $null = New-Item -ItemType $juncLinkType -Path $bracketJunc -Target $outsidePrecious -ErrorAction Stop
+        $null = New-Item -ItemType $juncLinkType -Path $directJunc -Target $outsidePrecious -ErrorAction Stop
 
         $global:LASTEXITCODE = 0
         & $restoreScript -Task $juncTask -RepoPath $juncRepoDir | Out-Null
         $jRc = $LASTEXITCODE
-        $juncGone = (-not (Test-Path -LiteralPath $nestedJunc)) -and (-not (Test-Path -LiteralPath $directJunc))
+        $juncGone = (-not (Test-Path -LiteralPath $nestedJunc)) -and (-not (Test-Path -LiteralPath $bracketJunc)) -and (-not (Test-Path -LiteralPath $bracketRogueParent)) -and (-not (Test-Path -LiteralPath $directJunc))
         $targetSurvived = (Test-Path -LiteralPath $preciousTargetFile) -and ((Get-Content -LiteralPath $preciousTargetFile -Raw).Trim() -eq "do not delete via junction")
-        Assert-Test -Name "Restore-AuditCheckpoint unlinks untracked junctions without deleting target files" -Condition ($jRc -eq 0 -and $juncGone -and $targetSurvived) -Details "rc=$jRc juncGone=$juncGone targetSurvived=$targetSurvived"
+        Assert-Test -Name "Restore-AuditCheckpoint unlinks untracked junctions (including dir[1] ancestors) without deleting target files" -Condition ($jRc -eq 0 -and $juncGone -and $targetSurvived) -Details "rc=$jRc juncGone=$juncGone targetSurvived=$targetSurvived"
+
+        # Direct Remove-PathSafeNoFollow verification with trailing slash and [1] bracketed parent folder
+        $trailRoot = Join-Path $testDir "trail_dir[1]"
+        New-Item -ItemType Directory -Path $trailRoot -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $trailRoot "regular.txt") -Value "temp" -Encoding utf8
+        $trailNestedJunc = Join-Path $trailRoot "sub_junc"
+        $trailDirectJunc = Join-Path $testDir "direct_trail[1]"
+        $null = New-Item -ItemType $juncLinkType -Path $trailNestedJunc -Target $outsidePrecious -ErrorAction Stop
+        $null = New-Item -ItemType $juncLinkType -Path $trailDirectJunc -Target $outsidePrecious -ErrorAction Stop
+
+        $restoreAstErr = $null
+        $restoreAst = [System.Management.Automation.Language.Parser]::ParseFile($restoreScript, [ref]$null, [ref]$restoreAstErr)
+        $removeFnAst = $restoreAst.Find({ param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq "Remove-PathSafeNoFollow" }, $true)
+        $trailOk = $false
+        if ($null -ne $removeFnAst) {
+            & {
+                . ([scriptblock]::Create($removeFnAst.Extent.Text))
+                Remove-PathSafeNoFollow -TargetPath ($trailDirectJunc + "/")
+                Remove-PathSafeNoFollow -TargetPath ($trailRoot + "/")
+            }
+            $trailOk = (-not (Test-Path -LiteralPath $trailDirectJunc)) -and (-not (Test-Path -LiteralPath $trailRoot)) -and (Test-Path -LiteralPath $preciousTargetFile) -and ((Get-Content -LiteralPath $preciousTargetFile -Raw).Trim() -eq "do not delete via junction")
+        }
+        Assert-Test -Name "Remove-PathSafeNoFollow unlinks bracketed and trailing-slash reparse targets safely" -Condition $trailOk -Details "directGone=$(-not (Test-Path -LiteralPath $trailDirectJunc)) rootGone=$(-not (Test-Path -LiteralPath $trailRoot)) targetExists=$(Test-Path -LiteralPath $preciousTargetFile)"
     } finally {
-        foreach ($jp in @($nestedJunc, $directJunc)) {
+        foreach ($jp in @($nestedJunc, $bracketJunc, $directJunc, $trailNestedJunc, $trailDirectJunc)) {
             if ($jp -and (Test-Path -LiteralPath $jp)) {
                 try { [System.IO.Directory]::Delete($jp, $false) } catch {}
             }
@@ -681,9 +708,56 @@ try {
         }
     }
 
+    # Test 14: File mode $pathHash preserves case on POSIX and stays case-insensitive on Windows
+    $caseTask = "case-$taskName"
+    $caseScratchDir = Join-Path $userHome ".gemini/antigravity/scratch/$caseTask"
+    if ([System.IO.Path]::DirectorySeparatorChar -eq '/') {
+        $caseDir = Join-Path $testDir "case_posix"
+        $upperSub = Join-Path $caseDir "DirCase"
+        $lowerSub = Join-Path $caseDir "dircase"
+        New-Item -ItemType Directory -Path $upperSub, $lowerSub -Force | Out-Null
+        $upperFoo = Join-Path $caseDir "Foo.txt"
+        $lowerFoo = Join-Path $caseDir "foo.txt"
+        $upperItem = Join-Path $upperSub "item.txt"
+        $lowerItem = Join-Path $lowerSub "item.txt"
+        Set-Content -LiteralPath $upperFoo -Value "upper foo" -Encoding utf8
+        Set-Content -LiteralPath $lowerFoo -Value "lower foo" -Encoding utf8
+        Set-Content -LiteralPath $upperItem -Value "upper dir item" -Encoding utf8
+        Set-Content -LiteralPath $lowerItem -Value "lower dir item" -Encoding utf8
+
+        & $newScript -Task $caseTask -FilePath @($upperFoo, $lowerFoo, $upperItem, $lowerItem) | Out-Null
+        $itemBackups = @(Get-ChildItem -LiteralPath $caseScratchDir -Filter "*_item.txt.bak")
+        $upperFooBak = Get-ChildItem -LiteralPath $caseScratchDir -Filter "*_Foo.txt.bak" | Select-Object -First 1
+        $lowerFooBak = Get-ChildItem -LiteralPath $caseScratchDir -Filter "*_foo.txt.bak" | Select-Object -First 1
+        $upperPrefix = if ($upperFooBak) { ($upperFooBak.Name -split '_')[0] } else { "" }
+        $lowerPrefix = if ($lowerFooBak) { ($lowerFooBak.Name -split '_')[0] } else { "" }
+
+        Set-Content -LiteralPath $upperFoo -Value "tampered 1" -Encoding utf8
+        Set-Content -LiteralPath $lowerFoo -Value "tampered 2" -Encoding utf8
+        Set-Content -LiteralPath $upperItem -Value "tampered 3" -Encoding utf8
+        Set-Content -LiteralPath $lowerItem -Value "tampered 4" -Encoding utf8
+        & $restoreScript -Task $caseTask -FilePath @($upperFoo, $lowerFoo, $upperItem, $lowerItem) | Out-Null
+
+        $posixCaseOk = ($itemBackups.Count -eq 2) -and (-not [string]::IsNullOrEmpty($upperPrefix)) -and (-not [string]::IsNullOrEmpty($lowerPrefix)) -and ($upperPrefix -ne $lowerPrefix) -and
+            ((Get-Content -LiteralPath $upperFoo -Raw).Trim() -eq "upper foo") -and
+            ((Get-Content -LiteralPath $lowerFoo -Raw).Trim() -eq "lower foo") -and
+            ((Get-Content -LiteralPath $upperItem -Raw).Trim() -eq "upper dir item") -and
+            ((Get-Content -LiteralPath $lowerItem -Raw).Trim() -eq "lower dir item")
+        Assert-Test -Name "File mode preserves case-sensitive pathHash on POSIX without collisions" -Condition $posixCaseOk -Details "itemBackups=$($itemBackups.Count) upperPrefix=$upperPrefix lowerPrefix=$lowerPrefix"
+    } else {
+        $winCaseFile = Join-Path $testDir "CaseWindow.txt"
+        $winCaseFileLower = Join-Path $testDir "casewindow.txt"
+        Set-Content -LiteralPath $winCaseFile -Value "win case original" -Encoding utf8
+        & $newScript -Task $caseTask -FilePath $winCaseFile | Out-Null
+        Remove-Item -LiteralPath $winCaseFile -Force
+        & $restoreScript -Task $caseTask -FilePath $winCaseFileLower | Out-Null
+        $winRestored = if (Test-Path -LiteralPath $winCaseFileLower) { (Get-Content -LiteralPath $winCaseFileLower -Raw).Trim() } else { "" }
+        Assert-Test -Name "File mode maintains case-insensitive pathHash matching on Windows" -Condition ($winRestored -eq "win case original") -Details "restored=$winRestored"
+    }
+
 } finally {
     # Cleanup temporary directories and test-created scratch locations
-    foreach ($extraTask in @($taskName, "multi-$taskName", "corrupt-$taskName", "missinghashes-$taskName", "noentry-$taskName", "comma-$taskName", "status-fail-$testId", "ls-fail-$testId", "nested-$taskName", "bracket-$taskName", "fail-nongit-$testId")) {
+    foreach ($extraTask in @($taskName, "multi-$taskName", "corrupt-$taskName", "missinghashes-$taskName", "noentry-$taskName", "comma-$taskName", "status-fail-$testId", "ls-fail-$testId", "nested-$taskName", "bracket-$taskName", "fail-nongit-$testId", "case-$taskName")) {
         $extraScratch = Join-Path $userHome ".gemini/antigravity/scratch/$extraTask"
         if (Test-Path -LiteralPath $extraScratch) {
             Remove-Item -LiteralPath $extraScratch -Recurse -Force -ErrorAction SilentlyContinue

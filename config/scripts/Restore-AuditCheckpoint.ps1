@@ -41,6 +41,9 @@ try {
     function Remove-PathSafeNoFollow {
         param([string]$TargetPath)
         $fullPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($TargetPath)
+        if ($fullPath.Length -gt 1 -and $fullPath -notmatch '^[A-Za-z]:[/\\]?$') {
+            $fullPath = $fullPath.TrimEnd('\', '/')
+        }
         $item = Get-Item -LiteralPath $fullPath -Force -ErrorAction Stop
         if (($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
             if ($item.PSIsContainer) {
@@ -96,7 +99,8 @@ try {
             } else {
                 $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($target)
             }
-            $pathBytes = [System.Text.Encoding]::UTF8.GetBytes($resolvedPath.ToLowerInvariant())
+            $pathHashKey = if ([System.IO.Path]::DirectorySeparatorChar -eq '\') { $resolvedPath.ToLowerInvariant() } else { $resolvedPath }
+            $pathBytes = [System.Text.Encoding]::UTF8.GetBytes($pathHashKey)
             $sha1 = [System.Security.Cryptography.SHA1]::Create()
             try {
                 $pathHash = ([BitConverter]::ToString($sha1.ComputeHash($pathBytes))).Replace('-', '').ToLower().Substring(0, 8)

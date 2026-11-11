@@ -229,22 +229,26 @@ function Test-DenyPath {
     } elseif ($expanded -match '^file://(/.*)$') {
         $expanded = $Matches[1]
     }
-    $expanded = $expanded -replace '/', '\'
-    if ($expanded -match '^\\\\[\.\?]\\([A-Za-z]:.*)$') {
-        $expanded = $Matches[1]
-    }
-
-    $drivePart = ""
-    $bodyPart = $expanded
-    if ($expanded -match '^([A-Za-z]:)(.*)$') {
-        $drivePart = $Matches[1]
-        $bodyPart = $Matches[2]
-    }
-    $lastSlash = $bodyPart.LastIndexOf('\')
-    if ($lastSlash -ge 0) {
-        $expanded = $drivePart + $bodyPart.Substring(0, $lastSlash + 1) + ($bodyPart.Substring($lastSlash + 1) -replace ':.*$', '')
+    $sep = [System.IO.Path]::DirectorySeparatorChar
+    if ($sep -eq '\') {
+        $expanded = $expanded -replace '/', '\'
+        if ($expanded -match '^\\\\[\.\?]\\([A-Za-z]:.*)$') {
+            $expanded = $Matches[1]
+        }
+        $drivePart = ""
+        $bodyPart = $expanded
+        if ($expanded -match '^([A-Za-z]:)(.*)$') {
+            $drivePart = $Matches[1]
+            $bodyPart = $Matches[2]
+        }
+        $lastSlash = $bodyPart.LastIndexOf('\')
+        if ($lastSlash -ge 0) {
+            $expanded = $drivePart + $bodyPart.Substring(0, $lastSlash + 1) + ($bodyPart.Substring($lastSlash + 1) -replace ':.*$', '')
+        } else {
+            $expanded = $drivePart + ($bodyPart -replace ':.*$', '')
+        }
     } else {
-        $expanded = $drivePart + ($bodyPart -replace ':.*$', '')
+        $expanded = $expanded -replace '\\', '/'
     }
 
     try {
@@ -256,7 +260,8 @@ function Test-DenyPath {
     if (Test-LexicalDenyPath -NormPath $fullNorm) { return $true }
 
     $probe = $fullProbe.TrimEnd('\', '/')
-    if ($probe -match '^[A-Za-z]:$') { $probe += '\' }
+    if ($sep -eq '\' -and $probe -match '^[A-Za-z]:$') { $probe += '\' }
+    elseif ($sep -eq '/' -and [string]::IsNullOrEmpty($probe)) { $probe = '/' }
     $suffixParts = New-Object System.Collections.Generic.List[string]
     while (-not [string]::IsNullOrWhiteSpace($probe)) {
         $item = Get-Item -LiteralPath $probe -Force -ErrorAction SilentlyContinue
@@ -271,7 +276,7 @@ function Test-DenyPath {
                 if ([string]::IsNullOrWhiteSpace($lt)) { continue }
                 $resolvedTarget = $lt
                 if (-not [System.IO.Path]::IsPathRooted($resolvedTarget)) {
-                    $probeParent = Split-Path -Parent $probe
+                    $probeParent = [System.IO.Path]::GetDirectoryName($probe)
                     if ($probeParent) {
                         $resolvedTarget = Join-Path $probeParent $resolvedTarget
                     }
@@ -289,9 +294,13 @@ function Test-DenyPath {
                 }
             }
         }
-        $parent = Split-Path -Parent $probe
-        if ([string]::IsNullOrWhiteSpace($parent) -or $parent -eq $probe) { break }
-        $leafName = Split-Path -Leaf $probe
+        try {
+            $parent = [System.IO.Path]::GetDirectoryName($probe)
+            if ([string]::IsNullOrWhiteSpace($parent) -or $parent -eq $probe) { break }
+            $leafName = [System.IO.Path]::GetFileName($probe)
+        } catch {
+            break
+        }
         if (-not [string]::IsNullOrEmpty($leafName)) {
             $suffixParts.Add($leafName)
         }

@@ -43,7 +43,7 @@ Never inflate simple code or architecture with academic, corporate, or audit-rep
 
 ---
 
-## 3. Code Comment Hygiene (`antislop-code`)
+## 3. Code Comment Hygiene
 
 - **Zero Obvious AI Commentary**:
   - Never add obvious comments describing syntax or trivial actions (`// Update state`, `// Loop through items`, `// Check if user is null`, `// Return result`).

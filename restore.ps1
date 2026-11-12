@@ -67,6 +67,31 @@ function Copy-DirectoryContentsLiteral {
     }
 }
 
+function Remove-PathSafeNoFollow {
+    param([string]$TargetPath)
+    $fullPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($TargetPath)
+    if ($fullPath.Length -gt 1 -and $fullPath -notmatch '^[A-Za-z]:[/\\]?$') {
+        $fullPath = $fullPath.TrimEnd('\', '/')
+    }
+    $item = Get-Item -LiteralPath $fullPath -Force -ErrorAction Stop
+    if (($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
+        if ($item.PSIsContainer) {
+            [System.IO.Directory]::Delete($fullPath, $false)
+        } else {
+            [System.IO.File]::Delete($fullPath)
+        }
+        return
+    }
+    if ($item.PSIsContainer) {
+        foreach ($child in @(Get-ChildItem -LiteralPath $fullPath -Force -ErrorAction Stop)) {
+            Remove-PathSafeNoFollow -TargetPath $child.FullName
+        }
+        [System.IO.Directory]::Delete($fullPath, $false)
+    } else {
+        Remove-Item -LiteralPath $fullPath -Force -ErrorAction Stop
+    }
+}
+
 Write-Host ">>> Running pre-flight credential audit on deployment files..." -ForegroundColor Cyan
 $deployScanTargets = @(
     (Join-Path $scriptRoot "README.md"),
@@ -175,14 +200,17 @@ if (Test-Path -LiteralPath $srcAgents) {
     foreach ($retiredAgent in $retiredRepoAgents) {
         $retiredPath = Join-Path $dstAgents $retiredAgent
         if (Test-Path -LiteralPath $retiredPath) {
-            Remove-Item -LiteralPath $retiredPath -Recurse -Force
+            Remove-PathSafeNoFollow -TargetPath $retiredPath
             Write-Host "[CLEANUP] Pruned retired repo agent: $retiredAgent" -ForegroundColor DarkGray
         }
     }
-    $srcAgentDirs = @(Get-ChildItem -LiteralPath $srcAgents -Directory)
+    $srcAgentDirs = @(Get-ChildItem -LiteralPath $srcAgents -Directory -Force)
     foreach ($aDir in $srcAgentDirs) {
         $targetDir = Join-Path $dstAgents $aDir.Name
-        if (Test-Path -LiteralPath $targetDir) {
+        if (Test-Path -LiteralPath $targetDir -PathType Leaf) {
+            Remove-Item -LiteralPath $targetDir -Force
+        }
+        if (Test-Path -LiteralPath $targetDir -PathType Container) {
             $srcFiles = @(Get-ChildItem -LiteralPath $aDir.FullName -Recurse -File -Force | ForEach-Object {
                 $_.FullName.Substring($aDir.FullName.TrimEnd('\', '/').Length).Replace('\', '/')
             })
@@ -193,15 +221,13 @@ if (Test-Path -LiteralPath $srcAgents) {
                     Write-Host "[CLEANUP] Pruned orphan agent file: $($aDir.Name)$rel" -ForegroundColor DarkGray
                 }
             }
-        } else {
-            $null = [System.IO.Directory]::CreateDirectory($targetDir)
-        }
-        if (Test-Path -LiteralPath $targetDir -PathType Container) {
             Get-ChildItem -LiteralPath $targetDir -Recurse -Directory -Force | Sort-Object -Property FullName -Descending | ForEach-Object {
                 if (@(Get-ChildItem -LiteralPath $_.FullName -Force).Count -eq 0) {
                     Remove-Item -LiteralPath $_.FullName -Force
                 }
             }
+        } else {
+            $null = [System.IO.Directory]::CreateDirectory($targetDir)
         }
         if (@(Get-ChildItem -LiteralPath $aDir.FullName -Force).Count -gt 0) {
             Copy-DirectoryContentsLiteral -SourceDir $aDir.FullName -DestDir $targetDir
@@ -219,14 +245,17 @@ if (Test-Path -LiteralPath $srcSkills) {
     foreach ($retiredSkill in $retiredRepoSkills) {
         $retiredPath = Join-Path $dstSkills $retiredSkill
         if (Test-Path -LiteralPath $retiredPath) {
-            Remove-Item -LiteralPath $retiredPath -Recurse -Force
+            Remove-PathSafeNoFollow -TargetPath $retiredPath
             Write-Host "[CLEANUP] Pruned retired repo skill: $retiredSkill" -ForegroundColor DarkGray
         }
     }
-    $srcSkillDirs = @(Get-ChildItem -LiteralPath $srcSkills -Directory)
+    $srcSkillDirs = @(Get-ChildItem -LiteralPath $srcSkills -Directory -Force)
     foreach ($sDir in $srcSkillDirs) {
         $targetDir = Join-Path $dstSkills $sDir.Name
-        if (Test-Path -LiteralPath $targetDir) {
+        if (Test-Path -LiteralPath $targetDir -PathType Leaf) {
+            Remove-Item -LiteralPath $targetDir -Force
+        }
+        if (Test-Path -LiteralPath $targetDir -PathType Container) {
             $srcFiles = @(Get-ChildItem -LiteralPath $sDir.FullName -Recurse -File -Force | ForEach-Object {
                 $_.FullName.Substring($sDir.FullName.TrimEnd('\', '/').Length).Replace('\', '/')
             })
@@ -254,12 +283,15 @@ if (Test-Path -LiteralPath $srcSkills) {
 
 # 5. Prune legacy ADR deployments (ADRs stay repo-only)
 foreach ($docsParent in @((Join-Path $geminiHome "docs"), (Join-Path $configHome "docs"))) {
+    if (-not (Test-Path -LiteralPath $docsParent -PathType Container)) { continue }
+    $docsItem = Get-Item -LiteralPath $docsParent -Force
+    if (($docsItem.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) { continue }
     $staleAdr = Join-Path $docsParent "adr"
-    if (Test-Path -LiteralPath $staleAdr -PathType Container) {
-        Remove-Item -LiteralPath $staleAdr -Recurse -Force
+    if (Test-Path -LiteralPath $staleAdr) {
+        Remove-PathSafeNoFollow -TargetPath $staleAdr
         Write-Host "[CLEANUP] Pruned legacy ADR path: $staleAdr" -ForegroundColor DarkGray
     }
-    if ((Test-Path -LiteralPath $docsParent -PathType Container) -and (@(Get-ChildItem -LiteralPath $docsParent -Force).Count -eq 0)) {
+    if (@(Get-ChildItem -LiteralPath $docsParent -Force).Count -eq 0) {
         Remove-Item -LiteralPath $docsParent -Force
         Write-Host "[CLEANUP] Pruned empty docs directory: $docsParent" -ForegroundColor DarkGray
     }
@@ -292,7 +324,6 @@ foreach ($docsParent in @((Join-Path $geminiHome "docs"), (Join-Path $configHome
 Write-Host ">>> Everyday-AGY restoration completed successfully!" -ForegroundColor Green
 Write-Host ">>> Note: For Context7 MCP setup, refer to README.md and TOOLKIT.md." -ForegroundColor Yellow
 Write-Host ">>> Tip: Recommended upstream skills & plugins (refer to official docs for Antigravity install):" -ForegroundColor Cyan
-Write-Host "    - Taste-Skill (design-taste-frontend): https://github.com/Leonxlnx/taste-skill" -ForegroundColor DarkGray
+Write-Host "    - Taste-Skill (taste-skill): https://github.com/afif25fradana/taste-skill" -ForegroundColor DarkGray
 Write-Host "    - Ponytail (lazy dev mode & audits):  https://github.com/DietrichGebert/ponytail" -ForegroundColor DarkGray
-Write-Host "    - Anti-Slop (clean copywriting & UI): https://github.com/miqdadbadjuber/anti-slop" -ForegroundColor DarkGray
-Write-Host "    - Chrome DevTools & Web Guidance:     Install via Antigravity Marketplace" -ForegroundColor DarkGray
+Write-Host "    - Chrome DevTools: Install via Antigravity Marketplace" -ForegroundColor DarkGray

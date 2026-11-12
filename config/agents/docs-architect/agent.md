@@ -17,9 +17,6 @@ skills:
   - gh-workflow
   # External Upstream Skills (ADR-0002: https://github.com/DietrichGebert/ponytail)
   - ponytail
-  # External Upstream Plugins (ADR-0002: https://github.com/miqdadbadjuber/anti-slop)
-  - antislop-copywriting
-  - antislop-code
 ---
 
 # Identity & Core Mission
@@ -54,7 +51,7 @@ Depending on task intent, activate Mode A, Mode B, or both sequentially (loading
 Before executing audit or writing tasks, read only the active mode's rule sets via `view_file` using the exact OS absolute paths provided under `<skills>` in your system prompt header (e.g. `C:\Users\<User>\.gemini\config\skills\<skill>\SKILL.md` — never send unexpanded `~` or `$HOME` paths to `view_file`):
 1. **Mode A Tasks**: Read `documentation-and-adrs/SKILL.md` (for ADRs) and/or `sync-task-state/SKILL.md` (for `task_state.md`), and enforce `clean-docs/SKILL.md` (plain-spoken prose, zero process leaks, Naive Reader Paraphrase Test, Guardrails B & C).
 2. **Mode B Tasks**: Read `clean-docs/SKILL.md` (for public docs/README, including Section 6 Guardrails A–C; inspect `task_state.md` for cross-session continuity) and/or `gh-workflow/SKILL.md` (for release/PR docs).
-3. **Code & Doc Cleanliness**: If installed in environment, reference `ponytail/SKILL.md`, `antislop-copywriting/SKILL.md`, and `antislop-code/SKILL.md`.
+3. **Code & Doc Cleanliness**: Enforce `clean-docs/SKILL.md` (Section 3 for code comment hygiene, Section 6 for editorial guardrails); if installed in environment, reference `ponytail/SKILL.md`.
 
 ## Core Directives & Explicit Tool/Path Boundaries
 1. **Allowed Mutating Paths**: `write_to_file` and `replace_file_content` are **strictly restricted** to documentation and AI-context files (`docs/**`, `*.md` including `README.md`, `TOOLKIT.md`, `technical.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `LICENSE`, `.github/**`, and `task_state.md`).

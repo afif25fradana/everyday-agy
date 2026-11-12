@@ -676,7 +676,91 @@ try {
     $rbAgentRestored = ([System.IO.File]::ReadAllText((Join-Path $rbHome ".gemini/config/agents/tdd-guide/agent.md"), [System.Text.Encoding]::UTF8).Trim() -eq "name: original-agent")
 
     Assert-Test -Name "restore.ps1 rolls back partial deployment from backup on failure" -Condition ($rbRes.ExitCode -ne 0 -and $rbGeminiRestored -and $rbHooksRestored -and $rbScriptRestored -and $rbAgentRestored) -Details "rc=$($rbRes.ExitCode) gem=$rbGeminiRestored hooks=$rbHooksRestored scr=$rbScriptRestored ag=$rbAgentRestored"
+
+    # Case 1: Reparse-point / junction safety for retired skills and legacy ADR paths
+    $linkType = if ([System.IO.Path]::DirectorySeparatorChar -eq '\') { "Junction" } else { "SymbolicLink" }
+    $case1Repo = Join-Path $sandboxRoot "link_repo"
+    $case1Home = Join-Path $sandboxRoot "link_home"
+    $case1ExternalSkillTarget = Join-Path $sandboxRoot "external_skill_target"
+    $case1ExternalAdrTarget = Join-Path $sandboxRoot "external_adr_target"
+    $case1ExternalDocsTarget = Join-Path $sandboxRoot "external_docs_target"
+    $null = [System.IO.Directory]::CreateDirectory((Join-Path $case1Repo "config/scripts"))
+    $null = [System.IO.Directory]::CreateDirectory((Join-Path $case1Repo "config/agents/tdd-guide"))
+    $null = [System.IO.Directory]::CreateDirectory((Join-Path $case1Repo "config/skills/orchestrator"))
+    $null = [System.IO.Directory]::CreateDirectory((Join-Path $case1Home ".gemini/config/skills"))
+    $null = [System.IO.Directory]::CreateDirectory((Join-Path $case1Home ".gemini/docs"))
+    $null = [System.IO.Directory]::CreateDirectory($case1ExternalSkillTarget)
+    $null = [System.IO.Directory]::CreateDirectory($case1ExternalAdrTarget)
+    $null = [System.IO.Directory]::CreateDirectory((Join-Path $case1ExternalDocsTarget "adr"))
+
+    Copy-Item -LiteralPath $restorePath -Destination (Join-Path $case1Repo "restore.ps1") -Force
+    [System.IO.File]::WriteAllText((Join-Path $case1Repo "config/GEMINI.md"), "# Repo GEMINI", [System.Text.UTF8Encoding]::new($false))
+    [System.IO.File]::WriteAllText((Join-Path $case1Repo "config/hooks.json"), "{}", [System.Text.UTF8Encoding]::new($false))
+    [System.IO.File]::WriteAllText((Join-Path $case1Repo "config/scripts/s.ps1"), "# script", [System.Text.UTF8Encoding]::new($false))
+    [System.IO.File]::WriteAllText((Join-Path $case1Repo "config/agents/tdd-guide/agent.md"), "name: tdd-guide", [System.Text.UTF8Encoding]::new($false))
+    [System.IO.File]::WriteAllText((Join-Path $case1Repo "config/skills/orchestrator/SKILL.md"), "name: orchestrator", [System.Text.UTF8Encoding]::new($false))
+
+    $skillSentinel = Join-Path $case1ExternalSkillTarget "sentinel.txt"
+    $adrSentinel = Join-Path $case1ExternalAdrTarget "sentinel.txt"
+    $docsParentSentinel = Join-Path $case1ExternalDocsTarget "adr/sentinel.txt"
+    [System.IO.File]::WriteAllText($skillSentinel, "keep-skill-target", [System.Text.UTF8Encoding]::new($false))
+    [System.IO.File]::WriteAllText($adrSentinel, "keep-adr-target", [System.Text.UTF8Encoding]::new($false))
+    [System.IO.File]::WriteAllText($docsParentSentinel, "keep-docs-parent-target", [System.Text.UTF8Encoding]::new($false))
+
+    $retiredSkillLink = Join-Path $case1Home ".gemini/config/skills/audit-dev-workflow"
+    $legacyAdrLink = Join-Path $case1Home ".gemini/docs/adr"
+    $docsParentLink = Join-Path $case1Home ".gemini/config/docs"
+    $null = New-Item -ItemType $linkType -Path $retiredSkillLink -Target $case1ExternalSkillTarget
+    $null = New-Item -ItemType $linkType -Path $legacyAdrLink -Target $case1ExternalAdrTarget
+    $null = New-Item -ItemType $linkType -Path $docsParentLink -Target $case1ExternalDocsTarget
+    $testLinks = @($retiredSkillLink, $legacyAdrLink, $docsParentLink)
+
+    $case1Res = Invoke-DeploySandboxScript -ScriptPath (Join-Path $case1Repo "restore.ps1") -HomeDir $case1Home
+    $skillLinkRemoved = -not (Test-Path -LiteralPath $retiredSkillLink)
+    $adrLinkRemoved = -not (Test-Path -LiteralPath $legacyAdrLink)
+    $skillSentinelPreserved = Test-Path -LiteralPath $skillSentinel -PathType Leaf
+    $adrSentinelPreserved = Test-Path -LiteralPath $adrSentinel -PathType Leaf
+    $docsParentPreserved = Test-Path -LiteralPath $docsParentSentinel -PathType Leaf
+    Assert-Test -Name "restore.ps1 unlinks retired skill and ADR junctions/symlinks without deleting target contents" -Condition ($case1Res.ExitCode -eq 0 -and $skillLinkRemoved -and $adrLinkRemoved -and $skillSentinelPreserved -and $adrSentinelPreserved -and $docsParentPreserved) -Details "rc=$($case1Res.ExitCode) skillGone=$skillLinkRemoved adrGone=$adrLinkRemoved skillSentinel=$skillSentinelPreserved adrSentinel=$adrSentinelPreserved docsParentSentinel=$docsParentPreserved err=$($case1Res.StdErr)"
+
+    # Case 2: Leaf-file-to-directory collision in agents/ and skills/
+    $case2Repo = Join-Path $sandboxRoot "leaf_repo"
+    $case2Home = Join-Path $sandboxRoot "leaf_home"
+    $null = [System.IO.Directory]::CreateDirectory((Join-Path $case2Repo "config/scripts"))
+    $null = [System.IO.Directory]::CreateDirectory((Join-Path $case2Repo "config/agents/ui-crafter"))
+    $null = [System.IO.Directory]::CreateDirectory((Join-Path $case2Repo "config/skills/coding-standards"))
+    $null = [System.IO.Directory]::CreateDirectory((Join-Path $case2Home ".gemini/config/agents"))
+    $null = [System.IO.Directory]::CreateDirectory((Join-Path $case2Home ".gemini/config/skills"))
+
+    Copy-Item -LiteralPath $restorePath -Destination (Join-Path $case2Repo "restore.ps1") -Force
+    [System.IO.File]::WriteAllText((Join-Path $case2Repo "config/GEMINI.md"), "# Repo GEMINI", [System.Text.UTF8Encoding]::new($false))
+    [System.IO.File]::WriteAllText((Join-Path $case2Repo "config/hooks.json"), "{}", [System.Text.UTF8Encoding]::new($false))
+    [System.IO.File]::WriteAllText((Join-Path $case2Repo "config/scripts/s.ps1"), "# script", [System.Text.UTF8Encoding]::new($false))
+    [System.IO.File]::WriteAllText((Join-Path $case2Repo "config/agents/ui-crafter/agent.md"), "name: ui-crafter", [System.Text.UTF8Encoding]::new($false))
+    [System.IO.File]::WriteAllText((Join-Path $case2Repo "config/skills/coding-standards/SKILL.md"), "name: coding-standards", [System.Text.UTF8Encoding]::new($false))
+
+    [System.IO.File]::WriteAllText((Join-Path $case2Home ".gemini/config/agents/ui-crafter"), "colliding-agent-leaf", [System.Text.UTF8Encoding]::new($false))
+    [System.IO.File]::WriteAllText((Join-Path $case2Home ".gemini/config/skills/coding-standards"), "colliding-skill-leaf", [System.Text.UTF8Encoding]::new($false))
+
+    $case2Res = Invoke-DeploySandboxScript -ScriptPath (Join-Path $case2Repo "restore.ps1") -HomeDir $case2Home
+    $deployedAgentLeafFix = Test-Path -LiteralPath (Join-Path $case2Home ".gemini/config/agents/ui-crafter/agent.md") -PathType Leaf
+    $deployedSkillLeafFix = Test-Path -LiteralPath (Join-Path $case2Home ".gemini/config/skills/coding-standards/SKILL.md") -PathType Leaf
+    Assert-Test -Name "restore.ps1 replaces colliding leaf files in agents/ and skills/ with deployed directories" -Condition ($case2Res.ExitCode -eq 0 -and $deployedAgentLeafFix -and $deployedSkillLeafFix) -Details "rc=$($case2Res.ExitCode) agent=$deployedAgentLeafFix skill=$deployedSkillLeafFix err=$($case2Res.StdErr)"
 } finally {
+    foreach ($lnk in @($testLinks)) {
+        if ($lnk) {
+            try {
+                $item = Get-Item -LiteralPath $lnk -Force -ErrorAction SilentlyContinue
+                if ($item -and (($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0)) {
+                    if ($item.PSIsContainer) {
+                        [System.IO.Directory]::Delete($lnk, $false)
+                    } else {
+                        [System.IO.File]::Delete($lnk)
+                    }
+                }
+            } catch { }
+        }
+    }
     if (Test-Path -LiteralPath $sandboxRoot) {
         Remove-Item -LiteralPath $sandboxRoot -Recurse -Force -ErrorAction SilentlyContinue
     }

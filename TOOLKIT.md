@@ -103,11 +103,10 @@ These skills and plugins live in their own upstream repositories with dedicated 
 
 | Project / Suite | Included Skills | Description | Official Documentation & Antigravity Setup |
 |---|---|---|---|
-| **Taste-Skill** | `design-taste-frontend` | Anti-slop frontend art direction distilled from 247 curated design galleries. | [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) |
+| **Taste-Skill** | `taste-skill` | Anti-slop frontend craft and company-site builder with local HTTP & browser verification gate. | [afif25fradana/taste-skill](https://github.com/afif25fradana/taste-skill) *(fork of [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill))* |
 | **Ponytail Suite** | `ponytail`<br>`ponytail-audit`<br>`ponytail-review`<br>`ponytail-debt`<br>`ponytail-gain`<br>`ponytail-help` | Lazy senior developer mode: shortest working diffs, YAGNI enforcement, repo audits, and debt ledgers. | [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail) |
-| **Anti-Slop Suite** | `antislop`<br>`antislop-ui`<br>`antislop-copywriting`<br>`antislop-code`<br>`antislop-human`<br>`antislop-layoutmobile` | Master filter for AI coding agents: stops generic AI purple gradients, filler copy, and sloppy comments. | [miqdadbadjuber/anti-slop](https://github.com/miqdadbadjuber/anti-slop) |
 | **Chrome DevTools** | `chrome-devtools`<br>`a11y-debugging`<br>`cookie-debugging`<br>`debug-optimize-lcp`<br>`memory-leak-debugging`<br>`troubleshooting` | Browser automation, accessibility auditing, cookie debugging, Core Web Vitals (LCP) optimization, and heap snapshots. | [ChromeDevTools/chrome-devtools-mcp](https://github.com/ChromeDevTools/chrome-devtools-mcp)<br>*(Antigravity Marketplace)* |
-| **Modern Web Guidance** | `modern-web-guidance`<br>`chrome-extensions` | Best practices for modern web platform APIs (popovers, container queries, view transitions) and Chrome Extensions Manifest V3. | [GoogleChrome/modern-web-guidance](https://github.com/GoogleChrome/modern-web-guidance)<br>*(Antigravity Marketplace)* |
+| **Modern Web Guidance** | `modern-web-guidance`<br>`chrome-extensions` | Best practices for modern web platform APIs (popovers, container queries, view transitions) and Chrome Extensions Manifest V3. | [GoogleChrome/modern-web-guidance](https://github.com/GoogleChrome/modern-web-guidance)<br>*(Optional Antigravity Marketplace — not installed locally)* |
 | **Android CLI** | `android-cli` | Project scaffolding, emulator control, layout tree inspection, and visual validation for Android development. | [developer.android.com/tools/agents/android-cli](https://developer.android.com/tools/agents/android-cli)<br>*(Antigravity Marketplace)* |
 
 ---
@@ -126,7 +125,7 @@ Specialized agents available for delegation in Antigravity across an 8 `inherit`
 | **build-error-resolver** | `model: flash` | Read, Replace, Run, MCP (inheritMcp: true) *(No write)* | Resolves compiler, typecheck, and build errors with shortest working diffs. |
 | **docs-architect** | `model: inherit` | Read, Write, Replace, Run | Updates technical documentation, owns Nygard ADRs and public repository docs, and syncs AI-Context repositories (ADR-0002, ADR-0005). |
 | **maintenance-bot** | `model: flash` | Read, Write, Replace, Run | Dependabot PR triage, CI failure diagnosis, and CVE remediation. |
-| **ui-crafter** | `model: inherit` | Read, Write, Replace, Run, MCP (inheritMcp: true) | Modern web UI widget creation, WCAG AA accessibility, and Generative UI design. |
+| **ui-crafter** | `model: inherit` | Read, Write, Replace, Run, MCP (inheritMcp: true) | Full landing pages/sites (`taste-skill`), existing app component edits, WCAG 2.2 AA accessibility, and Generative UI widgets. |
 | **l10n-humanizer** | `model: inherit` | Read, Write, Replace, Run | Dual-Scope UI/UX localization (Microsoft Indonesian style guide) and second-pass bilingual prose humanization (anti-AI rules, fact lock). |
 
 ---

@@ -4,10 +4,10 @@
 Accepted
 
 ## Date
-2026-11-11
+2026-11-12
 
 ## Context
-As my `everyday-agy` dotfiles grew, I needed to keep the catalog lean. Importing massive external catalogs (like 300+ skill bundles) or vendoring community suites (`design-taste-frontend`, 6 `ponytail*` skills, and official Marketplace plugins) dumped roughly 44,000 lines of third-party JavaScript and JSON into Git, distorted GitHub language stats, and drifted from upstream releases.
+As my `everyday-agy` dotfiles grew, I needed to keep the catalog lean. Importing massive external catalogs (like 300+ skill bundles) or vendoring community suites (`taste-skill`, 6 `ponytail*` skills, and official Marketplace plugins) dumped roughly 44,000 lines of third-party JavaScript and JSON into Git, distorted GitHub language stats, and drifted from upstream releases.
 
 Testing in `Gemini 3.8 Flash (High)` sessions also ran into four Antigravity model and schema constraints:
 1. **Model selection drift**: `model: flash` degraded multi-file TDD reasoning, accessibility audits, bilingual localization nuances, and doc writing. Because Antigravity's subagent docs leave exact `model: flash` worker budgets vague, subagents dropped `High` thinking unless configured with `model: inherit`.
@@ -29,7 +29,7 @@ I trimmed the fleet to 10 custom subagents in `config/agents/*/agent.md` (enforc
 - **Explicit write and path boundaries**:
   - Read-only auditors (`code-auditor`, `silent-failure-hunter`, `spec-verifier`) write only to `<appDataDir>\brain\<conversation-id>\...` scratch dossiers; `system-architect` writes to scratch/proposals in explorer mode and `specs/<feature>/*.md` only when authorized (`docs/adr/` belongs strictly to `docs-architect`).
   - `build-error-resolver` intentionally lacks `write_to_file` (`replace_file_content` only, no scratch files) so it fixes broken types in place instead of creating empty `.d.ts` stubs.
-  - `tdd-guide` edits test files and target units; `ui-crafter` separates `Codebase Component` (`src/**`, `components/**`, etc.) from `Generative UI Widget` standalone artifacts using built-in `generative_ui` and dormant plugin skills; `maintenance-bot` edits CI/dependency manifests and `docs/maintenance-howto.md`; `docs-architect` owns `docs/**`, `*.md`, and `task_state.md`; `l10n-humanizer` edits localization resources (Scope A) and prose polish (Scope B).
+  - `tdd-guide` edits test files and target units; `ui-crafter` spans three scoped workflows — `Codebase Component` site builds with `taste-skill` (`index.html`, `*.html`, `assets/**`, `.taste-skill/**`, `share.jpg`, `favicon.svg`, `names.json`, `credits.json`, `shots/**`, `dist/**`, `out/**`, `src/**`, `components/**`, `pages/**`, `styles/**`, `public/**`), individual existing-app component edits (`coding-standards`, `clean-docs`), and `Generative UI Widget` standalone `<agent-embed>` artifacts using built-in `generative_ui`; `maintenance-bot` edits CI/dependency manifests and `docs/maintenance-howto.md`; `docs-architect` owns `docs/**`, `*.md`, and `task_state.md`; `l10n-humanizer` edits localization resources (Scope A) and prose polish (Scope B).
 - **Mandatory Skill Activation Gate**: Every `agent.md` instructs the subagent to read only active-mode `SKILL.md` files via `view_file` using exact OS absolute paths from `<skills>` (never unexpanded `~`).
 
 ### 3. 15-Skill Tracked Catalog, Domain Partitioning, and Frontmatter Budget
@@ -39,7 +39,7 @@ I maintain exactly 15 skills under `config/skills/` (enforced by `.github/workfl
 - **Frontmatter constraints**: Every `SKILL.md` keeps `description:` on a single line `<= 128` characters and wraps values containing `: ` in quotes (enforced by CI and `YamlValidation.Tests.ps1`).
 
 ### 4. Decoupled Upstream Suites, Context7 HTTP Auth, and Verified CLI Tools
-- **External skills and plugins**: I decoupled `design-taste-frontend` (`Leonxlnx/taste-skill`), all 6 `ponytail*` skills (`DietrichGebert/ponytail`), the `antislop` suite (`miqdadbadjuber/anti-slop`), and official Marketplace plugins (`chrome-devtools-plugin`, `modern-web-guidance-plugin`, `android-cli-plugin`) from Git tracking. `README.md`, `TOOLKIT.md`, and `restore.ps1` point to upstream repositories instead of vendoring clones.
+- **External skills and plugins**: I decoupled `taste-skill` (`afif25fradana/taste-skill`, fork of `Leonxlnx/taste-skill`, installed as an Antigravity plugin), all 6 `ponytail*` skills (`DietrichGebert/ponytail`), and official Marketplace plugins (`chrome-devtools-plugin`, `android-cli-plugin`) from Git tracking, while retiring the `antislop` plugin suite (`miqdadbadjuber/anti-slop`, superseded by repository `clean-docs` Sections 3/6, `coding-standards`, and `taste-skill`). `modern-web-guidance` remains an optional Marketplace plugin and is not installed locally or declared in `ui-crafter`. `README.md`, `TOOLKIT.md`, and `restore.ps1` point to upstream repositories instead of vendoring clones.
 - **Context7 Streamable HTTP header auth**: Store the Bearer token literally in machine-local `~/.gemini/config/mcp_config.json`, exclude `mcp_config.json` and `mcp_config*.json` in `.gitignore`, document copy-paste snippets with `<YOUR_CONTEXT7_API_KEY>` in `README.md` and `TOOLKIT.md`, and enforce credential scans in `sync.ps1`, `restore.ps1`, and CI (see [ADR-0003](./0003-runtime-hooks-command-safety-and-checkpoints.md) and [ADR-0005](./0005-clean-docs-and-repo-sync-boundaries.md)).
 - **Verified CLI tooling (`config/GEMINI.md`, `TOOLKIT.md`)**: Register `rtk` for output compression (falling back to raw commands or `rtk proxy`), `ripgrep` (`rg` over heavyweight graph wrappers), `ast-grep` (`sg`) for syntax-tree search/rewrite, `gh` (never prefixed with `rtk`), `pwsh` 7.6 / PowerShell 5.1, `node`, `python`, `java` (JBR 25), `fzf`, `ffmpeg`, `adb`, `code`, and `opencode`.
 
@@ -54,5 +54,5 @@ I maintain exactly 15 skills under `config/skills/` (enforced by `.github/workfl
 ## Consequences
 - **Positive**: Keeps the repo lean (10 agents, 15 skills, PowerShell/Markdown language footprint), catches schema and MCP errors in CI, keeps Context7 reliable, and matches each model tier to task complexity.
 - **Negative / Operational Requirements**:
-  - Setting up a new machine requires creating `~/.gemini/config/mcp_config.json` locally and installing decoupled upstream skills (`ponytail`, `taste-skill`, `antislop`) and Marketplace plugins separately.
+  - Setting up a new machine requires creating `~/.gemini/config/mcp_config.json` locally and installing decoupled upstream skills/plugins (`ponytail`, `taste-skill`) and Marketplace plugins separately.
   - Adding or renaming any agent or skill requires updating the exact count assertions in `.github/workflows/ci.yml`.

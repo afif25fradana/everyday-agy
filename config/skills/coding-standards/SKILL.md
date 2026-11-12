@@ -15,7 +15,7 @@ Baseline conventions across **TypeScript**, **Python**, **Vanilla JavaScript**, 
 2. **KISS & Ponytail**: Shortest working diff wins; zero single-impl interfaces or speculative abstractions.
 3. **Immutability by Default**: Pure transformations and readonly structures over in-place reference mutation.
 4. **Fail Loudly**: Never swallow exceptions or mask errors with fallback defaults (MITRE CWE-390/CWE-252).
-5. **Self-Documenting Code**: Meaningful identifiers; reserve comments for non-obvious *why* rationale (`antislop-code`).
+5. **Self-Documenting Code**: Meaningful identifiers; reserve comments for non-obvious *why* rationale (see [`clean-docs`](../clean-docs/SKILL.md#3-code-comment-hygiene)).
 
 ---
 
@@ -98,6 +98,6 @@ async function waitFor(predicate: () => Promise<boolean> | boolean, timeoutMs = 
 
 ## Related Skills & Agents
 - [`ponytail`](https://github.com/DietrichGebert/ponytail) - Minimalist, YAGNI implementation discipline.
-- `antislop-code` (plugin skill) - Comment hygiene and anti-slop rules.
+- [`clean-docs`](../clean-docs/SKILL.md) - Plain-spoken repo prose, zero process leaks, and code comment hygiene (Section 3).
 - [`code-auditor`](../../agents/code-auditor/agent.md) - Code quality and security auditing specialist.
 - [`spec-verifier`](../../agents/spec-verifier/agent.md) - Documentation and official API verification specialist.

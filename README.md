@@ -67,7 +67,7 @@ For the full agent directory, tool boundaries, and delegation parameters, see **
 
 ### Workflow Skills (`config/skills/`)
 
-I maintain 15 workflow skills directly in `config/skills/`. Third-party suites (`ponytail`, `taste-skill`, `antislop`, and Chrome DevTools) are kept outside git tracking per ADR-0002 and installed straight from their upstream repos:
+I maintain 15 workflow skills directly in `config/skills/`. Third-party suites (`ponytail`, `taste-skill`, and Chrome DevTools) are kept outside git tracking per ADR-0002 and installed straight from their upstream repos:
 
 | Category | Count | Included Skills | Origin / Licensing |
 |---|:---:|---|---|
@@ -129,4 +129,4 @@ For the complete catalog of verified CLI tools, official repositories, and an au
 Dual-licensed under MIT and CC BY-SA 4.0:
 - Repository scripts, custom subagents, and bespoke skills (`orchestrator`, `council-review`, `academic-council`, `audit-dev`, `sync-task-state`, `clean-docs`, `deep-web-research`) are licensed under the [MIT License](./LICENSE).
 - Adapted Trail of Bits security skills (`audit-context-building`, `differential-review`) are licensed under [Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](./config/skills/audit-context-building/LICENSE).
-- Decoupled upstream community skills (`ponytail`, `taste-skill`, `antislop`) are referenced under their respective upstream MIT licenses.
+- Decoupled upstream community skills (`ponytail`, `taste-skill`) are referenced under their respective upstream MIT licenses.

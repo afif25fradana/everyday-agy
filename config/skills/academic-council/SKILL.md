@@ -1,23 +1,33 @@
 ---
 name: academic-council
-description: Multi-Agent Academic Council (/academic-council) for BEI/IDX thesis proposals, citation forensics, and defense simulation.
+description: "Read-only multi-agent council (/academic-council): BEI/IDX thesis & chapter audits, econometrics, citation forensics, defense."
 ---
 
 # Academic Council — Deliberative Thesis & Research Evaluation (Operational Runbook)
 
-A high-rigor, evidence-backed academic evaluation framework for thesis proposals, research papers,
-and scholarly writing. Adapted from the `council-review` architecture for software engineering,
-re-engineered for **accounting, finance, economics, and social science research**.
+A high-rigor, strictly read-only multi-perspective evaluation framework for accounting, finance, economics, and BEI/IDX empirical research (thesis proposals, single-proposal deep dives, chapter drafts, citation forensics, and defense prep).
 
-Powered by Antigravity's multi-agent orchestration engine (`teamwork`).
+Powered by Antigravity's native multi-agent orchestration engine (`teamwork`).
+
+---
+
+## When to Use & Non-Goals (Routing Boundary)
+
+- **Use `/academic-council` ONLY for**: Read-only multi-seat academic evaluations—comparing multiple thesis proposals, auditing a single proposal or specific chapter (Bab 1–5), validating econometric models/proxies, checking BEI/OJK/PSAK data feasibility, verifying real journal citations, or simulating Indonesian thesis defenses (sidang skripsi / ujian proposal).
+- **Do NOT use (redirect immediately)**:
+  - **Mutating thesis edits or code/script fixes** (e.g., editing `.docx`/`.tex`/`.md` drafts or fixing Python/Stata/R data-cleaning scripts): Council is strictly read-only. Route code edits to [`orchestrator`](../orchestrator/SKILL.md) / [`audit-dev`](../audit-dev/SKILL.md).
+  - **Software architecture, codebase audits, or PR reviews**: Route to [`council-review`](../council-review/SKILL.md) or [`differential-review`](../differential-review/SKILL.md).
+  - **Standalone documentation writing or non-academic library research**: Route to [`clean-docs`](../clean-docs/SKILL.md) or [`deep-web-research`](../deep-web-research/SKILL.md).
 
 ---
 
 ## Mandatory Delegation Protocol (DO NOT BYPASS)
 
 > [!CAUTION]
-> **FOR ACADEMIC COUNCIL EVALUATIONS, NEVER CALL SPECIALIST AGENTS DIRECTLY FROM THE PARENT AGENT.**
-> The Parent Agent MUST dispatch EXACTLY ONE call to `teamwork`:
+> **FOR ACADEMIC COUNCIL EVALUATIONS, DISPATCH EXCLUSIVELY VIA `teamwork`.**
+> Calling specialist subagents directly from the Parent session bypasses parallel seat deliberation, citation verification, arithmetic reconciliation, and victory auditing.
+>
+> **The Parent Agent MUST dispatch EXACTLY ONE call to `teamwork`:**
 >
 > ```json
 > invoke_subagent(
@@ -27,244 +37,69 @@ Powered by Antigravity's multi-agent orchestration engine (`teamwork`).
 > )
 > ```
 >
-> *Engine Visibility Note*: `teamwork` is an internal engine subagent. Even though it
-> may be omitted from the visible `Available subagents:` list, it is fully recognized by the
-> Antigravity runtime. Invoking `TypeName: "teamwork"` spawns the full autonomous council.
+> *Engine Visibility Note*: `teamwork` is an internal runtime subagent omitted from the visible `Available subagents:` list, yet natively recognized by Antigravity. Invoking `TypeName: "teamwork"` spawns the full autonomous council.
 
 ---
 
 ## Core Operational Guarantees
 
-1. **Read-Only Invariant**: Council panels are diagnostic only. Zero modifying edits to project files outside the scratch workspace.
-2. **Real-World Evidence Grounding**: No council member may offer opinions without first verifying against real journal databases, regulatory documents, or financial data sources via `search_web` governed by [`deep-web-research`](../deep-web-research/SKILL.md).
-3. **Anti-Hallucination Citation Gate**: Every referenced journal, author name, publication year, and DOI MUST be verified through web search. Fabricated references are treated as critical failures.
-4. **Socratic Operator Alignment**: Council composition, evaluation depth, and acceptance criteria are locked via structured dialog (`ask_question`) before dispatching agent teams.
-5. **Anti-Sycophancy Gate**: Scores >= 4.50 require concrete proof. Every seat must surface real weaknesses. No empty praise.
+1. **Strictly Read-Only Invariant**: Diagnostic only. Zero edits to thesis files, scripts, or repository files outside the scratch workspace.
+2. **Real-World Evidence Grounding & Regulatory Currency**: All econometric proxies, BEI/OJK/DSAK-IAI regulations (including the 1 Jan 2024 SAK Indonesia renumbering and active Peraturan BEI I-X/II-X effective dates for `<research_period>`), and prior-study claims must be verified via `search_web` governed by [`deep-web-research`](../deep-web-research/SKILL.md) (capped at 3 queries per unresolved item).
+3. **Anti-Hallucination & Paywall Citation Gate**: Every cited journal reference requires verified author(s), year, title, journal, and DOI/URL. When paywalls (ScienceDirect, Emerald, Scopus) or offline/rate-limited indexers hide fields, tag `[UNVERIFIED - PAYWALL/OFFLINE: <missing_fields>]`—never extrapolate missing volume/issue, DOI, or quartile from snippets. Fabricated references are tagged `[FABRICATED/VETOED]` as critical failures and isolated in a quarantined sub-table.
+4. **Plain-Text Single-Turn Alignment (No `ask_question` Dependency)**: Only the Parent Agent aligns with the operator, using concise plain text in a single turn. Skip parameters already supplied by the operator. Never invoke `ask_question` inside subagents or non-interactive runs.
+5. **Anti-Sycophancy Gate (No Forced Quotas)**: Scores `>= 4.50` require concrete empirical or documentary proof. Every seat reports verified weaknesses with concrete evidence—or explicitly documents the formulas, rules, or citations checked with `no critical/high gaps verified` (zero fabricated weakness quotas, zero empty praise).
+6. **Honest Subagent Accounting (`Status: not run`)**: Any seat that crashes, times out, or fails to execute records `Status: not run` (never "0 findings") and invalidates certification.
 
 ---
 
-## Tri-Pillar Execution Lifecycle
+## 4-Stage Execution Lifecycle
 
-```
-[Target: Thesis Proposal / Paper Draft / Research Design]
-               │
-               ▼
-┌──────────────────────────────────────────────┐
-│  Pillar 1: Cold Context Grounding            │
-│  (Read all proposal files, map variables,    │
-│   identify theories, verify formula accuracy) │
-└──────────────────────┬───────────────────────┘
-                       │
-                       ▼
-┌──────────────────────────────────────────────┐
-│  Pillar 2: Socratic Council Formation        │  <-- ask_question
-│  (Select 3-5 academic seats, set criteria)   │
-└──────────────────────┬───────────────────────┘
-                       │
-                       ▼
-┌──────────────────────────────────────────────┐
-│  Pillar 3: Autonomous Council Deliberation   │  <-- teamwork
-│  - Parallel Specialized Academic Reviewers   │
-│  - Adversarial Thesis Defense Simulation     │
-│  - Citation Forensic Verification            │
-│  - Chairman Synthesis & Scorecard            │
-│  - Independent Victory Auditor Certification │
-└──────────────────────┬───────────────────────┘
-                       │
-                       ▼
-[Deliverable: Certified Academic Evaluation Report]
-```
-
----
-
-### Pillar 1: Cold Context Grounding
+### Stage 1: Cold Context Grounding
 
 Before convening the Council, establish an objective factual baseline:
+1. Read all target files (proposals, chapter drafts, variable tables, formula definitions).
+2. Map the research architecture: Independent -> Dependent -> Moderating/Mediating/Control variables, grand theories, hypotheses, sample scope, and `<research_period>`.
+3. List concrete verification targets: proxy formulas, BEI/OJK/PSAK regulations active during `<research_period>`, and "penelitian terdahulu" citations requiring forensic verification.
 
-1. **Read all target files** (proposals, drafts, variable tables, formula definitions).
-2. **Map the research architecture**: Independent variables → Dependent variables → Control/Moderating/Mediating variables → Theoretical framework → Hypotheses → Methodology.
-3. **Identify verification targets**: Which formulas need checking? Which theories need alignment validation? Which journal claims need citation forensics?
-4. Proceed to Pillar 2 once the factual map is compiled.
+### Stage 2: Operator Council Formation (Plain-Text Confirmation)
 
----
+Align missing parameters in **one concise plain-text response** (omit anything already specified in the user prompt, and avoid naming internal skill/reference filenames in operator-facing text):
 
-### Pillar 2: Socratic Council Formation
+1. **Evaluation Mode**: Confirm one of:
+   - **Comparative Ranking** (`M >= 2` proposals ranked head-to-head)
+   - **Single Proposal Deep-Dive** (readiness verdict on 1 proposal, no ranking table)
+   - **Focused Chapter/Section Audit** (e.g., Bab 2 Literature Review or Bab 3 Methodology; active dimension weights renormalized to 100%)
+2. **Council Seat Selection (`3-5` seats for full proposals; `2-5` seats for Focused Chapter/Section Audits)**: Recommend a tailored bundle from [`references/seat-catalog.md`](./references/seat-catalog.md) mapped 1-to-1 to dynamic requirement blocks (`R1..R<N>`).
+3. **Domain, `<research_period>` & Language**: Confirm academic field (`Akuntansi Keuangan`, `Auditing`, `Perpajakan`, `Akuntansi Manajemen`, `Keuangan/Ekonomi`), exact `<research_period>` (e.g., `2022-2025` or `2023-2026`), and output language (Indonesian academic prose or English).
+4. **Draft Prompt Assembly**: Read [`references/dispatch-template.md`](./references/dispatch-template.md) via `read_file`/`view_file` **before** assembling `<appDataDir>\brain\<conversation-id>\prompt_draft.md` so the draft locks dynamic `R1..R<N>` seats, `<research_period>`, paywall citation tags, mode-adaptive scoring, and `Status: not run` accounting.
+5. **Operator Approval Gate**: Stop and wait for explicit operator confirmation (`approve`, `proceed`, `continue`) before dispatching `teamwork`.
 
-Engage the operator interactively using `ask_question` (one question at a time):
+### Stage 3: Autonomous Council Deliberation (`teamwork`)
 
-1. **Council Seat Selection**: Present seats from the [Academic Seat Catalog](./references/seat-catalog.md). Default bundle for thesis proposal review:
-   - Econometrics & Methodology Specialist
-   - Theoretical Scholar (Accounting/Finance Theory)
-   - BEI & Accounting Domain Specialist
-   - Real Citation Auditor
-   - Thesis Defense Simulator (Devil's Advocate)
+After operator approval, verify `<appDataDir>\brain\<conversation-id>\prompt_draft.md` strictly matches [`references/dispatch-template.md`](./references/dispatch-template.md) (read via `read_file`/`view_file` if not already loaded in this session), then dispatch **one** `invoke_subagent(TypeName: "teamwork", Role: "Academic Council Panel", Prompt: ...)` call populated strictly with the approved seats (`3-5` full / `2-5` focused), evaluation mode, target paths, and `<research_period>`.
 
-2. **Evaluation Scope**: Select which proposals/chapters to evaluate:
-   - All proposals (comparative ranking mode)
-   - Single proposal (deep-dive mode)
-   - Specific chapter/section (focused audit)
+Internal `teamwork` execution pipeline:
+1. **Sentinel Dispatch**: Initializes `<appDataDir>\brain\<conversation-id>\scratch\<task>\` and launches the Project Orchestrator.
+2. **Phase 0 (Parallel Academic Seat Reviews)**: Runs concurrent read-only Explorers for the `N` approved seats using `search_web` per `deep-web-research`.
+3. **Phase 1 (Chairman Synthesis & Arithmetic Reconciliation)**: Compiles `academic_council_report.md` using the mode-adaptive template in [`references/scorecard-rubric.md`](./references/scorecard-rubric.md), verifying weight closure (`100%`) and composite math.
+4. **Phase 2 (Adversarial & Citation Forensic Verification)**: Cross-checks formula proofs, regulatory effective dates, citation status tags (`[VERIFIED]` / `[UNVERIFIED - PAYWALL/OFFLINE]` / quarantined `[FABRICATED/VETOED]`), and `Status: not run` disclosures.
+5. **Phase 3 (Mandatory Victory Audit)**: Confirms zero workspace mutations and certifies completion (`VICTORY CONFIRMED`).
 
-3. **Research Domain**: Confirm the academic field to calibrate seat expertise:
-   - Akuntansi Keuangan (Financial Accounting)
-   - Auditing
-   - Perpajakan (Taxation)
-   - Akuntansi Manajemen (Management Accounting)
-   - Ekonomi / Keuangan Umum (General Finance/Economics)
+### Stage 4: Certified Deliverable Packaging
 
-4. **Output Language**: Indonesian academic prose or English.
+Once `teamwork` returns, read `<appDataDir>\brain\<conversation-id>\scratch\<task>\academic_council_report.md` and present per [`references/scorecard-rubric.md`](./references/scorecard-rubric.md):
 
-5. **Draft Prompt Assembly**: Maintain and display `prompt_draft.md` in the brain artifact directory.
-
-6. **Operator Approval Gate**: Require explicit confirmation before delegating.
-
----
-
-### Pillar 3: Autonomous Council Deliberation
-
-Upon operator approval, dispatch `teamwork` using this structure:
-
-```json
-invoke_subagent(
-  TypeName: "teamwork",
-  Role: "Academic Council Panel",
-  Prompt: <academic_council_prompt_text>
-)
-```
-
-#### Dispatch Prompt Contract
-
-The `Prompt` text must adhere to this structure:
-
-```markdown
-Requested team: Council review panel (read-only audit & comparison)
-
-Conduct a comprehensive, read-only multi-perspective Academic Council evaluation of the
-thesis proposal(s) at <target_path> to assess research feasibility, methodological rigor,
-theoretical coherence, citation integrity, and defense readiness.
-
-Working directory: <appDataDir>\brain\<conversation-id>\scratch\<task>
-Integrity mode: development
-
-## Context & Domain
-- Academic field: [Akuntansi Keuangan / Auditing / Perpajakan / etc.]
-- Data source: Secondary data from Bursa Efek Indonesia (BEI / idx.co.id)
-- Target files: <absolute_paths_to_proposal_files>
-
-## Requirements
-
-### R1. Econometrics & Research Methodology Audit (Seat: Methodology Specialist)
-Evaluate the methodological soundness of each proposal:
-- Is the chosen regression model (data panel / logistic / MRA / path analysis) appropriate
-  for the variable types and research questions?
-- Are the variable proxies (formulas) mathematically correct and commonly accepted in
-  peer-reviewed accounting literature?
-- Identify purposive sampling criteria gaps, minimum sample size concerns, and potential
-  endogeneity or multicollinearity traps.
-- Flag assumptions that may fail (e.g., normality for small samples, heteroscedasticity
-  in cross-sectional data).
-- Use `search_web` to verify each formula/proxy against real published methodology papers.
-
-### R2. Theoretical Framework & Hypothesis Coherence Audit (Seat: Theoretical Scholar)
-Evaluate the theoretical foundations of each proposal:
-- Does the chosen grand theory (Agency Theory, Signaling Theory, Stakeholder Theory,
-  Positive Accounting Theory, Legitimacy Theory, etc.) logically support the proposed
-  hypotheses?
-- Is the causal chain from theory → variable relationship → hypothesis direction ($H_1$
-  positive/negative) internally consistent?
-- Identify any logical gaps where a theory is cited but the hypothesis direction
-  contradicts the theory's core mechanism.
-- Suggest alternative or complementary theories if the current framework is weak.
-- Use `search_web` to verify theoretical applications in recent accounting research.
-
-### R3. BEI Regulatory & Accounting Domain Verification (Seat: Domain Specialist)
-Verify practical feasibility against real-world BEI/OJK/DSAK-IAI conditions:
-- Are the proposed variable data points actually available in BEI annual reports,
-  financial statements (Neraca, Laba Rugi, Arus Kas, CALK), or sustainability reports?
-- Do the proposed sector/index selections (LQ45, IDX ESG Leaders, SRI-KEHATI,
-  Papan Pemantauan Khusus) match the research period (2021-2025)?
-- Are there recent regulatory changes (POJK, PSAK revisions, IFRS adoption timelines)
-  that affect variable measurement or data availability?
-- Verify specific BEI mechanisms mentioned (Full Call Auction, free float rules,
-  trading halt procedures) against actual BEI regulations via web search.
-
-### R4. Citation Forensics & Real Journal Verification (Seat: Citation Auditor)
-Conduct forensic verification of all academic references and claims:
-- For each theoretical claim or "penelitian terdahulu" mentioned, search for the REAL
-  journal article using `search_web` targeting Google Scholar, SINTA, Scopus, or
-  publisher domains (emerald.com, sciencedirect.com, tandfonline.com, garuda.kemdikbud.go.id).
-- Verify: author name(s), publication year, journal name, volume/issue, and DOI.
-- Provide 5-8 VERIFIED real journal references per proposal that directly support the
-  research variables and hypotheses.
-- Flag any claims that cannot be substantiated with real published research.
-- Prioritize Indonesian SINTA-accredited journals (S1-S2) and international Scopus-indexed
-  journals in accounting/finance.
-
-### R5. Thesis Defense Simulation (Seat: Devil's Advocate / Dosen Penguji)
-Simulate a rigorous thesis defense examination (sidang skripsi):
-- Generate 5-7 pointed questions per proposal that a tough examiner ("dosen killer")
-  would ask, covering:
-  * "Apa bedanya penelitian Anda dengan penelitian terdahulu X?"
-  * "Kenapa memilih sektor ini dan bukan sektor lain?"
-  * "Bagaimana kalau data Anda tidak lolos uji normalitas/asumsi klasik?"
-  * "Apa kontribusi praktis penelitian ini bagi dunia usaha/regulator?"
-  * "Jelaskan mekanisme teori keagenan yang menghubungkan X1 dengan Y!"
-- For each question, provide a suggested strong answer framework.
-- Rate each proposal's "defense readiness" on a 1-5 scale.
-
-### R6. Comparative Ranking & Recommendation (Seat: Chairman)
-After all seats complete their evaluation:
-- Produce a comparative ranking of all proposals across dimensions:
-  * Feasibility (data availability & ease of collection)
-  * Novelty (kebaruan / research gap strength)
-  * Methodological Rigor
-  * Theoretical Coherence
-  * Defense Readiness
-  * Estimated Time to Completion
-- Recommend the single best proposal with justification.
-- Provide a concrete "quick win" action plan for the recommended proposal.
-
-### R7. Strictly Read-Only Execution
-The evaluation must remain strictly read-only. Zero mutating file edits, package
-installations, or system changes are permitted outside the scratch workspace.
-
-### R8. Structured Deliverable
-Generate a comprehensive evaluation report saved to
-`<appDataDir>\brain\<conversation-id>\scratch\<task>\academic_council_report.md`. The report must include:
-1. Executive Summary & Chairman Verdict with final ranking.
-2. Numerical Scorecards (scale 1.0 to 5.0) per proposal across all evaluation dimensions.
-3. Verified citation list (real journals with author, year, title, journal name, DOI/URL).
-4. Defense simulation Q&A per proposal.
-5. Prioritized weakness matrix (Critical / High / Medium / Low).
-6. Recommended proposal with action plan.
-
-## Acceptance Criteria & Verification
-- [ ] Report exists at `<appDataDir>\brain\<conversation-id>\scratch\<task>\academic_council_report.md`
-- [ ] Report contains numerical scorecards (1.0-5.0) for each proposal across all dimensions
-- [ ] Every cited journal reference has been verified via web search (author, year, journal, DOI/URL confirmed)
-- [ ] Zero fabricated/hallucinated journal references in the final report
-- [ ] Each proposal has 5-7 defense simulation questions with answer frameworks
-- [ ] Comparative ranking table with clear #1 recommendation and justification
-- [ ] All variable formulas/proxies have been cross-checked against published methodology sources
-- [ ] Anti-Sycophancy: Scores >= 4.50 require concrete evidence. Every seat must surface at least 2 real weaknesses per proposal
-- [ ] Zero mutating file edits outside scratch workspace
-```
+1. **Executive Summary & Chairman Verdict**: Mode-appropriate verdict (`#1..#M` ranking for comparative mode, or readiness verdict for single-proposal / chapter mode) with composite score(s).
+2. **Mode-Adaptive Scorecard Matrix**: Dynamic `M`-proposal matrix or single-target weighted table (with unseated dimensions marked `N/A (not seated)` and active weights renormalized to `100%`).
+3. **Verified Citation Bank** *(when Citation Auditor is seated)*: Real journal references carrying `[VERIFIED: <DOI/URL>]` or `[UNVERIFIED - PAYWALL/OFFLINE: <missing_fields>]` tags, with any `[FABRICATED/VETOED]` draft citations segregated into a separate `Quarantined / Rejected Draft Citations` sub-table.
+4. **Defense Prep Kit** *(when Defense Simulator is seated)*: 5–7 pointed examiner questions with structured answer frameworks.
+5. **Prioritized Weakness Matrix**: Categorized into `CRITICAL`, `HIGH`, `MEDIUM`, `LOW` (plus any `Status: not run` disclosures).
+6. **Concrete Action Plan**: Phased next steps tailored to the recommended proposal or audited chapter.
 
 ---
 
-### Pillar 4: Certified Deliverable Packaging
+## References (Read On-Demand)
 
-Once `teamwork` returns, the Parent Agent reads `<appDataDir>\brain\<conversation-id>\scratch\<task>\academic_council_report.md` and presents:
-
-1. **Executive Summary & Chairman Verdict**: Ranking (#1 to #5) with composite scores.
-2. **Scorecard Matrix**: Per-proposal scores across Feasibility, Novelty, Methodology, Theory, Defense Readiness.
-3. **Verified Citation Bank**: Real journal references with confirmed DOI/URLs, ready to paste into daftar pustaka.
-4. **Defense Prep Kit**: Simulated examiner questions + suggested answers per proposal.
-5. **Weakness Matrix**: Categorized into `CRITICAL`, `HIGH`, `MEDIUM`, `LOW`.
-6. **Action Plan**: Concrete next steps for the recommended #1 proposal.
-
----
-
-## References & Catalogs
-
-- [Academic Seat Catalog & Domain Mapping](./references/seat-catalog.md)
-- [Academic Scorecard Rubric & Chairman Template](./references/scorecard-rubric.md)
+- [`references/seat-catalog.md`](./references/seat-catalog.md): 5 primary academic seats, 2 optional extension seats, IAI/BEI regulatory guardrails, paywall citation rules, and task bundles.
+- [`references/dispatch-template.md`](./references/dispatch-template.md): Parameterized `teamwork` prompt contract (`R1..R<N>`), `<research_period>` binding, and acceptance checklist.
+- [`references/scorecard-rubric.md`](./references/scorecard-rubric.md): Weighted 6-dimension rubric, focused-audit renormalization, anti-sycophancy rules, and mode-adaptive Chairman templates.

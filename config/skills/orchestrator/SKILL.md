@@ -5,7 +5,7 @@ description: "Meta-orchestrator protocol (/orchestrator) for Parent Agent: task 
 
 # Universal Lead Orchestrator Protocol (Operational Runbook)
 
-A high-rigor governance runbook enforcing Anthropic Lead-Agent context insulation, `obra/superpowers` subagent-driven development, and Antigravity multi-agent fleet coordination. Governed by `config/GEMINI.md` (`~/.gemini/GEMINI.md`) and [`ADR-0001`](../../../docs/adr/0001-orchestrator-tiering-and-subagent-delegation.md).
+A high-rigor governance runbook enforcing Anthropic Lead-Agent context insulation, `obra/superpowers` subagent-driven development, and Antigravity multi-agent fleet coordination. Governed by `config/GEMINI.md` (`~/.gemini/GEMINI.md`).
 
 > [!TIP]
 > **Workflow Routing**: `orchestrator` is the sole authoritative operational runbook governing the end-to-end execution lifecycle across all tiers (Tier 0–3). For code quality auditing, skeptical verification, and the Five-Axis Review Rubric, consult [`audit-dev`](../audit-dev/SKILL.md).
@@ -113,7 +113,7 @@ flowchart TD
 ```
 
 ### Pathway A: Deliberative Multi-Seat Council (Tier 3)
-Dispatch exactly ONE call to `teamwork` with `Role: "Council Review Panel"` per `council-review/SKILL.md`. Direct specialist agent calls from Parent are prohibited for Tier 3 evaluations. Once Gate 1 approval is granted for the council proposal, execution decomposes into sequential Tier 2 work packages orchestrated by Parent via Pathway B.
+Dispatch exactly ONE call to `teamwork` with `Role: "Council Review Panel"` per [council-review/SKILL.md](../council-review/SKILL.md). Direct specialist agent calls from Parent are prohibited for Tier 3 evaluations. Once Gate 1 approval is granted for the council proposal, execution decomposes into sequential Tier 2 work packages orchestrated by Parent via Pathway B.
 
 ### Pathway B: Focused Domain Specialists (Tier 1 On-Demand / Tier 2 Execution)
 Parent dispatches targeted custom subagents directly via `invoke_subagent`:

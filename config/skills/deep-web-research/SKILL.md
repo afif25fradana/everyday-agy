@@ -1,6 +1,6 @@
 ---
 name: deep-web-research
-description: Verifiable primary-source web research protocol enforcing version-locked queries, official domain filters, and CLI fallbacks.
+description: "Verifiable primary-source web research (/deep-web-research): version-locked queries, official domain filters, CLI fallbacks."
 ---
 
 # Deep Web Research Protocol

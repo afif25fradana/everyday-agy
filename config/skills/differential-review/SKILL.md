@@ -110,7 +110,7 @@ Before delivering:
 - [ ] Blast radius calculated for HIGH risk
 - [ ] Attack scenarios are concrete (not generic)
 - [ ] Findings reference specific line numbers + commits
-- [ ] Report file generated in `<appDataDir>\brain\<conversation-id>\...`
+- [ ] Report emitted as a standalone UserFacing Artifact in `<appDataDir>\brain\<conversation-id>\...` per [`handoff-spec.md`](../orchestrator/references/handoff-spec.md) (never chat-only), with raw evidence saved in `<appDataDir>\brain\<conversation-id>\scratch\<task>\`
 - [ ] User notified with concise 1–3 line summary
 
 ---
@@ -130,7 +130,7 @@ Before delivering:
 - **Formatting/linting** (cosmetic changes)
 - **User explicitly requests quick summary only** (they accept risk)
 
-For these cases, use standard code review instead.
+For these cases, route to [audit-dev](../audit-dev/SKILL.md) instead.
 
 ---
 
@@ -144,26 +144,6 @@ For these cases, use standard code review instead.
 - High blast radius (50+ callers) + HIGH risk change
 
 These patterns require adversarial analysis even in quick triage.
-
----
-
-## Tips for Best Results
-
-**Do:**
-- Start with git blame for removed code
-- Calculate blast radius early to prioritize
-- Generate concrete attack scenarios
-- Reference specific line numbers and commits
-- Be honest about coverage limitations
-- Always generate the output file
-
-**Don't:**
-- Skip git history analysis
-- Make generic findings without evidence
-- Claim full analysis when time-limited
-- Forget to check test coverage
-- Miss high blast radius changes
-- Output report only to chat (output report as a standalone UserFacing Artifact following `handoff-spec.md`, and save raw evidence to `<appDataDir>\brain\<conversation-id>\scratch\<task>\`)
 
 ---
 

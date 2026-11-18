@@ -1,6 +1,6 @@
 ---
 name: skill-creator
-description: "Interactive skill authoring: progressive disclosure structure, eval assertions, blind A/B rubrics, and trigger tuning."
+description: "Interactive skill authoring (/skill-creator): progressive disclosure, eval assertions, blind A/B rubrics, and trigger tuning."
 ---
 
 <!-- Derivative work adapted from Anthropic's skill-creator (Apache-2.0). Modified for Antigravity native subagent architecture and pure-Markdown format by everyday-agy. -->

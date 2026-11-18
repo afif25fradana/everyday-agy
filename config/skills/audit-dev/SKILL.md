@@ -9,6 +9,7 @@ An evidence-anchored, skeptical code quality and review rubric for developers, a
 
 > [!TIP]
 > **Workflow vs. Audit Separation**: `orchestrator` is the operational runbook governing the execution lifecycle (triage, checkpoints, subagents, and gate packaging). `audit-dev` provides the authoritative quality criteria, skeptical inquiry doctrine, and Five-Axis Review Rubric applied during diagnostic audits and pre-flight diff reviews.
+> **Audit Routing**: For security-focused PR or git diff audits (auth, crypto, validation removal, attacker modeling), route to [`differential-review`](../differential-review/SKILL.md). For Tier 3 multi-seat architecture audits, route to [`council-review`](../council-review/SKILL.md).
 
 ---
 

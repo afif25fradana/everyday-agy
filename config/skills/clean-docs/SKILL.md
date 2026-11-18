@@ -7,6 +7,9 @@ description: Plain-spoken documentation (/clean-docs), commit hygiene, anti-slop
 
 Plain-spoken engineering prose, humanized conventional commits, zero internal process leaks, and grounded documentation. Governed by the minimalist principles of `GEMINI.md` and `ponytail`.
 
+> [!TIP]
+> For Architecture Decision Records (`docs/adr/`) and operational runbooks, route to [`documentation-and-adrs`](../documentation-and-adrs/SKILL.md).
+
 ---
 
 ## 1. Zero Process Artifacts & Leak Prevention

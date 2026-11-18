@@ -1,6 +1,6 @@
 ---
 name: spec-kit
-description: "Spec-Driven Development (/speckit.specify, .plan, .tasks) for greenfield features: requirements, tech plan, and task checklist."
+description: "Spec-Driven Development (/spec-kit; /speckit.specify, .plan, .tasks) for greenfield features: specs, tech plan, task checklist."
 ---
 
 # Spec-Kit (Spec-Driven Development)
@@ -69,7 +69,7 @@ Draft artifact `<appDataDir>\brain\<conversation-id>/plan.md`:
 - **New Modules**: [Only if strictly necessary; prefer stdlib/existing helpers]
 
 ## 2. Contracts & Data Models
-- **API / CLI Contract**: [Input parameters, payload types, exit codes]
+- **API / CLI Contract**: [Input parameters, payload types, exit codes; use [`contract-first`](../contract-first/SKILL.md) for cross-boundary API contracts]
 - **Database / Schema Changes**: [Migrations, foreign keys, indexes - zero downtime]
 
 ## 3. ADR Gate

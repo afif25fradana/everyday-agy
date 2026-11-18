@@ -1,6 +1,6 @@
 ---
 name: documentation-and-adrs
-description: Author Michael Nygard Architecture Decision Records (docs/adr/) and process runbooks when making significant design decisions.
+description: "Author Michael Nygard ADRs (/adr, /documentation-and-adrs, docs/adr/) and process runbooks for significant design decisions."
 ---
 
 # Architecture Decision Records (ADRs) & Process Documentation

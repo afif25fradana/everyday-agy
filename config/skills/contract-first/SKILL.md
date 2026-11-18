@@ -88,78 +88,21 @@ Do not expose a database row and call it a contract.
 
 ### 3. Define the Smallest Useful Contract
 
-Example:
-
-```yaml
-# openapi.yaml
-openapi: 3.1.0
-components:
-  schemas:
-    OrderSummary:
-      type: object
-      required: [id, status, total]
-      properties:
-        id:
-          type: string
-          description: Opaque identifier; never parse as a number.
-        status:
-          type: string
-          enum: [pending, paid, cancelled]
-        total:
-          type: number
-          format: double
-          minimum: 0
-        cancellationReason:
-          type: [string, "null"]
-```
-
-Define semantic constraints, not only syntax. For example, document whether
-`cancellationReason` is null for every status except `cancelled`.
+Define semantic constraints, not only syntax (for example, document whether `cancellationReason` is null for every status except `cancelled`). See [`references/templates.md`](./references/templates.md) for an OpenAPI 3.1.0 `OrderSummary` schema example.
 
 ### 4. Generate or Derive Consumer Types
 
-Prefer generated types over handwritten copies:
+Establish a verified rollback checkpoint (`New-AuditCheckpoint.ps1`) before running code generators. Prefer generated types over handwritten copies:
 
 ```bash
 rtk npm run generate:api-types
 ```
 
-Back that script with the repository's existing, pinned OpenAPI generator.
-
-```typescript
-import type { components } from "./generated/api";
-
-type OrderSummary = components["schemas"]["OrderSummary"];
-
-export const paidOrderMock = {
-  id: "9007199254740993123",
-  status: "paid",
-  total: 49.9,
-  cancellationReason: null,
-} satisfies OrderSummary;
-```
-
-The consumer can build against contract-valid mocks while the provider is still
-in progress.
+Back that script with the repository's existing, pinned OpenAPI generator. The consumer can build against contract-valid mocks derived from generated types (see [`references/templates.md`](./references/templates.md)) while the provider is still in progress.
 
 ### 5. Verify the Provider
 
-The provider must prove that real responses satisfy the same artifact:
-
-```typescript
-import type { components } from "./generated/api";
-
-type OrderSummary = components["schemas"]["OrderSummary"];
-
-export function toOrderSummary(row: OrderRow): OrderSummary {
-  return {
-    id: String(row.id),
-    status: row.status,
-    total: row.total,
-    cancellationReason: row.cancellation_reason,
-  };
-}
-```
+The provider must prove that real responses satisfy the same artifact (see [`references/templates.md`](./references/templates.md) for a TypeScript provider mapper example).
 
 Static types catch many field and enum mistakes. Add runtime schema validation
 or a framework-level contract test at serialization boundaries, where database
@@ -186,19 +129,7 @@ The integration question is not "did both sides pass their own tests?" It is
 
 ## Contract Change Protocol
 
-Never change implementation first and update the contract afterward.
-
-1. Propose the consumer need and compatibility impact.
-2. Change the canonical artifact.
-3. Review the contract diff with affected consumers and the provider.
-4. Regenerate types, clients, or fixtures.
-5. Update provider and consumer implementations.
-6. Run consumer and provider verification.
-7. Merge only when all affected sides agree on the new contract.
-
-For an additive change, verify that old consumers continue to work. For a
-breaking change, use the repository's versioning or migration policy rather
-than silently repurposing an existing field.
+Never change implementation first and update the contract afterward. Follow the step-by-step change protocol and additive/breaking compatibility policy in [`references/protocols.md`](./references/protocols.md). Under the [`orchestrator`](../orchestrator/SKILL.md) Subagent Commit/Push/PR Ban, subagents must never commit, push, or merge; only the Parent Orchestrator merges after Gate 2 approval.
 
 ## Anti-Patterns
 
@@ -207,17 +138,6 @@ than silently repurposing an existing field.
 - **Compile-Time Types as Only Proof**: Using `as unknown as Type` casts hiding incompatible runtime payloads.
 - **Contract After Implementation**: Writing or generating the contract only after both sides finish.
 - **Configuration Cliffs & Sharp Edges**: Zero/empty/null defaults that silently disable validation or timeouts, single boolean flags that toggle authentication/authorization, and adjacent stringly-typed parameters risking swap confusion.
-
-## Best Practices
-
-- Keep one canonical artifact per boundary.
-- Design from consumer jobs, then map provider internals at the boundary.
-- Make identifiers, nullability, enums, and errors explicit.
-- Generate types and mocks where the ecosystem supports it.
-- Test real serialized provider output, including alternate paths.
-- Treat a contract diff as a cross-boundary change requiring affected-owner review.
-- Prefer a small compatible addition over a speculative general schema.
-- Delete handwritten copies once generated or derived versions exist.
 
 ## Related Skills & Agents
 

@@ -1,19 +1,31 @@
 ---
 name: council-review
-description: Multi-Agent Council Review (/council) via teamwork for Tier 3 architecture evaluations, deep audits, and pre-release gates.
+description: "Read-only multi-agent teamwork council (/council, /council-review): scored Tier 3 software architecture audits & release gates."
 ---
 
 # Deliberative Council Review Orchestration (Operational Runbook)
 
-A high-rigor, evidence-backed evaluation framework combining Anthropic's **Evaluator-Optimizer** separation, Karpathy's **Council Double-Blind Synthesis**, and Addy Osmani's **SDLC Phased Gating**. Powered natively by Antigravity's hidden multi-agent orchestration engine (`teamwork`).
+High-rigor, read-only multi-perspective evaluation framework for Tier 3 software engineering reviews. Powered by Antigravity's native multi-agent orchestration engine (`teamwork`).
+
+---
+
+## When to Use & Non-Goals (Tier Routing Boundary)
+
+- **Use `/council` or `/council-review` ONLY for**: Read-only Tier 3 evaluations (`> 5` files, architectural overhauls, cross-cutting security/reliability audits, or pre-release gates) that justify multi-seat adversarial deliberation.
+- **Do NOT use (downgrade or redirect immediately)**:
+  - **Mutating tasks (edits, fixes, commits)**: Council is strictly read-only. Route to [`orchestrator`](../orchestrator/SKILL.md) (Tier 0/1/2).
+  - **Tier 0/1 single-module fixes or Tier 2 scoped changes (`2-5` files)**: Use direct Parent TDD or targeted specialists with [`audit-dev`](../audit-dev/SKILL.md).
+  - **PR or git diff reviews**: Route to [`differential-review`](../differential-review/SKILL.md).
+  - **Pre-audit invariant mapping only**: Route to [`audit-context-building`](../audit-context-building/SKILL.md).
+  - **Academic, finance, or BEI/IDX thesis reviews**: Route to [`academic-council`](../academic-council/SKILL.md).
 
 ---
 
 ## Mandatory Delegation Protocol (DO NOT BYPASS)
 
 > [!CAUTION]
-> **FOR TIER 3 COUNCIL EVALUATIONS, DISPATCH VIA TEAMWORK.**
-> Calling individual specialist agents directly from the parent session for a Tier 3 Council review bypasses multi-seat peer deliberation, adversarial cross-checking, and victory auditing.
+> **FOR TIER 3 COUNCIL EVALUATIONS, DISPATCH EXCLUSIVELY VIA `teamwork`.**
+> Calling individual specialist subagents directly from the Parent session for a Tier 3 Council evaluation bypasses peer deliberation, deduplication, fail-closed adversarial challenge, and victory auditing.
 >
 > **The Parent Agent MUST dispatch EXACTLY ONE call to `teamwork`:**
 >
@@ -25,182 +37,62 @@ A high-rigor, evidence-backed evaluation framework combining Anthropic's **Evalu
 > )
 > ```
 >
-> *Engine Visibility Note*: `teamwork` is an internal engine subagent. Even though it is omitted from the visible `Available subagents:` list in your system prompt, it is fully recognized by the Antigravity runtime. Invoking `TypeName: "teamwork"` spawns the full autonomous council (Sentinel -> Project Orchestrator -> Parallel Explorers -> Adversarial Challengers -> Victory Auditor).
+> *Engine Visibility Note*: `teamwork` is an internal runtime subagent omitted from the visible `Available subagents:` list, yet natively recognized by Antigravity. Invoking `TypeName: "teamwork"` spawns Sentinel -> Project Orchestrator -> Parallel Explorers -> Adversarial Challengers -> Victory Auditor.
 
 ---
 
 ## Core Operational Guarantees
 
-1. **Strictly Read-Only Invariant**: Council panels are diagnostic only. Zero modifying edits to project files, zero package installations, and zero destructive shell commands are permitted during evaluation.
-2. **Cold Fact Grounding First**: No council member may offer opinions, ratings, or critiques without first grounding observations in verified codebase guarantees and caller topologies per [`audit-context-building`](../audit-context-building/SKILL.md).
-3. **Socratic Operator Alignment**: Council composition, evaluation depth, and acceptance criteria are locked via structured dialog (`ask_question`) before dispatching agent teams.
-4. **Anti-Sycophancy Gate**: Explorers and reviewers are barred from giving unearned praise. Scores >= 4.50 require concrete proof or automated fault injection. Every seat must surface real gaps.
-5. **Adversarial Verification Gate**: Preliminary findings must be challenged by independent reviewers (stress-testing line citations, logic consistency, and arithmetic closure) before final handoff.
+1. **Strictly Read-Only Invariant**: Diagnostic only. Zero edits to repository files, zero package installations, and zero destructive shell commands.
+2. **Cold Fact Grounding First**: Anchor observations in verified invariants, unenforced assumptions (`nothing found` if absent), and caller graphs per [`audit-context-building`](../audit-context-building/SKILL.md).
+3. **Plain-Text Single-Turn Alignment (No `ask_question` Dependency)**: Only the Parent Agent aligns with the operator, using concise plain text in a single turn. Skip parameters the operator already supplied. Never invoke `ask_question` inside subagents or non-interactive runs, and never use multi-turn `ask_question` ceremony for confirmations.
+4. **Anti-Sycophancy & Exploitability Gate**: Scores `>= 4.50` require empirical proof or automated fault injection. Every seat must report verified gaps with concrete `file.ext#Lxx-Lyy` citations—or explicitly document the invariants inspected with `no critical/high gaps verified` (zero fabricated quotas, zero performative praise).
+5. **Fail-Closed Verification & Honest Accounting**: Adversarial Challengers verify line citations and dynamic `4 x N_seats` arithmetic closure. Any seat that fails or times out records `Status: not run` (never "0 findings") and blocks certification.
 
 ---
 
-## Tri-Pillar Execution Lifecycle
+## 4-Stage Execution Lifecycle
 
-```
-[Target Code/Skill/Architecture]
-               │
-               ▼
-┌──────────────────────────────────────────────┐
-│  Pillar 1: Cold Context Grounding            │  <-- audit-context-building
-│  (Map guarantees, assumptions, calls)        │
-└──────────────────────┬───────────────────────┘
-                       │
-                       ▼
-┌──────────────────────────────────────────────┐
-│  Pillar 2: Socratic Council Formation        │  <-- ask_question
-│  (Select 3-5 custom agent seats, criteria)   │
-└──────────────────────┬───────────────────────┘
-                       │
-                       ▼
-┌──────────────────────────────────────────────┐
-│  Pillar 3: Autonomous Council Deliberation   │  <-- teamwork (Sentinel)
-│  - Dedicated Project Orchestrator            │
-│  - Parallel Specialized Explorers            │
-│  - Adversarial Reviewers & Challengers       │
-│  - Chairman Synthesis & Scorecard Arithmetic │
-│  - Independent Victory Auditor Certification │
-└──────────────────────┬───────────────────────┘
-                       │
-                       ▼
-[Deliverable: Certified Council Evaluation Report]
-```
+### Stage 1: Cold Context Grounding (`audit-context-building`)
 
----
+1. Establish factual boundaries before convening seats: target modules, entrypoints, dependencies, and risk surface.
+2. Parent performs zero-read baseline scoping (`rtk git status`, `rtk rg -l`, `rtk rg -c`) without reading application source code inline.
+3. Deep read-only invariant mapping runs concurrently inside `teamwork` Phase 0 Explorers, writing dossiers under `<appDataDir>\brain\<conversation-id>\scratch\<task>\audit-context\`.
 
-### Pillar 1: Cold Context Grounding (`audit-context-building`)
+### Stage 2: Operator Council Formation (Plain-Text Confirmation)
 
-Before convening the Council, establish an objective factual baseline to prevent speculative debate:
-1. Identify target modules, boundaries, and dependencies.
-2. Map function guarantees (what must always hold), unenforced assumptions (marked `nothing found` if unvalidated), and upstream/downstream callers.
-3. For large codebases, Parent conducts baseline scoping via zero-read metadata (`rtk rg`), while deep read-only inspection is executed concurrently by Explorer agents inside `teamwork` Phase 0 (dossier compiled under `<appDataDir>\brain\<conversation-id>\scratch\<task>\audit-context\`).
-4. Proceed to Pillar 2 once factual boundaries are verified.
+Align missing parameters in **one concise plain-text response** (omit anything already specified in the user prompt, and avoid naming internal skill/reference filenames in operator-facing text):
+
+1. **Seat Selection (`3-5` seats)**: Recommend a tailored bundle from [`references/seat-catalog.md`](./references/seat-catalog.md). Every active seat maps 1-to-1 to a dynamic requirement block (`R1..R<N>`).
+2. **Evaluation Scope & Focus**: Confirm target paths and primary audit priorities (e.g., architecture invariants, security/data safety, reliability, UX/a11y, spec verification).
+3. **Deliverable & Draft Prompt**: Read [`references/dispatch-template.md`](./references/dispatch-template.md) via `read_file`/`view_file` **before** assembling the dispatch prompt so the draft locks the dynamic `R1..R<N>` contract, ADR-0004 Deduplication Barrier, `Status: not run` accounting, and acceptance criteria. Confirm output format per [`references/scorecard-rubric.md`](./references/scorecard-rubric.md) (`4 x N_seats` scorecard: 12 cells for 3 seats, 16 for 4, 20 for 5), and save the assembled prompt to `<appDataDir>\brain\<conversation-id>\prompt_draft.md`.
+4. **Approval Gate**: Stop and wait for explicit operator confirmation (`approve`, `proceed`, `continue`) before dispatching `teamwork`.
+
+### Stage 3: Autonomous Council Deliberation (`teamwork`)
+
+After operator approval, verify `<appDataDir>\brain\<conversation-id>\prompt_draft.md` strictly matches [`references/dispatch-template.md`](./references/dispatch-template.md) (read via `read_file`/`view_file` if not already loaded in this session), then dispatch **one** `invoke_subagent(TypeName: "teamwork", Role: "Council Review Panel", Prompt: ...)` call populated strictly with the approved `N` seats (`3-5`) and target paths.
+
+Internal `teamwork` execution pipeline:
+1. **Sentinel Dispatch**: Initializes `<appDataDir>\brain\<conversation-id>\scratch\<task>\` and launches the Project Orchestrator.
+2. **Phase 0 (Parallel Seat Exploration)**: Runs concurrent read-only Explorers for the `N` approved seats, citing `file.ext#Lxx-Lyy`.
+3. **Phase 1 (Chairman Synthesis & ADR-0004 Deduplication Barrier)**: Normalizes snippet keys (`${file}::${normalize(evidence)}`), collapses duplicate findings at `max(Severities)` annotating all discovering seats, and compiles `council_evaluation_report.md`.
+4. **Phase 2 (Fail-Closed Adversarial & Forensic Gate)**: Reviewers check domain fidelity; Challengers stress-test `CRITICAL`/`HIGH` citations (refuted only at `>= 0.8` confidence with empirical proof; otherwise fails closed) and `4 x N_seats` arithmetic closure; Forensic Auditor confirms zero repo mutations or installs.
+5. **Phase 3 (Mandatory Victory Audit)**: `teamwork_victory_auditor` certifies completion (`VICTORY CONFIRMED`).
+
+### Stage 4: Certified Deliverable Packaging
+
+Once `teamwork` finishes, Parent reads `<appDataDir>\brain\<conversation-id>\scratch\<task>\council_evaluation_report.md` and delivers the certified summary per [`references/scorecard-rubric.md`](./references/scorecard-rubric.md):
+
+1. **Executive Summary & Chairman Verdict**: Verdict, composite score (`X.XX / 5.0`), and Grade (`A+`, `A`, `B+`, `B`, or `C`).
+2. **Dynamic `4 x N_seats` Scorecard Matrix**: Exact row, column, and grand-mean arithmetic closure across all `N` active seats (`3-5`) and four rubric axes (12, 16, or 20 scored cells).
+3. **Verified Discrepancies**: Anchored to exact line coordinates (`file.ext#Lxx-Lyy`).
+4. **Prioritized Gap Matrix**: Categorized into `CRITICAL`, `HIGH`, `MEDIUM`, and `LOW` (plus any `Status: not run` disclosures).
+5. **Non-Breaking Actionable Roadmap**: Phased remediation plan verified against Context7 or official docs when `spec-verifier` is seated (or flagged `[UNVERIFIED]` if offline).
 
 ---
 
-### Pillar 2: Socratic Council Formation (`ask_question`)
+## References (Read On-Demand)
 
-Engage the operator interactively using `ask_question` (one question at a time) to eliminate ambiguity:
-
-1. **Council Seat Selection**: Present 3-5 specialized seats tailored to the problem from the [Seat Catalog](./references/seat-catalog.md):
-   - Architecture & Contracts (`system-architect`)
-   - Security, Hygiene & Database Safety (`code-auditor`)
-   - Reliability & Silent Failures (`silent-failure-hunter`)
-   - Test Integrity & TDD (`tdd-guide`)
-   - Official Spec & Remediation Verifier (`spec-verifier`)
-   - Frontend UX & Accessibility (`ui-crafter`)
-   - Documentation & ADRs (`docs-architect`)
-   - Compiler & Typing (`build-error-resolver`)
-   - Infrastructure & CI (`maintenance-bot`)
-   - Software Localization & Humanizer (`l10n-humanizer`)
-2. **Evaluation Depth & Focus**: Select primary dimensions:
-   - Antigravity Spec Alignment
-   - Developer Ergonomics & Operational Friction
-   - Token & Context Window Efficiency
-   - GitHub Community Benchmarking
-3. **Forcing Function & Output Format**: Confirm deliverable format (Scorecard Rubric 1-5 + Prioritized Gap Matrix + Chairman Roadmap).
-4. **Draft Prompt Assembly**: Maintain and display `prompt_draft.md` in the brain artifact directory per `teamwork` rules.
-5. **Operator Approval Gate**: Require explicit operator confirmation ("approve", "proceed", "continue", or UI "Proceed") before delegating.
-
----
-
-### Pillar 3: Autonomous Council Deliberation (`teamwork`)
-
-Upon operator approval, dispatch `teamwork` using this exact structure:
-
-```json
-invoke_subagent(
-  TypeName: "teamwork",
-  Role: "Council Review Panel",
-  Prompt: <council_prompt_text>
-)
-```
-
-#### Dispatch Prompt Contract
-
-The `Prompt` text must adhere strictly to these structural rules:
-
-```markdown
-Requested team: Council review panel (read-only audit & comparison)
-
-Conduct a comprehensive, read-only multi-perspective Council evaluation of <target_name> to determine whether it is optimal, ergonomically sound, spec-compliant, and competitive against top GitHub community standards.
-
-Working directory: <appDataDir>\brain\<conversation-id>\scratch\<task>
-Integrity mode: development
-
-## References
-- Target files: <absolute_paths_to_targets>
-- Relevant standards and benchmark files
-
-## Requirements
-
-### R1. <Domain 1 Audit> (Council Seat 1 - e.g. system-architect)
-Audit the target against architectural invariants, DAG acyclicity, modular isolation, and API contract fidelity.
-
-### R2. <Domain 2 Audit> (Council Seat 2 - e.g. code-auditor)
-Audit security attack surface, sanitization, credential hygiene, and anti-slop code hygiene.
-
-### R3. <Domain 3 Audit> (Council Seat 3 - e.g. silent-failure-hunter)
-Hunt swallowed exceptions, silent defaults, masking catches, and resource leaks.
-
-### R4. <Domain 4 Audit> (Council Seat 4 - e.g. Community Benchmarking)
-Benchmark against top GitHub repositories and state-of-the-art patterns.
-
-### R5. Official Spec & Remediation Verification (Council Seat: spec-verifier)
-Cross-check all proposed remediation plans, code snippets, and third-party library recommendations against live authoritative documentation. Use Context7 MCP (`resolve-library-id` -> `query-docs`) as primary verification; fallback to `search_web` targeting official documentation domains governed by `deep-web-research/SKILL.md` if Context7 lacks coverage. Veto deprecated APIs, unverified syntax, or speculative abstractions.
-
-### R6. Strictly Read-Only Execution & Infrastructure
-The evaluation must remain strictly read-only. Zero mutating file edits, package installations, or system changes are permitted outside the scratch workspace.
-
-### R7. Structured Deliverable & Chairman Synthesis
-Generate a comprehensive evaluation report saved to `<appDataDir>\brain\<conversation-id>\scratch\<task>\council_evaluation_report.md`. The report must include:
-1. Executive Summary & Final Verdict from the Chairman.
-2. Numerical Scorecards (scale 1.0 to 5.0 for Rigor, Ergonomics, Token Efficiency, and Spec Alignment across all active seats).
-3. Prioritized Gap Matrix (Critical / High / Medium / Low).
-4. Non-breaking actionable optimization roadmap grounded in verified documentation.
-
-## Acceptance Criteria & Adversarial Verification
-- [ ] Evaluation report exists at `<appDataDir>\brain\<conversation-id>\scratch\<task>\council_evaluation_report.md`
-- [ ] Report contains numerical scorecards (1.0 to 5.0) across all seats with normalized arithmetic closure ($4 \times N_{\text{seats}}$ cells)
-- [ ] Report lists concrete line-number citations for every identified discrepancy (`file.ext#Lxx-Lyy`)
-- [ ] Anti-Sycophancy Mandate: Scores >= 4.50 are prohibited unless backed by automated fault injection or rigorous proof. Every seat must surface at least 2 critical/high gap observations
-- [ ] Subagent Accounting: Any explorer/seat that times out or fails is marked 'not run' (never counted as 0 findings; invalidates clean-round convergence)
-- [ ] Remediation Verification: Every action item in the optimization roadmap is cross-checked against Context7 or official documentation per `deep-web-research`
-- [ ] Adversarial Challengers independently verify all line references against codebase HEAD
-- [ ] Zero mutating file edits or package installations were performed during the run
-```
-
-#### What Happens Under the Hood
-1. **Sentinel Dispatch**: The Sentinel initializes the task scratch workspace and launches a dedicated Project Orchestrator.
-2. **Phase 0 (Parallel Seat Exploration)**: Orchestrator spawns concurrent Explorer subagents for the selected seats. Each Explorer performs a deep read-only inspection, citing concrete file and line coordinates (`file.ext#Lxx-Lyy`).
-3. **Phase 1 (Chairman Synthesis & Evidence-Normalized Deduplication Barrier)**:
-   - A synthesis worker aggregates candidate findings across seats.
-   - **Deduplication Barrier (ADR-0004)**: Normalizes code snippet keys (`${file}::${normalize(evidence)}`), stripping transient whitespace and comments. Overlapping findings on identical code coordinates are collapsed into a single canonical gap claim, elevating severity to $\max(\text{Severities})$ and annotating all discovering seats. This cuts downstream review noise and token expenditure by >50%.
-   - Compiles the initial consolidated draft report (`council_evaluation_report.md`).
-4. **Phase 2 (Targeted Adversarial Quality & Forensic Gate)**:
-   - **Reviewers**: Verify domain claims and community benchmark fidelity against unique findings.
-   - **Challengers (Fail-Closed Semantics)**: Stress-test line citations and logic consistency on unique `CRITICAL` and `HIGH` findings. A finding is refuted only upon $\ge 0.8$ confidence with empirical proof; otherwise, it fails closed and remains blocking. Stress-test scorecard arithmetic closure (verifying row/column grand mean arithmetic).
-   - **Forensic Auditor**: Verifies zero file mutations outside scratch and zero package installs.
-5. **Phase 3 (Mandatory Victory Audit)**: Sentinel invokes an independent Victory Auditor (`teamwork_victory_auditor`). Deliberation completes only when `VICTORY CONFIRMED` is achieved.
-
----
-
-### Pillar 4: Certified Deliverable Packaging
-
-Once `teamwork` returns, the Parent Agent reads `<appDataDir>\brain\<conversation-id>\scratch\<task>\council_evaluation_report.md` and presents the certified deliverable meeting [`scorecard-rubric.md`](./references/scorecard-rubric.md):
-1. **Executive Summary & Chairman Verdict**: Clear grade (A, B+, B, C) and composite score (out of 5.0).
-2. **16-Cell Scorecard Matrix**: Normalized arithmetic closure across Rigor, Ergonomics, Token Efficiency, and Spec Alignment.
-3. **Concrete Discrepancies**: Citations anchored strictly to line coordinates (`file.ext#Lxx-Lyy`).
-4. **Prioritized Gap Matrix**: Categorized into `CRITICAL`, `HIGH`, `MEDIUM`, and `LOW`.
-5. **Non-Breaking Actionable Roadmap**: Phased implementation plan ready for operator execution.
-
----
-
-## References & Catalogs
-
-- [Seat Catalog & Agent Mapping](./references/seat-catalog.md): Directory of custom subagent specialties and domain assignments.
-- [Scorecard Rubric & Chairman Template](./references/scorecard-rubric.md): Scoring criteria, mathematical reconciliation rules, and handoff template.
+- [`references/seat-catalog.md`](./references/seat-catalog.md): 10 custom specialist seats, model tiers, and recommended bundles.
+- [`references/dispatch-template.md`](./references/dispatch-template.md): Parameterized `teamwork` prompt contract (`R1..R<N>`) and acceptance checklist.
+- [`references/scorecard-rubric.md`](./references/scorecard-rubric.md): 4-axis rubric, `4 x N_seats` arithmetic closure rules, grading scale, and Chairman report template.

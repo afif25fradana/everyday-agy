@@ -4,7 +4,7 @@
 Accepted
 
 ## Date
-2026-11-11
+2026-11-18
 
 ## Context
 Single-perspective reviews miss cross-cutting defects, rely on memory instead of current documentation, slip into polite agreement (`"Great point!"`), or treat timed-out reviewers as having zero findings. Integrating external review tools also hit practical snags:
@@ -31,14 +31,15 @@ I adapted Trail of Bits' security skills to Antigravity subagent and scratch pri
 
 ### 3. Deliberative `council-review` via `teamwork`
 High-stakes Tier 3 evaluations run through `config/skills/council-review/` using a single read-only call to `invoke_subagent(TypeName: "teamwork", ...)` (updated from the deprecated `teamwork_preview` name):
-- **Tri-Pillar Lifecycle**:
-  - *Pillar 1 (Cold Context Grounding)*: Baseline invariants via `audit-context-building` and zero-read scoping (`rtk rg`).
-  - *Pillar 2 (Socratic Council Formation)*: Parent locks 3-5 seats from the 10-seat `references/seat-catalog.md`, evaluation focus, and deliverable format with the operator via `ask_question`.
-  - *Pillar 3 (Autonomous `teamwork` Deliberation)*: Sentinel initializes scratch; Project Orchestrator runs parallel seat explorers; Chairman synthesis normalizes and collapses duplicate findings via the **Deduplication Barrier** (`${file}::${normalize(evidence)}`, taking max severity); fail-closed Adversarial Challengers verify line citations (`file.ext#Lxx-Lyy`) and `4 x N_seats` scorecard arithmetic closure; Victory Auditor certifies completion.
-- **Anti-Sycophancy Gate**: Scores `>= 4.50` require empirical proof or fault injection, every seat must surface real gaps, and review feedback rejects performative praise (`clean-docs`).
+- **4-Stage Execution Lifecycle**:
+  - *Stage 1 (Cold Context Grounding)*: Baseline invariants via `audit-context-building` and zero-read scoping (`rtk git status`, `rtk rg`), with deep read-only invariant mapping running concurrently inside `teamwork` Phase 0 Explorers.
+  - *Stage 2 (Operator Council Formation)*: Parent aligns 3-5 seats from the 10-seat `references/seat-catalog.md`, evaluation focus, and deliverable format in one concise plain-text turn without `ask_question`, loading the parameterized `R1..R<N>` dispatch contract on demand from `references/dispatch-template.md` into `prompt_draft.md` and pausing for explicit operator confirmation.
+  - *Stage 3 (Autonomous `teamwork` Deliberation)*: Sentinel initializes scratch; Project Orchestrator runs parallel read-only seat explorers using the approved `R1..R<N>` prompt loaded on demand from `references/dispatch-template.md`; Chairman synthesis normalizes and collapses duplicate findings via the **Deduplication Barrier** (`${file}::${normalize(evidence)}`, taking max severity); fail-closed Adversarial Challengers verify line citations (`file.ext#Lxx-Lyy`) and dynamic `4 x N_seats` arithmetic closure; Forensic Auditor confirms zero repository mutations or installs; Victory Auditor certifies completion.
+  - *Stage 4 (Certified Deliverable Packaging)*: Parent packages the Chairman verdict, dynamic `4 x N_seats` scorecard matrix (12, 16, or 20 cells with exact row, column, and grand-mean arithmetic closure per `references/scorecard-rubric.md`), line-cited discrepancies, prioritized gap matrix (including any `Status: not run` disclosures), and non-breaking remediation roadmap.
+- **Anti-Sycophancy & Exploitability Gate**: Scores `>= 4.50` require empirical proof or fault injection. Every seat reports verified gaps with concrete `file.ext#Lxx-Lyy` citations or explicitly documents the invariants inspected with `no critical/high gaps verified` (no forced finding quotas, no performative praise per `clean-docs`).
 
 ### 4. Empirical Finance Research Panel (`academic-council`)
-Tucked alongside the software skills in `config/skills/academic-council/` is a specialized research review configuration I built for my accounting and finance thesis on IDX/BEI secondary market data. Disclosed upfront in `README.md`, it reuses `council-review`'s read-only Tri-Pillar lifecycle, `teamwork` dispatch, and anti-sycophancy scorecard across five academic seats (`references/seat-catalog.md`):
+Tucked alongside the software skills in `config/skills/academic-council/` is a specialized research review configuration I built for my accounting and finance thesis on IDX/BEI secondary market data. Disclosed upfront in `README.md`, it retains the original read-only Tri-Pillar lifecycle, `teamwork` dispatch, and anti-sycophancy scorecard across five academic seats (`references/seat-catalog.md`):
 - **Econometrics & Research Methodology**: Audits panel/logistic regression models, variable proxy formulas, sampling criteria, and endogeneity or multicollinearity risks.
 - **Theoretical Coherence**: Audits deductive links between grand theories (Agency, Signaling, Stakeholder, Positive Accounting) and hypothesis directions.
 - **BEI/IDX Regulatory & Data Feasibility**: Verifies that proposed variables actually appear in free public IDX annual reports, financial statement notes (CALK), or sustainability reports under active OJK/PSAK/BEI rules instead of assuming paid Bloomberg/Refinitiv terminals.

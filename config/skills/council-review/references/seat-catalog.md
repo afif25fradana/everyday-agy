@@ -1,6 +1,6 @@
 # Council Seat Catalog & Agent Mapping (`seat-catalog.md`)
 
-This catalog maps evaluation domains to specialized Antigravity custom subagents (`config/agents/`). Each seat functions as an independent reviewer during Pillar 3 council deliberation, adhering to the 8 `inherit` / 2 `flash` fleet split per ADR-0002.
+This catalog maps evaluation domains to specialized Antigravity custom subagents (`config/agents/`). Each seat functions as an independent reviewer during Stage 3 council deliberation, adhering to the 8 `inherit` / 2 `flash` fleet split per ADR-0002.
 
 ---
 
@@ -85,4 +85,4 @@ This catalog maps evaluation domains to specialized Antigravity custom subagents
 | **Software Localization / i18n Release** | `l10n-humanizer` + `ui-crafter` + `docs-architect` |
 | **Database & Schema Modification** | `code-auditor` + `system-architect` + `silent-failure-hunter` |
 | **Library Upgrade / Modernization** | `maintenance-bot` + `build-error-resolver` + `spec-verifier` |
-| **Skill & Workflow Tooling Audit** | `system-architect` + `code-auditor` + `docs-architect` + Community Benchmark |
+| **Skill & Workflow Tooling Audit** | `system-architect` + `code-auditor` + `docs-architect` + `spec-verifier` (Community Benchmark) |

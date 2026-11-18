@@ -6,7 +6,7 @@ This specification defines the numerical evaluation rubric, mathematical reconci
 
 ## 1. The Four-Dimensional Rubric (Scale 1.0 - 5.0)
 
-Every Council seat independently evaluates the subject across four standard axes:
+Every active Council seat (`N` = 3 to 5) independently evaluates the subject across four standard axes:
 
 ### Axis 1: Technical Rigor & Correctness
 - **5.0**: Flawless invariant preservation, exhaustive edge-case coverage, zero dropped defensive mechanisms, airtight typing/concurrency.
@@ -16,34 +16,34 @@ Every Council seat independently evaluates the subject across four standard axes
 - **1.0**: Broken logic, severe safety violations, unmitigated race conditions.
 
 ### Axis 2: Developer Ergonomics & Operational Friction
-- **5.0**: Zero ceremony on trivial tasks, clear single-click action paths, intuitive error recovery, zero cognitive fatigue.
+- **5.0**: Zero unnecessary ceremony, clear operator paths, intuitive error recovery, minimal cognitive load.
 - **4.0**: Minimal friction, clear guidelines, rare unnecessary verification prompts.
 - **3.0**: Moderate ceremony, rigid gates for simple tasks, manual workarounds needed for edge cases.
 - **2.0**: High operational friction, frequent false-positive rejections, workflow deadlocks.
-- **1.0**: Impractical for daily engineering, causes developer paralysis or total bypass of safety gates.
+- **1.0**: Impractical for daily engineering, causes developer paralysis or safety-gate bypasses.
 
-### Axis 3: Token & Context Efficiency (Anti-Slop)
-- **5.0**: Perfectly modular progressive disclosure, zero redundant text, concise plain-spoken prose, optimal context utilization.
-- **4.0**: Good brevity, minor narrative padding (<1 KB), well-partitioned references.
-- **3.0**: Noticeable text repetition (1-3 KB duplicate checklists), moderate greedy retrieval risk.
-- **2.0**: Severe text duplication (>5 KB), heavy prompt templates, repetitive guidelines burning context.
-- **1.0**: Monolithic prompt bloat, high token burn on every turn, severe context window dilution.
+### Axis 3: Modularity, Maintainability & Context Efficiency
+- **5.0**: Clean progressive disclosure / modular boundaries, zero dead weight or duplication, concise plain-spoken structure.
+- **4.0**: Good modularity and brevity, minor padding, cleanly separated responsibilities.
+- **3.0**: Noticeable duplication or unnecessary coupling across modules/documents.
+- **2.0**: Severe duplication, oversized templates/modules, or heavy cognitive/token bloat.
+- **1.0**: Monolithic bloat, severe dilution of invariants, unmaintainable sprawl.
 
-### Axis 4: Specification & Community Alignment
-- **5.0**: Full harmony with official engine tool signatures, adheres to industry state-of-the-art standards (Anthropic, SWE-agent, Karpathy).
-- **4.0**: Minor tool naming or script discrepancies, competitive with leading community practices.
-- **3.0**: Functional but relies on legacy naming conventions, missing modern community patterns (e.g. repro-first tests).
-- **2.0**: Significant specification drift, script execution failures, outdated tool references.
-- **1.0**: Fundamental incompatibility with runtime engine or host platform.
+### Axis 4: Specification & Standards Alignment
+- **5.0**: Full harmony with authoritative runtime/vendor specs, ADRs, and verified industry practices.
+- **4.0**: Minor naming or convention discrepancies, aligned with current standards.
+- **3.0**: Functional but relies on legacy conventions or misses modern verification patterns.
+- **2.0**: Significant specification drift, outdated tool/API references, or contract violations.
+- **1.0**: Fundamental incompatibility with runtime engine, platform contracts, or security baselines.
 
 ---
 
 ## 2. Mathematical Reconciliation & Arithmetic Closure Rules
 
-To prevent arbitrary or hallucinated scoring, the Chairman synthesis must satisfy exact arithmetic closure across all evaluated cells ($4 \times N_{\text{seats}}$ cells):
+To prevent arbitrary or hallucinated scoring, Chairman synthesis must satisfy exact arithmetic closure across all evaluated cells (`4 x N_seats` cells: 12 for 3 seats, 16 for 4 seats, 20 for 5 seats):
 
 1. **Seat Composite Score (Row Average)**:
-   $$\text{Seat Composite} = \frac{\text{Rigor} + \text{Ergonomics} + \text{Token} + \text{Spec}}{4}$$
+   $$\text{Seat Composite} = \frac{\text{Rigor} + \text{Ergonomics} + \text{Efficiency} + \text{Spec}}{4}$$
 2. **Dimensional Column Average**:
    $$\text{Column Average} = \frac{\sum_{i=1}^{N} \text{Score}_{i}}{N}$$
 3. **Grand Mean Closure**:
@@ -60,12 +60,12 @@ To prevent arbitrary or hallucinated scoring, the Chairman synthesis must satisf
 
 ## 3. Prioritized Gap Matrix Standards
 
-Identified deficiencies must be mapped to four discrete urgency tiers:
+Identified deficiencies map to four discrete urgency tiers:
 
-- **CRITICAL**: Runtime engine breakage, tool call failures, security vulnerabilities, or hard execution deadlocks.
-- **HIGH**: Slash command mismatches, heavy operator friction, or missing rollback capabilities.
-- **MEDIUM**: Cross-file text duplication, missing repro-first test patterns, or excessive prompt weight.
-- **LOW**: Minor stylistic inconsistencies or cross-platform shell convenience enhancements.
+- **CRITICAL**: Runtime breakage, tool/API call failures, exploitable security vulnerabilities, or execution deadlocks.
+- **HIGH**: Contract/interface mismatches, heavy operator friction, silent error masking, or missing rollback safety.
+- **MEDIUM**: Cross-file duplication, missing edge-case test coverage, or excessive module/prompt weight.
+- **LOW**: Minor stylistic inconsistencies or cross-platform convenience improvements.
 
 ---
 
@@ -83,19 +83,21 @@ Identified deficiencies must be mapped to four discrete urgency tiers:
 
 ## 1. Executive Summary & Chairman Verdict
 - **Chairman's Verdict**: [APPROVED | APPROVED WITH OPTIMIZATIONS | REJECTED]
-- **Composite Score**: X.XX / 5.0 (Grade: [A/B+/B/C])
-- **Executive Rationale**: <2-3 paragraphs explaining the core strengths and critical deficiencies.>
+- **Composite Score**: X.XX / 5.0 (Grade: [A+/A/B+/B/C])
+- **Executive Rationale**: <2-3 paragraphs explaining core strengths and verified deficiencies.>
 
 ---
 
-## 2. Numerical Scorecard Matrix
+## 2. Numerical Scorecard Matrix (4 x <N> Cells)
 
-| Council Seat | Rigor | Ergonomics | Token Efficiency | Spec Alignment | Seat Composite |
+<!-- Include one row per active seat (3 to 5 seats). Mark any failed/timed-out seat as `Status: not run` (invalidates certification). -->
+
+| Council Seat | Rigor | Ergonomics | Efficiency | Spec Alignment | Seat Composite |
 | :--- | :---: | :---: | :---: | :---: | :---: |
 | **Seat 1: <Name>** | X.XX | X.XX | X.XX | X.XX | **X.XX** |
 | **Seat 2: <Name>** | X.XX | X.XX | X.XX | X.XX | **X.XX** |
 | **Seat 3: <Name>** | X.XX | X.XX | X.XX | X.XX | **X.XX** |
-| **Seat 4: <Name>** | X.XX | X.XX | X.XX | X.XX | **X.XX** |
+| *(Add Seat 4 / Seat 5 rows if active)* | ... | ... | ... | ... | ... |
 | **Column Averages** | **X.XX** | **X.XX** | **X.XX** | **X.XX** | **Grand Mean: X.XX** |
 
 ---
@@ -106,23 +108,23 @@ Identified deficiencies must be mapped to four discrete urgency tiers:
 ---
 
 ## 4. Prioritized Gap Matrix
-- **CRITICAL**: <List items>
-- **HIGH**: <List items>
-- **MEDIUM**: <List items>
-- **LOW**: <List items>
+- **CRITICAL**: <List items or "None verified">
+- **HIGH**: <List items or "None verified">
+- **MEDIUM**: <List items or "None verified">
+- **LOW**: <List items or "None verified">
 
 ---
 
 ## 5. Non-Breaking Actionable Roadmap
 - **Phase 1: Immediate Gaps**
-- **Phase 2: Ergonomics & Friction**
-- **Phase 3: Token Hygiene & Progressive Disclosure**
-- **Phase 4: Community Upgrades**
-*(Note: All remediation actions, library recommendations, and API signatures must be verified against Context7 MCP or official documentation by the spec-verifier seat before inclusion.)*
+- **Phase 2: Ergonomics & Reliability**
+- **Phase 3: Maintainability & Modularity**
+- **Phase 4: Standards & Modernization**
+*(Note: When `spec-verifier` is seated, every roadmap API/library action must be tagged `[VERIFIED]`, `[UNVERIFIED]`, or `[VETOED]` against Context7 or official documentation.)*
 
 ---
 
 ## 6. Certification
 - **Auditor**: Victory Auditor Independent Verification
-- **Status**: VICTORY CONFIRMED (Zero file mutations, zero package installs)
+- **Status**: VICTORY CONFIRMED (Zero repository mutations, zero package installs)
 ```

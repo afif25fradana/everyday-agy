@@ -4,7 +4,7 @@
 Accepted
 
 ## Date
-2026-11-15
+2026-11-17
 
 ## Context
 As my `everyday-agy` dotfiles grew, I needed to keep the catalog lean. Importing massive external catalogs (like 300+ skill bundles) or vendoring community suites (`impeccable`, 6 `ponytail*` skills, and official Marketplace plugins) dumped roughly 44,000 lines of third-party JavaScript and JSON into Git, distorted GitHub language stats, and drifted from upstream releases.
@@ -32,10 +32,10 @@ I trimmed the fleet to 10 custom subagents in `config/agents/*/agent.md` (enforc
   - `tdd-guide` edits test files and target units; `ui-crafter` spans three scoped workflows — `Codebase Component` with `impeccable` (`PRODUCT.md`, `DESIGN.md`, `.impeccable/**`, `index.html`, `*.html`, `assets/**`, `favicon.svg`, `dist/**`, `out/**`, `src/**`, `components/**`, `pages/**`, `styles/**`, `public/**`), individual existing-app component edits (`coding-standards`, `clean-docs`), and `Generative UI Widget` standalone `<agent-embed>` artifacts using built-in `generative_ui`; `maintenance-bot` edits CI/dependency manifests and `docs/maintenance-howto.md`; `docs-architect` owns `docs/**`, `*.md`, and `task_state.md`; `l10n-humanizer` edits localization resources (Scope A) and prose polish (Scope B).
 - **Mandatory Skill Activation Gate**: Every `agent.md` instructs the subagent to read only active-mode `SKILL.md` files via `view_file` using exact OS absolute paths from `<skills>` (never unexpanded `~`).
 
-### 3. 15-Skill Tracked Catalog, Domain Partitioning, and Frontmatter Budget
-I maintain exactly 15 skills under `config/skills/` (enforced by `.github/workflows/ci.yml`), partitioned into independent skills rather than greedy `references/` trees that models load wholesale regardless of task:
+### 3. 16-Skill Tracked Catalog, Domain Partitioning, and Frontmatter Budget
+I maintain exactly 16 skills under `config/skills/` (enforced by `.github/workflows/ci.yml`), partitioned into independent skills rather than greedy `references/` trees that models load wholesale regardless of task:
 - **7 bespoke workflows**: `orchestrator`, `council-review`, `academic-council`, `audit-dev`, `sync-task-state`, `clean-docs`, and `deep-web-research`.
-- **8 engine-adapted ports**: `spec-kit` (wired to `system-architect`), `gh-workflow` (wired to `maintenance-bot` and `docs-architect`), `audit-context-building` and `differential-review` (ported from Trail of Bits from Claude `.js`/workflow calls to Antigravity subagent and scratch primitives, with `differential-review` structured under `references/`), `contract-first`, `database-migrations`, `coding-standards` (kept inline at 103 lines with Active LTS floors for Node 20+, Python 3.12+, Go 1.22+, and Java 21/25 rather than split across files), and `documentation-and-adrs`.
+- **9 engine-adapted ports**: `spec-kit` (wired to `system-architect`), `skill-creator` (adapted from Anthropic's `skill-creator` under Apache-2.0 into a lean pure-Markdown workflow with zero bundled scripts), `gh-workflow` (wired to `maintenance-bot` and `docs-architect`), `audit-context-building` and `differential-review` (ported from Trail of Bits from Claude `.js`/workflow calls to Antigravity subagent and scratch primitives, with `differential-review` structured under `references/`), `contract-first`, `database-migrations`, `coding-standards` (kept inline at 103 lines with Active LTS floors for Node 20+, Python 3.12+, Go 1.22+, and Java 21/25 rather than split across files), and `documentation-and-adrs`.
 - **Frontmatter constraints**: Every `SKILL.md` keeps `description:` on a single line `<= 128` characters and wraps values containing `: ` in quotes (enforced by CI and `YamlValidation.Tests.ps1`).
 
 ### 4. Decoupled Upstream Suites, Context7 HTTP Auth, and Verified CLI Tools
@@ -52,7 +52,7 @@ I maintain exactly 15 skills under `config/skills/` (enforced by `.github/workfl
 - **Splitting `coding-standards` into `references/` or importing large external catalogs**: Rejected because foundational rules are shared across 4 agents and benefit from a compact inline floor without extra read roundtrips.
 
 ## Consequences
-- **Positive**: Keeps the repo lean (10 agents, 15 skills, PowerShell/Markdown language footprint), catches schema and MCP errors in CI, keeps Context7 reliable, and matches each model tier to task complexity.
+- **Positive**: Keeps the repo lean (10 agents, 16 skills, PowerShell/Markdown language footprint), catches schema and MCP errors in CI, keeps Context7 reliable, and matches each model tier to task complexity.
 - **Negative / Operational Requirements**:
   - Setting up a new machine requires creating `~/.gemini/config/mcp_config.json` locally and installing decoupled upstream skills/plugins (`ponytail`, `impeccable`) and Marketplace plugins separately.
   - Adding or renaming any agent or skill requires updating the exact count assertions in `.github/workflows/ci.yml`.

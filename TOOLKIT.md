@@ -68,7 +68,7 @@ npm install -g @ast-grep/cli
 
 ## 3. Custom Skills Catalog
 
-15 custom and adapted skills tracked in this repository (`config/skills/`); external third-party suites are listed in Section 4.
+16 custom and adapted skills tracked in this repository (`config/skills/`); external third-party suites are listed in Section 4.
 
 ### A. Spec-Driven & Development Workflows
 | Skill Name | Trigger / Command | Description | Upstream / Origin |
@@ -79,6 +79,7 @@ npm install -g @ast-grep/cli
 | **spec-kit** | `/speckit.specify`<br>`/speckit.plan`<br>`/speckit.tasks` | Spec-Driven Development (SDD) framework to specify, architect, and generate task lists before coding. | [github/spec-kit](https://github.com/github/spec-kit) |
 | **gh-workflow** | `/gh-workflow` | GitHub CLI automation for PR creation, non-interactive CI monitoring, and PR review comments. | Antigravity Native / [cli/cli](https://github.com/cli/cli) |
 | **sync-task-state** | `/sync-task-state` | Lightweight active AI context management (`task_state.md`) in Twin-Repo workflows. | **Original Work (@afif25fradana)** |
+| **skill-creator** | `/skill-creator` | Interactive skill authoring: progressive disclosure structure, eval assertions, blind A/B rubrics, and trigger tuning. | **Anthropic**<br>[anthropics/claude-plugins-official](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/skill-creator) *(Apache-2.0)*<br>*(Adapted for pure-Markdown Antigravity workflows)* |
 
 ### B. Security, Standards & Architecture
 | Skill Name | Trigger / Command | Description | Upstream / Origin |

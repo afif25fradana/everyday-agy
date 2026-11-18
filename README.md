@@ -39,7 +39,7 @@ everyday-agy/
 │   ├── hooks.json       # Native Antigravity PreToolUse/PostToolUse hook definitions
 │   ├── scripts/         # Native hook router, AST command safety, checkpoints & diffs (5 scripts)
 │   ├── agents/          # 10 specialized subagents with hybrid model tiering (ADR-0002)
-│   └── skills/          # 15 bespoke and engine-adapted workflow skills
+│   └── skills/          # 16 bespoke and engine-adapted workflow skills
 ├── docs/
 │   └── adr/             # Living Domain Architectural Decision Records (Nygard format)
 ├── sync.ps1             # Pulls repo-tracked configs from ~/.gemini/ into this repo
@@ -67,12 +67,12 @@ For the full agent directory, tool boundaries, and delegation parameters, see **
 
 ### Workflow Skills (`config/skills/`)
 
-I maintain 15 workflow skills directly in `config/skills/`. Third-party suites (`ponytail`, `impeccable`, and Chrome DevTools) are kept outside git tracking per ADR-0002 and installed straight from their upstream repos:
+I maintain 16 workflow skills directly in `config/skills/`. Third-party suites (`ponytail`, `impeccable`, and Chrome DevTools) are kept outside git tracking per ADR-0002 and installed straight from their upstream repos:
 
 | Category | Count | Included Skills | Origin / Licensing |
 |---|:---:|---|---|
 | **Bespoke Architectures** | 7 | `orchestrator`, `council-review`, `academic-council`, `audit-dev`, `sync-task-state`, `clean-docs`, `deep-web-research` | Original works authored for Antigravity (MIT) |
-| **Engine-Adapted Ports** | 8 | `spec-kit`, `gh-workflow`, `audit-context-building`, `differential-review`, `contract-first`, `database-migrations`, `coding-standards`, `documentation-and-adrs` | Adapted from community tools, ECC, and Trail of Bits (MIT & CC BY-SA 4.0) |
+| **Engine-Adapted Ports** | 9 | `spec-kit`, `skill-creator`, `gh-workflow`, `audit-context-building`, `differential-review`, `contract-first`, `database-migrations`, `coding-standards`, `documentation-and-adrs` | Adapted from Anthropic, community tools, ECC, and Trail of Bits (MIT, Apache-2.0 & CC BY-SA 4.0) |
 
 For trigger commands, detailed skill descriptions, and upstream installation links, see:
 - [**Tracked Skills Catalog**](./TOOLKIT.md#3-custom-skills-catalog)
@@ -126,7 +126,8 @@ For the complete catalog of verified CLI tools, official repositories, and an au
 
 ## License
 
-Dual-licensed under MIT and CC BY-SA 4.0:
+Licensed under MIT, Apache-2.0, and CC BY-SA 4.0:
 - Repository scripts, custom subagents, and bespoke skills (`orchestrator`, `council-review`, `academic-council`, `audit-dev`, `sync-task-state`, `clean-docs`, `deep-web-research`) are licensed under the [MIT License](./LICENSE).
+- Adapted `skill-creator` is licensed under the [Apache License, Version 2.0](./config/skills/skill-creator/LICENSE) (adapted from [Anthropic's skill-creator](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/skill-creator), Copyright (c) 2026 Anthropic, PBC).
 - Adapted Trail of Bits security skills (`audit-context-building`, `differential-review`) are licensed under [Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](./config/skills/audit-context-building/LICENSE).
 - Decoupled upstream community skills are referenced under their respective upstream licenses: ponytail under MIT License, and impeccable under Apache-2.0 License.

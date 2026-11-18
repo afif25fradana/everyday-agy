@@ -65,7 +65,7 @@ Align missing parameters in **one concise plain-text response** (omit anything a
 
 1. **Seat Selection (`3-5` seats)**: Recommend a tailored bundle from [`references/seat-catalog.md`](./references/seat-catalog.md). Every active seat maps 1-to-1 to a dynamic requirement block (`R1..R<N>`).
 2. **Evaluation Scope & Focus**: Confirm target paths and primary audit priorities (e.g., architecture invariants, security/data safety, reliability, UX/a11y, spec verification).
-3. **Deliverable & Draft Prompt**: Read [`references/dispatch-template.md`](./references/dispatch-template.md) via `read_file`/`view_file` **before** assembling the dispatch prompt so the draft locks the dynamic `R1..R<N>` contract, ADR-0004 Deduplication Barrier, `Status: not run` accounting, and acceptance criteria. Confirm output format per [`references/scorecard-rubric.md`](./references/scorecard-rubric.md) (`4 x N_seats` scorecard: 12 cells for 3 seats, 16 for 4, 20 for 5), and save the assembled prompt to `<appDataDir>\brain\<conversation-id>\prompt_draft.md`.
+3. **Deliverable & Draft Prompt**: Read [`references/dispatch-template.md`](./references/dispatch-template.md) via `read_file`/`view_file` **before** assembling the dispatch prompt so the draft locks the dynamic `R1..R<N>` contract, the Deduplication Barrier, `Status: not run` accounting, and acceptance criteria. Confirm output format per [`references/scorecard-rubric.md`](./references/scorecard-rubric.md) (`4 x N_seats` scorecard: 12 cells for 3 seats, 16 for 4, 20 for 5), and save the assembled prompt to `<appDataDir>\brain\<conversation-id>\prompt_draft.md`.
 4. **Approval Gate**: Stop and wait for explicit operator confirmation (`approve`, `proceed`, `continue`) before dispatching `teamwork`.
 
 ### Stage 3: Autonomous Council Deliberation (`teamwork`)
@@ -75,7 +75,7 @@ After operator approval, verify `<appDataDir>\brain\<conversation-id>\prompt_dra
 Internal `teamwork` execution pipeline:
 1. **Sentinel Dispatch**: Initializes `<appDataDir>\brain\<conversation-id>\scratch\<task>\` and launches the Project Orchestrator.
 2. **Phase 0 (Parallel Seat Exploration)**: Runs concurrent read-only Explorers for the `N` approved seats, citing `file.ext#Lxx-Lyy`.
-3. **Phase 1 (Chairman Synthesis & ADR-0004 Deduplication Barrier)**: Normalizes snippet keys (`${file}::${normalize(evidence)}`), collapses duplicate findings at `max(Severities)` annotating all discovering seats, and compiles `council_evaluation_report.md`.
+3. **Phase 1 (Chairman Synthesis & Deduplication Barrier)**: Normalizes snippet keys (`${file}::${normalize(evidence)}`), collapses duplicate findings at `max(Severities)` annotating all discovering seats, and compiles `council_evaluation_report.md`.
 4. **Phase 2 (Fail-Closed Adversarial & Forensic Gate)**: Reviewers check domain fidelity; Challengers stress-test `CRITICAL`/`HIGH` citations (refuted only at `>= 0.8` confidence with empirical proof; otherwise fails closed) and `4 x N_seats` arithmetic closure; Forensic Auditor confirms zero repo mutations or installs.
 5. **Phase 3 (Mandatory Victory Audit)**: `teamwork_victory_auditor` certifies completion (`VICTORY CONFIRMED`).
 

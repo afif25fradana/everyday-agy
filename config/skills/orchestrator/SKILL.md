@@ -58,7 +58,7 @@ Before opening any source file, the Parent Agent classifies task blast radius us
 ### 1.6 Subagent Commit/Push Ban, Shell Safety & Direct Parent CLI Test Runner
 - **Subagent Commit & PR Ban**: Subagents are strictly barred from running `git commit`, `git tag`, `git push`, `gh pr create`, `gh pr merge`, or `gh release create`. Commit and PR authority belongs exclusively to the Parent Agent post-Gate 2 approval.
 - **AST Shell Validation**: Any non-standard mutating or file-deleting shell command executed by Parent or Subagent must first pass `Test-PowerShellCommandSafety.ps1` per `config/GEMINI.md#L64`.
-- **Direct Parent Test Runner**: Parent must directly run the verification test command via `run_command`, verifying exit code 0 AND positive assertion count ($>0$ passed, $0$ failed per ADR-0001). For testless repos, label `[TEST HARNESS: NONE]` and verify via static compilation/linter/build checks.
+- **Direct Parent Test Runner**: Parent must directly run the verification test command via `run_command`, verifying exit code 0 AND positive assertion count ($>0$ passed, $0$ failed). For testless repos, label `[TEST HARNESS: NONE]` and verify via static compilation/linter/build checks.
 
 ### 1.7 Pre-Mutation Syntax Interception (SWE-Agent Fast Syntax Gate — SSOT)
 - **Fast Syntax Gate**: Before executing test runners or presenting verification, mutators or Parent run a rapid syntax check on modified files (`node --check <file>` or `rtk npx tsc --noEmit` for Node/JS/TS, `python -m py_compile <file>` for Python, `[System.Management.Automation.Language.Parser]::ParseFile("<file>", [ref]$null, [ref]$err)` for PowerShell).
@@ -125,7 +125,7 @@ Parent dispatches targeted custom subagents directly via `invoke_subagent`:
 - Quality Gate: `code-auditor` or `silent-failure-hunter` (diff review against [`audit-dev`](../audit-dev/SKILL.md)).
 
 > [!NOTE]
-> **Dynamic Model Elevation & Workspace Mode (ADR-0001 / ADR-0002)**: Across the 10-agent fleet, `build-error-resolver` and `maintenance-bot` default to `model: flash` while the other 8 specialists default to `model: inherit`. When Parent Orchestrator runs on `flash`, `Model: "inherit"` remains on `flash`; pass `Model: "pro"` dynamically in `invoke_subagent` to elevate `spec-verifier`, `system-architect`, or `docs-architect` for third-party API verification or high-stakes architectural synthesis. Default to `Workspace: inherit` to avoid Windows file locks and `node_modules` duplication, writing intermediate reports to `<appDataDir>\brain\<conversation-id>\scratch\<task>\`.
+> **Dynamic Model Elevation & Workspace Mode**: Across the 10-agent fleet, `build-error-resolver` and `maintenance-bot` default to `model: flash` while the other 8 specialists default to `model: inherit`. When Parent Orchestrator runs on `flash`, `Model: "inherit"` remains on `flash`; pass `Model: "pro"` dynamically in `invoke_subagent` to elevate `spec-verifier`, `system-architect`, or `docs-architect` for third-party API verification or high-stakes architectural synthesis. Default to `Workspace: inherit` to avoid Windows file locks and `node_modules` duplication, writing intermediate reports to `<appDataDir>\brain\<conversation-id>\scratch\<task>\`.
 
 ---
 
@@ -219,6 +219,6 @@ Return ONLY the compact <= 15-line summary defined in ## Output of your agent.md
 | :--- | :--- | :--- |
 | *"I'll just read one target file to understand the bug."* | Reading 1 file invariably escalates to reading 5 files, burning 30k tokens and degrading reasoning. | Use `rtk rg -l` and `rtk rg -c` for Zero-Read Triage. Dispatch `system-architect` or `code-auditor`. |
 | *"Direct reading is faster than spawning a subagent."* | Inline reading pollutes Parent context, triggering middle-loss, dropped safety checks, and hallucinated test passes. | Subagent dispatch takes 1 turn and guarantees context insulation. |
-| *"The task is small enough that I don't need a subagent."* | If it crosses module boundaries (>1 module or >2 non-test files) or requires architectural redesign, it is Tier 2 by definition (ADR-0001). | Follow the Zero-Read Triage Gate strictly; do not rationalize away Tier 2 boundaries. |
+| *"The task is small enough that I don't need a subagent."* | If it crosses module boundaries (>1 module or >2 non-test files) or requires architectural redesign, it is Tier 2 by definition. | Follow the Zero-Read Triage Gate strictly; do not rationalize away Tier 2 boundaries. |
 | *"The subagent reported green, so I can commit directly."* | Subagents may mock-cheat, delete tests, or suffer from Exit Code 0 fallacies. | Parent independently runs CLI tests (`run_command`) and validates $>0$ passed assertions. |
-| *"Two subagents failed, let me read the code to fix it myself."* | Violates the 2-Attempt Stop Rule and ADR-0001 clean-fail invariant. | Execute `$HOME\.gemini\config\scripts\Restore-AuditCheckpoint.ps1`, record failure evidence, and escalate to human operator. |
+| *"Two subagents failed, let me read the code to fix it myself."* | Violates the 2-Attempt Stop Rule and clean-fail invariant. | Execute `$HOME\.gemini\config\scripts\Restore-AuditCheckpoint.ps1`, record failure evidence, and escalate to human operator. |

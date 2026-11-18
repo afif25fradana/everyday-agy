@@ -39,7 +39,7 @@ Generate the certified report at `<appDataDir>\brain\<conversation-id>\scratch\<
 1. Executive Summary, Chairman Verdict, Composite Score (`X.XX / 5.0`), and Grade (`A+`, `A`, `B+`, `B`, or `C`).
 2. Dynamic `4 x <N>` Numerical Scorecard Matrix (scale 1.0-5.0 across all `<N>` active seats and 4 rubric axes with verified arithmetic closure).
 3. Concrete Discrepancies anchored strictly to `file.ext#Lxx-Lyy`.
-4. Prioritized Gap Matrix (`CRITICAL`, `HIGH`, `MEDIUM`, `LOW`) collapsed via ADR-0004 Deduplication Barrier (`${file}::${normalize(evidence)}`, `max(Severities)`).
+4. Prioritized Gap Matrix (`CRITICAL`, `HIGH`, `MEDIUM`, `LOW`) collapsed via the Deduplication Barrier (`${file}::${normalize(evidence)}`, `max(Severities)`).
 5. Non-breaking actionable optimization roadmap.
 
 ## Acceptance Criteria & Adversarial Verification

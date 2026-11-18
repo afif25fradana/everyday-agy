@@ -25,8 +25,8 @@ Enforces strict size limits (target: **<= 8,192 bytes** and **<= 100 lines**) wh
     1. *Active Capture*: Record tactical pitfalls into `## Known Edge Cases` during execution.
     2. *Code Inlining*: Permanent tactical workarounds are inlined directly into code comments per `clean-docs` (explaining *why*).
     3. *ADR Promotion*: Significant decisions altering protocols, dependencies, or security boundaries are promoted to `docs/adr/` and removed from `task_state.md`.
-  - **Architectural Decisions**: Decisions that choose dependencies, protocols, security policies, or data models must be documented in `docs/adr/NNNN-<slug>.md` per `documentation-and-adrs`. Edge cases that inspired an ADR should simply include a link: `[ADR-0002: Agent Fleet, Model Split, and External Skills](../../../docs/adr/0002-agent-fleet-model-split-and-external-skills.md)`.
-- **Commit Authority Boundary (ADR-0001 Subagent Commit Ban)**:
+  - **Architectural Decisions**: Decisions that choose dependencies, protocols, security policies, or data models must be documented in `docs/adr/NNNN-<slug>.md` per `documentation-and-adrs`. Edge cases that inspired an ADR should simply include a link: `[ADR-NNNN: <Short Title>](docs/adr/NNNN-<slug>.md)`.
+- **Commit Authority Boundary (Subagent Commit Ban)**:
   - Subagents (`docs-architect`, `system-architect`) may edit and validate `task_state.md` (Steps 1–4), but **MUST NOT** execute `git commit`. Staging and committing `task_state.md` (Step 5) belongs exclusively to the **Parent Agent** after operator approval.
 
 ---

@@ -12,7 +12,7 @@ description: "Interactive skill authoring (/skill-creator): progressive disclosu
 
 Plain-spoken runbook for authoring, evaluating, and tuning bespoke and ported skills for Google Antigravity. In `everyday-agy`, skills are concise, focused Markdown files (`SKILL.md`) with clean progressive disclosure and zero speculative code bloat.
 
-Governed by `GEMINI.md`, `clean-docs`, `coding-standards`, and ADR-0002. Automated batch evaluations run through native subagent sessions (`system-architect`, `code-auditor`, `spec-verifier`) or headless `agy -p` CLI externally.
+Governed by `GEMINI.md`, `clean-docs`, and `coding-standards`. Automated batch evaluations run through native subagent sessions (`system-architect`, `code-auditor`, `spec-verifier`) or headless `agy -p` CLI externally.
 
 ---
 
@@ -79,7 +79,7 @@ When automated command-line evaluation is required across multiple test cases, e
 ```powershell
 agy -p "Evaluate task 1 with skill candidate" --print-timeout 60s
 ```
-*Note: In-tree dotfile repositories remain pure Markdown. Automation harnesses and test runners reside externally per ADR-0002.*
+*Note: In-tree dotfile repositories remain pure Markdown. Automation harnesses and test runners reside externally.*
 
 ---
 

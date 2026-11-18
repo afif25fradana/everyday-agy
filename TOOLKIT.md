@@ -107,14 +107,14 @@ These skills and plugins live in their own upstream repositories with dedicated 
 | **Impeccable** | `impeccable` | Production-grade frontend UI/UX design, visual craft floor, redesigns, and accessibility across web and native platforms. | [pbakaus/impeccable](https://www.npmjs.com/package/impeccable) *(Apache-2.0)* |
 | **Ponytail Suite** | `ponytail`<br>`ponytail-audit`<br>`ponytail-review`<br>`ponytail-debt`<br>`ponytail-gain`<br>`ponytail-help` | Lazy senior developer mode: shortest working diffs, YAGNI enforcement, repo audits, and debt ledgers. | [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail) |
 | **Chrome DevTools** | `chrome-devtools`<br>`a11y-debugging`<br>`cookie-debugging`<br>`debug-optimize-lcp`<br>`memory-leak-debugging`<br>`troubleshooting` | Browser automation, accessibility auditing, cookie debugging, Core Web Vitals (LCP) optimization, and heap snapshots. | [ChromeDevTools/chrome-devtools-mcp](https://github.com/ChromeDevTools/chrome-devtools-mcp)<br>*(Antigravity Marketplace)* |
-| **Modern Web Guidance** | `modern-web-guidance`<br>`chrome-extensions` | Best practices for modern web platform APIs (popovers, container queries, view transitions) and Chrome Extensions Manifest V3. | [GoogleChrome/modern-web-guidance](https://github.com/GoogleChrome/modern-web-guidance)<br>*(Optional Antigravity Marketplace — not installed locally)* |
+| **Modern Web Guidance** | `modern-web-guidance`<br>`chrome-extensions` | Modern web platform API guidance (popovers, container queries, view transitions) and Chrome Extensions Manifest V3; mapped to `web-optimizer`. | [GoogleChrome/modern-web-guidance](https://github.com/GoogleChrome/modern-web-guidance)<br>*(Antigravity Marketplace — `modern-web-guidance-plugin` `v1.0.1`; requires Node `>= 22.0.0`)* |
 | **Android CLI** | `android-cli` | Project scaffolding, emulator control, layout tree inspection, and visual validation for Android development. | [developer.android.com/tools/agents/android-cli](https://developer.android.com/tools/agents/android-cli)<br>*(Antigravity Marketplace)* |
 
 ---
 
 ## 5. Custom Subagents
 
-Specialized agents available for delegation in Antigravity across an 8 `inherit` / 2 `flash` fleet split (ADR-0002):
+11 custom subagents available for delegation in Antigravity across a 9 `model: inherit` / 2 `model: flash` split, with 6 `inheritMcp: true` agents (`system-architect`, `code-auditor`, `spec-verifier`, `ui-crafter`, `web-optimizer`, `build-error-resolver`) per ADR-0002:
 
 | Agent Name | Model Tier | Tools Boundary | Core Responsibility |
 |---|:---:|---|---|
@@ -126,8 +126,9 @@ Specialized agents available for delegation in Antigravity across an 8 `inherit`
 | **build-error-resolver** | `model: flash` | Read, Replace, Run, MCP (inheritMcp: true) *(No write)* | Resolves compiler, typecheck, and build errors with shortest working diffs. |
 | **docs-architect** | `model: inherit` | Read, Write, Replace, Run | Updates technical documentation, owns Nygard ADRs and public repository docs, and syncs AI-Context repositories (ADR-0002, ADR-0005). |
 | **maintenance-bot** | `model: flash` | Read, Write, Replace, Run | Dependabot PR triage, CI failure diagnosis, and CVE remediation. |
-| **ui-crafter** | `model: inherit` | Read, Write, Replace, Run, MCP (inheritMcp: true) | Full landing pages/sites (`impeccable`), existing app component edits, WCAG 2.2 AA accessibility, and Generative UI widgets. |
+| **ui-crafter** | `model: inherit` | Read, Write, Replace, Run, MCP (inheritMcp: true, Context7 only) | Frontend visual design: landing pages, design systems, app components (`impeccable`), WCAG 2.2 AA visual accessibility, and Generative UI widgets (`generative_ui`); excludes browser DevTools skills. |
 | **l10n-humanizer** | `model: inherit` | Read, Write, Replace, Run | Dual-Scope UI/UX localization (Microsoft Indonesian style guide) and second-pass bilingual prose humanization (anti-AI rules, fact lock). |
+| **web-optimizer** | `model: inherit` | Read, Write, Replace, Run, MCP (inheritMcp: true) | Runtime web performance and Chrome DevTools MCP diagnostics (LCP, memory leaks, runtime a11y, cookies), web platform API updates (`modern-web-guidance`), and Chrome Extensions (MV3); supports read-only audits or closed-loop optimization and pairs with `ui-crafter` in the Conditional Frontend Duet. |
 
 ---
 

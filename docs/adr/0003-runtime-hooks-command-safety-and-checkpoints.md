@@ -4,7 +4,7 @@
 Accepted
 
 ## Date
-2026-11-17
+2026-11-18
 
 ## Context
 Text-only rules in `config/GEMINI.md` are easy for models to overlook during long sessions, while Node.js wrappers and POSIX shell hooks break on Windows PowerShell 5.1 (where `&&` and `||` fail to parse and bash heredocs error out). Running autonomous edits on Windows also exposed specific failure modes across command filtering, rollbacks, diff generation, and CI validation:
@@ -38,7 +38,7 @@ All five runtime, safety, checkpoint, and diff scripts (`Invoke-AntigravityHook.
 
 ### 4. Two-Layer YAML Validation, Standalone `.Tests.ps1`, and CI Matrix
 - **Two-layer YAML validation**:
-  - *Layer 1 (`YamlValidation.Tests.ps1`)*: A zero-dependency PowerShell validator running on both PS 5.1 and `pwsh` 7.6 that inspects `.github/**/*.yml`, agent manifests (10 agents, `subagent: true`, `mainAgent: false`, no `ask_question`, no `call_mcp_tool`, `build-error-resolver` missing `write_to_file`), skill frontmatter (16 skills, `<= 128` chars, quoted `: `), `hooks.json` matcher structure, all 5 `config/scripts/*.ps1` AST checks, `subagent-patterns.md` and `config/skills/orchestrator/scripts` absence, and `sync.ps1`/`restore.ps1` AST parity.
+  - *Layer 1 (`YamlValidation.Tests.ps1`)*: A zero-dependency PowerShell validator running on both PS 5.1 and `pwsh` 7.6 that inspects `.github/**/*.yml`, agent manifests (11 agents, `9 inherit / 2 flash` model split, `6` `inheritMcp: true` agents, `subagent: true`, `mainAgent: false`, no `ask_question`, no `call_mcp_tool`, `build-error-resolver` missing `write_to_file`, `ui-crafter` retaining `inheritMcp` and craft skills while omitting DevTools & `modern-web-guidance` skills, and `web-optimizer` declaring `inherit`, `inheritMcp: true`, mutator tools, and all 8 plugin skills), skill frontmatter (16 skills, `<= 128` chars, quoted `: `), `hooks.json` matcher structure, all 5 `config/scripts/*.ps1` AST checks, `subagent-patterns.md` and `config/skills/orchestrator/scripts` absence, and `sync.ps1`/`restore.ps1` AST parity.
   - *Layer 2 (`.yamllint.yml`)*: Validates `.github/` YAML files in CI (`2`-space indent, `key-duplicates: enable`, ignoring `/config/agents/`, `/config/skills/`, `/docs/`).
 - **Standalone `.Tests.ps1` isolation (`.github/tests/`)**: I moved `Test-PowerShellCommandSafety.Tests.ps1`, `AuditCheckpoint.Tests.ps1`, and `YamlValidation.Tests.ps1` out of `config/skills/` into `.github/tests/` so `restore.ps1` never copies CI test suites into `~/.gemini/`. I kept standalone assertion helpers instead of Pester so tests run identically on `windows-latest` (PS 5.1 + `pwsh`) and `ubuntu-latest` (`pwsh`) with zero third-party installs.
 - **CI Index & Credential Gates (`.github/workflows/ci.yml`)**: Enforces the `5-8` Living Domain ADR count bound with case-sensitive `[System.StringComparer]::Ordinal` two-way bijection parity against `docs/adr/README.md`, alongside the non-binary credential scanner shared with `sync.ps1` and `restore.ps1`.

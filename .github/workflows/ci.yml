@@ -97,8 +97,8 @@ jobs:
         shell: pwsh
         run: |
           $agents = Get-ChildItem -Path "config/agents" -Directory
-          if ($agents.Count -ne 10) {
-            Write-Error "Expected exactly 10 agents, found $($agents.Count)"
+          if ($agents.Count -ne 11) {
+            Write-Error "Expected exactly 11 agents, found $($agents.Count)"
             exit 1
           }
           foreach ($a in $agents) {

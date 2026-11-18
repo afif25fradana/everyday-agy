@@ -157,6 +157,11 @@ Write-Host "`n[2] Validating Custom Agent Frontmatter..." -ForegroundColor White
 $agents = @(Get-ChildItem -LiteralPath (Join-Path $repoRoot "config/agents") -Directory)
 Assert-Test -Name "Custom agent directories discovered under config/agents" -Condition ($agents.Count -ge 1) -Details "No agent directories found under config/agents"
 
+$agentFrontmatters = @{}
+$inheritCount = 0
+$flashCount = 0
+$inheritMcpCount = 0
+
 foreach ($a in $agents) {
     $agentFile = Join-Path $a.FullName "agent.md"
     if (-not (Test-Path -LiteralPath $agentFile)) {
@@ -173,6 +178,10 @@ foreach ($a in $agents) {
 
     if ($hasFrontmatter) {
         $frontmatter = $Matches[1]
+        $agentFrontmatters[$a.Name] = $frontmatter
+        if ($frontmatter -match '(?m)^model:\s+inherit\s*$') { $inheritCount++ }
+        if ($frontmatter -match '(?m)^model:\s+flash\s*$') { $flashCount++ }
+        if ($frontmatter -match '(?m)^inheritMcp:\s+true\s*$') { $inheritMcpCount++ }
         $syntaxResult = Test-YamlBlockSyntax -Content $frontmatter -FilePath $agentFile
         Assert-Test -Name "Agent frontmatter syntax ($($a.Name))" -Condition ($syntaxResult.Success) -Details ($syntaxResult.Error)
 
@@ -198,6 +207,48 @@ foreach ($a in $agents) {
         }
     }
 }
+
+Assert-Test -Name "Custom agent fleet count equals 11" -Condition ($agents.Count -eq 11) -Details "Found $($agents.Count) agents"
+Assert-Test -Name "Agent model split matches 9 inherit / 2 flash" -Condition ($inheritCount -eq 9 -and $flashCount -eq 2) -Details "Found $inheritCount inherit / $flashCount flash"
+Assert-Test -Name "Agent inheritMcp: true count matches 6" -Condition ($inheritMcpCount -eq 6) -Details "Found $inheritMcpCount agents with inheritMcp: true"
+
+$webPluginSkills = @(
+    "chrome-devtools",
+    "debug-optimize-lcp",
+    "memory-leak-debugging",
+    "a11y-debugging",
+    "cookie-debugging",
+    "troubleshooting",
+    "modern-web-guidance",
+    "chrome-extensions"
+)
+
+$uiBoundaryOk = $false
+$uiBoundaryDetails = "Missing config/agents/ui-crafter/agent.md"
+if ($agentFrontmatters.ContainsKey("ui-crafter")) {
+    $uiFm = $agentFrontmatters["ui-crafter"]
+    $uiHasMcp = ($uiFm -match '(?m)^inheritMcp:\s+true\s*$')
+    $uiHasImpeccable = ($uiFm -match '(?m)^\s*-\s+impeccable\s*$')
+    $uiHasGenUi = ($uiFm -match '(?m)^\s*-\s+generative_ui\s*$')
+    $uiForbiddenFound = @($webPluginSkills | Where-Object { $uiFm -match ('(?m)^\s*-\s+' + [regex]::Escape($_) + '\s*$') })
+    $uiBoundaryOk = $uiHasMcp -and $uiHasImpeccable -and $uiHasGenUi -and ($uiForbiddenFound.Count -eq 0)
+    $uiBoundaryDetails = "inheritMcp=$uiHasMcp impeccable=$uiHasImpeccable generative_ui=$uiHasGenUi forbidden=$($uiForbiddenFound -join ', ')"
+}
+Assert-Test -Name "ui-crafter retains inheritMcp + craft skills and omits DevTools/Modern Web Guidance skills" -Condition $uiBoundaryOk -Details $uiBoundaryDetails
+
+$webOptOk = $false
+$webOptDetails = "Missing config/agents/web-optimizer/agent.md"
+if ($agentFrontmatters.ContainsKey("web-optimizer")) {
+    $woFm = $agentFrontmatters["web-optimizer"]
+    $woModel = ($woFm -match '(?m)^model:\s+inherit\s*$')
+    $woMcp = ($woFm -match '(?m)^inheritMcp:\s+true\s*$')
+    $woTools = @("view_file", "write_to_file", "replace_file_content", "run_command")
+    $woMissingTools = @($woTools | Where-Object { $woFm -notmatch ('(?m)^\s*-\s+' + [regex]::Escape($_) + '\s*$') })
+    $woMissingSkills = @($webPluginSkills | Where-Object { $woFm -notmatch ('(?m)^\s*-\s+' + [regex]::Escape($_) + '\s*$') })
+    $webOptOk = $woModel -and $woMcp -and ($woMissingTools.Count -eq 0) -and ($woMissingSkills.Count -eq 0)
+    $webOptDetails = "model=$woModel inheritMcp=$woMcp missingTools=$($woMissingTools -join ', ') missingSkills=$($woMissingSkills -join ', ')"
+}
+Assert-Test -Name "web-optimizer declares inherit, inheritMcp: true, mutator tools, and all 8 plugin skills" -Condition $webOptOk -Details $webOptDetails
 
 # ---------------------------------------------------------
 # Part 3: Bundled Skills Frontmatter (config/skills/*/SKILL.md)

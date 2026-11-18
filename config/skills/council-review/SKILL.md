@@ -93,6 +93,6 @@ Once `teamwork` finishes, Parent reads `<appDataDir>\brain\<conversation-id>\scr
 
 ## References (Read On-Demand)
 
-- [`references/seat-catalog.md`](./references/seat-catalog.md): 10 custom specialist seats, model tiers, and recommended bundles.
+- [`references/seat-catalog.md`](./references/seat-catalog.md): 11 custom specialist seats, model tiers, and recommended bundles.
 - [`references/dispatch-template.md`](./references/dispatch-template.md): Parameterized `teamwork` prompt contract (`R1..R<N>`) and acceptance checklist.
 - [`references/scorecard-rubric.md`](./references/scorecard-rubric.md): 4-axis rubric, `4 x N_seats` arithmetic closure rules, grading scale, and Chairman report template.

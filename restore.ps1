@@ -326,4 +326,4 @@ Write-Host ">>> Note: For Context7 MCP setup, refer to README.md and TOOLKIT.md.
 Write-Host ">>> Tip: Recommended upstream skills & plugins (refer to official docs for Antigravity install):" -ForegroundColor Cyan
 Write-Host "    - Impeccable (frontend craft & UI design): https://www.npmjs.com/package/impeccable" -ForegroundColor DarkGray
 Write-Host "    - Ponytail (lazy dev mode & audits):  https://github.com/DietrichGebert/ponytail" -ForegroundColor DarkGray
-Write-Host "    - Chrome DevTools: Install via Antigravity Marketplace" -ForegroundColor DarkGray
+Write-Host "    - Chrome DevTools & Modern Web Guidance: Install via Antigravity Marketplace" -ForegroundColor DarkGray

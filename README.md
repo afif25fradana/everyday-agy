@@ -20,7 +20,7 @@ I tweak this setup constantly as I try new patterns and hit edge cases. Some par
 
 > [!WARNING]
 > **Token Consumption Warning: `council-review` & `teamwork`**
-> Running the `council-review` skill triggers Antigravity's `teamwork` engine. A council run selects specialized reviewer seats from the 10-agent fleet based on evaluation signals across review phases (Sentinel, Orchestrator, Parallel Domain Explorers, Adversarial Challengers, and Victory Auditor).
+> Running the `council-review` skill triggers Antigravity's `teamwork` engine. A council run selects specialized reviewer seats from the 11-agent fleet based on evaluation signals across review phases (Sentinel, Orchestrator, Parallel Domain Explorers, Adversarial Challengers, and Victory Auditor).
 >
 > This multi-agent deliberation consumes significant tokens. Save `council-review` for major architectural decisions, security reviews, and pre-release gates rather than routine edits.
 
@@ -38,7 +38,7 @@ everyday-agy/
 │   ├── GEMINI.md        # Tracked global operational rules deployed to ~/.gemini/GEMINI.md
 │   ├── hooks.json       # Native Antigravity PreToolUse/PostToolUse hook definitions
 │   ├── scripts/         # Native hook router, AST command safety, checkpoints & diffs (5 scripts)
-│   ├── agents/          # 10 specialized subagents with hybrid model tiering (ADR-0002)
+│   ├── agents/          # 11 specialized subagents with hybrid model tiering (ADR-0002)
 │   └── skills/          # 16 bespoke and engine-adapted workflow skills
 ├── docs/
 │   └── adr/             # Living Domain Architectural Decision Records (Nygard format)
@@ -56,18 +56,18 @@ The global rules file stays intentionally lean—focusing on active boundaries r
 
 ### Specialized Agent Roles (`config/agents/`)
 
-I run 10 custom subagents with an 8 `model: inherit` / 2 `model: flash` split (ADR-0002) backed by native `hooks.json` enforcement. Google Antigravity's official docs barely explain how subagent routing or thinking budgets actually work under the hood, and subagent frontmatter doesn't let you pick specific model variants or thinking effort levels.
+I run 11 custom subagents with a 9 `model: inherit` / 2 `model: flash` split (ADR-0002) backed by native `hooks.json` enforcement. Google Antigravity's official docs barely explain how subagent routing or thinking budgets actually work under the hood, and subagent frontmatter doesn't let you pick specific model variants or thinking effort levels.
 
-I use `Gemini 3.8 Flash (High)` as my daily driver on a free/Jio trial tier instead of burning tokens on `Gemini 4 Argon`. Flash works well, but as a parent orchestrator it occasionally drops multi-step constraints. Native `hooks.json` guards catch those slips at runtime, while `model: inherit` keeps the 8 reasoning and craft specialists on `High` thinking from the main session rather than dropping them into a weaker default Flash worker:
+I use `Gemini 3.8 Flash (High)` as my daily driver on a free/Jio trial tier instead of burning tokens on `Gemini 4 Argon`. Flash works well, but as a parent orchestrator it occasionally drops multi-step constraints. Native `hooks.json` guards catch those slips at runtime, while `model: inherit` keeps the 9 reasoning, craft, and web optimization specialists on `High` thinking from the main session rather than dropping them into a weaker default Flash worker:
 
-- **Analytical, Craft & Architecture Roles** (`model: inherit`): Inherit the primary session model for planning, audits, test design, documentation, localization, and UI craft (`system-architect`, `code-auditor`, `silent-failure-hunter`, `spec-verifier`, `tdd-guide`, `docs-architect`, `l10n-humanizer`, `ui-crafter`).
+- **Analysis, Architecture, Craft & Web Roles** (`model: inherit`): Inherit the primary session model for planning, audits, test design, documentation, localization, UI craft, and runtime web optimization (`system-architect`, `code-auditor`, `silent-failure-hunter`, `spec-verifier`, `tdd-guide`, `docs-architect`, `l10n-humanizer`, `ui-crafter`, `web-optimizer`).
 - **Build Fix & Maintenance Roles** (`model: flash`): Run on Flash for fast single-file compiler fixes and dependency maintenance (`build-error-resolver`, `maintenance-bot`).
 
 For the full agent directory, tool boundaries, and delegation parameters, see **[Custom Subagents Fleet in TOOLKIT.md](./TOOLKIT.md#5-custom-subagents)**.
 
 ### Workflow Skills (`config/skills/`)
 
-I maintain 16 workflow skills directly in `config/skills/`. Third-party suites (`ponytail`, `impeccable`, and Chrome DevTools) are kept outside git tracking per ADR-0002 and installed straight from their upstream repos:
+I maintain 16 workflow skills directly in `config/skills/`. Third-party suites stay outside git tracking per ADR-0002 and install straight from their upstream repos or the Antigravity Marketplace, including `ponytail`, `impeccable`, Chrome DevTools, and Modern Web Guidance (`modern-web-guidance` + `chrome-extensions`).
 
 | Category | Count | Included Skills | Origin / Licensing |
 |---|:---:|---|---|

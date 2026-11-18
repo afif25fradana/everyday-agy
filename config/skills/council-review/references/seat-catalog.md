@@ -1,6 +1,6 @@
 # Council Seat Catalog & Agent Mapping (`seat-catalog.md`)
 
-This catalog maps evaluation domains to specialized Antigravity custom subagents (`config/agents/`). Each seat functions as an independent reviewer during Stage 3 council deliberation, adhering to the 8 `inherit` / 2 `flash` fleet split.
+This catalog maps evaluation domains to specialized Antigravity custom subagents (`config/agents/`). Each seat functions as an independent reviewer during Stage 3 council deliberation across 11 seats, adhering to the 9 `inherit` / 2 `flash` fleet split.
 
 ---
 
@@ -30,11 +30,11 @@ This catalog maps evaluation domains to specialized Antigravity custom subagents
 - **Domain Focus**: Test-Driven Development (Red-Green-Refactor), mock-cheating detection, assertion veracity, boundary condition testing, and mutation testing.
 - **Evaluation Mandate**: Validates that unit tests verify real state mutations rather than superficial `mock.called` assertions.
 
-### Seat 5: Frontend UX & Platform Primitives
+### Seat 5: Frontend UX, Visual Craft & Accessibility
 - **Mapped Custom Agent**: [`ui-crafter`](../../../agents/ui-crafter/agent.md)
 - **Default Model**: `inherit`
-- **Domain Focus**: Web platform primitives, WCAG 2.2 AA accessibility, layout shifts, dark mode, keyboard navigation, and anti-slop UI design.
-- **Evaluation Mandate**: Audits ARIA roles, focus states, tap targets, and layout overflow.
+- **Domain Focus**: Visual design craft (`impeccable`), design systems (`PRODUCT.md`/`DESIGN.md`), WCAG 2.2 AA visual ergonomics, native HTML/CSS platform primitives, Generative UI widgets (`generative_ui`), Context7 MCP library verification, and anti-slop UI design. (Live Chrome DevTools runtime profiling routes to Seat 11.)
+- **Evaluation Mandate**: Audits visual hierarchy, contrast ratios, ARIA roles, focus states, tap targets, layout overflow, and design-token consistency.
 
 ---
 
@@ -73,6 +73,12 @@ This catalog maps evaluation domains to specialized Antigravity custom subagents
 - **Domain Focus**: Software localization (L10n), UI translation, Microsoft Indonesian style guide consistency, UX microcopy conciseness, XML/JSON escaping, and bilingual prose humanization (anti-AI writing rules, fact lock).
 - **Evaluation Mandate**: Audits localized resource files (`.resw`, `.json`, `.resx`), keyboard mnemonics (`&amp;`), character expansion budgets, and humanized translation flow.
 
+### Seat 11: Web Performance, DevTools & Platform Modernization
+- **Mapped Custom Agent**: [`web-optimizer`](../../../agents/web-optimizer/agent.md)
+- **Default Model**: `inherit`
+- **Domain Focus**: Runtime web performance (LCP/CWV traces, render-blocking resources), heap memory leak analysis, live Chrome DevTools MCP accessibility and cookie/session debugging, Baseline web platform modernization (`modern-web-guidance` / `legacy-scan`), and Chrome Extension MV3 compliance (`chrome-extensions`).
+- **Evaluation Mandate**: Audits live runtime bottlenecks, detached DOM/listener leaks, a11y tree vs DOM mismatches, `Set-Cookie`/SameSite/consent behavior, legacy web API fallbacks, and MV3 manifest/CSP security boundaries.
+
 ---
 
 ## 3. Recommended Seat Bundles by Task Type
@@ -86,3 +92,4 @@ This catalog maps evaluation domains to specialized Antigravity custom subagents
 | **Database & Schema Modification** | `code-auditor` + `system-architect` + `silent-failure-hunter` |
 | **Library Upgrade / Modernization** | `maintenance-bot` + `build-error-resolver` + `spec-verifier` |
 | **Skill & Workflow Tooling Audit** | `system-architect` + `code-auditor` + `docs-architect` + `spec-verifier` (Community Benchmark) |
+| **Web Performance, Runtime A11y & MV3 Modernization** | `web-optimizer` + `ui-crafter` + `code-auditor` + `spec-verifier` |

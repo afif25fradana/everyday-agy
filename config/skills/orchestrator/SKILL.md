@@ -17,7 +17,7 @@ A high-rigor governance runbook enforcing Anthropic Lead-Agent context insulatio
 ### 1.1 Role-Scoped Execution & Context Insulation Invariant
 - **Parent Lead Orchestrator (`invoke_subagent` present)**: On Tier 2 (`standard`) and Tier 3 (`large`) tasks, the Parent Agent is strictly prohibited from invoking `read_file` or `view_file` on application source code (`src/**`, `core/**`, `web/**`, `lib/**`, business logic implementations) AND strictly barred from calling `replace_file_content`, `multi_replace_file_content`, `write_to_file`, `edit_file`, or `write_file` on any workspace repository file. Parent write tools on Tier 2/3 are restricted strictly to session artifacts under `<appDataDir>\brain\<conversation-id>\*.md` and scratch files.
 - **Allowed Parent Reads**: High-level task coordination files (`task_state.md`, ADR summaries, `specs/<feature>/*.md`), intermediate subagent dossiers in scratch (`<appDataDir>\brain\<conversation-id>\scratch\<task>\` or `$HOME/.gemini/antigravity/scratch/<task>/`), git tracking receipts (`rtk git status --short`, `rtk git diff --stat`), CLI test output, and raw `git --no-pager diff HEAD` / `git --no-pager diff --stat` specifically for programmatic Gate 2 artifact injection.
-- **Execution Specialist Subagents (`invoke_subagent` absent)**: Deep code reading, syntax analysis, code editing, and test authoring belong exclusively to subagents. Mutating specialists (`tdd-guide`, `ui-crafter`, `docs-architect`, `l10n-humanizer`, `maintenance-bot`, `build-error-resolver`) are explicitly authorized to edit granted `<SCOPE>` paths within the active repository or sibling `<Project>-AI-Context` repo. Read-only specialists (`code-auditor`, `silent-failure-hunter`, `spec-verifier`, `system-architect`) write exclusively to `scratch/` dossiers.
+- **Execution Specialist Subagents (`invoke_subagent` absent)**: Deep code reading, syntax analysis, code editing, and test authoring belong exclusively to subagents. Mutating specialists (`tdd-guide`, `ui-crafter`, `web-optimizer`, `docs-architect`, `l10n-humanizer`, `maintenance-bot`, `build-error-resolver`) are explicitly authorized to edit granted `<SCOPE>` paths within the active repository or sibling `<Project>-AI-Context` repo. Read-only specialists (`code-auditor`, `silent-failure-hunter`, `spec-verifier`, `system-architect`) write exclusively to `scratch/` dossiers.
 
 ### 1.2 Zero-Read Triage Gate (Step 0 Blast Radius Sizing — SSOT)
 Before opening any source file, the Parent Agent classifies task blast radius using **zero-read metadata commands only**:
@@ -94,12 +94,14 @@ flowchart TD
     T1Exec --> P4Local["Phase 4 Verification"]
     
     CkptT2 -->|"Bugfix / Feature"| S2["Phase 3 Single-Pass Mutator: tdd-guide<br/>RED Test -> GREEN Fix -> Fast Syntax Check"]
-    CkptT2 -->|"Domain Specialist"| S3["Phase 3 Domain Specialist: ui-crafter /<br/>build-error-resolver / maintenance-bot"]
+    CkptT2 -->|"Domain Specialist"| S3["Phase 3 Domain Specialist: ui-crafter / web-optimizer /<br/>build-error-resolver / maintenance-bot"]
+    CkptT2 -->|"Full Web App / Redesign"| S3FeDuet["Phase 3 Frontend Duet:<br/>Stage 3a: ui-crafter (Visual Craft & Tokens)<br/>-> Stage 3b: web-optimizer (DevTools & Baseline)"]
     CkptT2 -->|"Tier 2/3 Public Docs"| S3Duet["Phase 3 Mode B Duet:<br/>Stage 3a: docs-architect (Structure & Claims)<br/>-> Stage 3b: l10n-humanizer (Scope B Anti-Slop)"]
     CkptT2 -->|"ADR / task_state"| S3ModeA["Phase 3 Single-Pass: docs-architect (Mode A)"]
     
     S2 --> S4["Phase 4 Stage 4a: Diff Audit<br/>code-auditor (audit-dev Five-Axis Rubric)"]
     S3 --> S4
+    S3FeDuet --> S4
     S3Duet --> S4
     S3ModeA --> S4
     
@@ -121,11 +123,11 @@ Parent dispatches targeted custom subagents directly via `invoke_subagent`:
 - Discovery: `system-architect` (contracts/topology), `code-auditor` (hygiene/security/database schema & migrations).
 - Vendor Specification Grounding: `spec-verifier` (Context7 MCP & [`deep-web-research`](../deep-web-research/SKILL.md) API checks).
 - Test & Feature Implementation (Post-Gate 1 & Post-Checkpoint): `tdd-guide` (Single-Pass Red-Green-Refactor, boundary assertions).
-- Focused Mutators: `ui-crafter` (frontend UI/accessibility), `build-error-resolver` (type/compiler errors via `replace_file_content`), `docs-architect` (ADRs/docs/`task_state.md`), `l10n-humanizer` (localization resources & bilingual prose), `maintenance-bot` (CI/Dependabot).
+- Focused Mutators: `ui-crafter` (visual UI craft, design tokens & Generative UI widgets), `web-optimizer` (DevTools perf/memory/a11y/cookie optimization, Baseline modernization & MV3 extensions), `build-error-resolver` (type/compiler errors via `replace_file_content`), `docs-architect` (ADRs/docs/`task_state.md`), `l10n-humanizer` (localization resources & bilingual prose), `maintenance-bot` (CI/Dependabot).
 - Quality Gate: `code-auditor` or `silent-failure-hunter` (diff review against [`audit-dev`](../audit-dev/SKILL.md)).
 
 > [!NOTE]
-> **Dynamic Model Elevation & Workspace Mode**: Across the 10-agent fleet, `build-error-resolver` and `maintenance-bot` default to `model: flash` while the other 8 specialists default to `model: inherit`. When Parent Orchestrator runs on `flash`, `Model: "inherit"` remains on `flash`; pass `Model: "pro"` dynamically in `invoke_subagent` to elevate `spec-verifier`, `system-architect`, or `docs-architect` for third-party API verification or high-stakes architectural synthesis. Default to `Workspace: inherit` to avoid Windows file locks and `node_modules` duplication, writing intermediate reports to `<appDataDir>\brain\<conversation-id>\scratch\<task>\`.
+> **Dynamic Model Elevation & Workspace Mode**: Across the 11-agent fleet, `build-error-resolver` and `maintenance-bot` default to `model: flash` while the other 9 specialists default to `model: inherit`. When Parent Orchestrator runs on `flash`, `Model: "inherit"` remains on `flash`; pass `Model: "pro"` dynamically in `invoke_subagent` to elevate `spec-verifier`, `system-architect`, or `docs-architect` for third-party API verification or high-stakes architectural synthesis. Default to `Workspace: inherit` to avoid Windows file locks and `node_modules` duplication, writing intermediate reports to `<appDataDir>\brain\<conversation-id>\scratch\<task>\`.
 
 ---
 
@@ -135,7 +137,7 @@ Parent dispatches targeted custom subagents directly via `invoke_subagent`:
 Classify blast radius using zero-read CLI commands (`rtk git status --short`, `rtk rg -l`, `rtk rg -c`). Establish task tier per Section 1.2.
 
 ### Phase 1: Investigation, Audit & Pre-Gate 1 Planning
-1. **Read-Only Exploration**: Parent dispatches read-only specialist subagents (`system-architect` or `code-auditor`) using the Lean 3-Slot delegation brief (`<OBJECTIVE>`, `<SCOPE>`, `<DELIVERABLE>`). Subagents inspect code coordinates and author diagnostic reports in `<appDataDir>\brain\<conversation-id>\scratch\<task>\`.
+1. **Read-Only Exploration**: Parent dispatches read-only specialist subagents (`system-architect`, `code-auditor`, or `web-optimizer` when dispatched with `Allowed Mutation Paths: NONE` for live DevTools/baseline diagnostics) using the Lean 3-Slot delegation brief (`<OBJECTIVE>`, `<SCOPE>`, `<DELIVERABLE>`). Subagents inspect code coordinates and author diagnostic reports in `<appDataDir>\brain\<conversation-id>\scratch\<task>\`.
 2. **Mandatory `code-auditor -> spec-verifier` Duet Pipeline (Pre-Gate 1 Planning)**:
    - Whenever `code-auditor` (or `system-architect`) completes a diagnostic audit or discovery pass in `scratch/` proposing fixes, library migrations, or configuration changes (**Stage 1a**), Parent MUST automatically dispatch **`spec-verifier` (Stage 1b)** before synthesizing `gate1_proposal.md` or presenting the audit report to the operator.
    - **`spec-verifier` Mandate**: Cross-checks all proposed API signatures, versions, options objects, and architectural patterns against official vendor documentation via Context7 MCP (`resolve-library-id` $\rightarrow$ `query-docs`) and version-locked web documentation (`deep-web-research`).
@@ -155,8 +157,12 @@ Upon receiving Gate 1 approval (or immediately following Step 0 for Tier 0/1):
 
 ### Phase 3: Execution & Single-Pass TDD
 1. **Code Features / Bug Fixes**: Parent dispatches `tdd-guide` under the Single-Pass TDD Protocol (Section 1.5). `tdd-guide` writes the RED test, executes the failure receipt, writes the GREEN fix, runs the Fast Syntax Gate, and verifies test success in a single continuous pass.
-2. **Domain Specialists**: When specialized tasks are required, Parent dispatches the appropriate single mutator (`ui-crafter`, `build-error-resolver`, `maintenance-bot`) strictly serialized per the Single-Writer Invariant (Section 1.3).
+2. **Domain Specialists**: When specialized tasks are required, Parent dispatches the appropriate single mutator (`ui-crafter`, `web-optimizer`, `build-error-resolver`, `maintenance-bot`) strictly serialized per the Single-Writer Invariant (Section 1.3).
    - *Two-Turn Clarification Relay*: If a specialist returns `Status: NEEDS_CLARIFICATION` with a scratch request (`clarification_request.md`), Parent suspends autonomous execution without incrementing `global_attempt_counter` ($\le 2$), presents the visual direction or product truth options to the operator, and re-dispatches the subagent with the operator's choice pinned under `Settled Findings:` in `<SCOPE>`.
+   - *Conditional Frontend Duet*: For Tier 2/3 full web app or landing page builds and redesigns, run serialized under Single-Writer Mutual Exclusion:
+     - **Stage 3a (`ui-crafter`)**: Visual craft, design tokens, and `PRODUCT.md`/`DESIGN.md`.
+     - **Stage 3b (`web-optimizer`)**: Live Chrome DevTools MCP profiling, runtime accessibility, and `modern-web-guidance` modernization.
+     - *Single-Pass Exemptions*: Small component edits and `< 500px` `generative_ui` widgets stay single-pass on `ui-crafter`; standalone perf, memory-leak, a11y, cookie, `legacy-scan`, or Chrome Extension MV3 tasks stay single-pass on `web-optimizer`.
 3. **Conditional Mode B Duet for Public Repository Documentation**:
    - For Tier 2/3 public and narrative repository docs (`README.md`, `TOOLKIT.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, and general `docs/**/*.md`), Parent executes a serialized two-stage duet (major `docs/adr/**` rewrites or consolidations may optionally run Stage 3b `l10n-humanizer` Scope B prose polish under Fact Lock):
      - **Stage 3a (`docs-architect` - Mode B)**: Formulates the 4-part pragmatic README/doc structure, grounds technical claims in verified code, verifies CLI snippets, and enforces clean documentation standards.

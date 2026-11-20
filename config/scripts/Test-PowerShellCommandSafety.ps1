@@ -4,7 +4,7 @@
 .DESCRIPTION
     Inspects command lines using native .NET PowerShell AST parsing without execution.
     Halts on forbidden destructive cmdlets, recursive root deletions, git force pushes, and --no-verify flags.
-    Adheres to ADR-0003.
+    Enforces repository command safety invariants.
 #>
 [CmdletBinding()]
 param(
@@ -249,7 +249,7 @@ process {
                         exit 1
                     }
 
-                    # Check root targets, drive roots, root wildcards, home, and environment path variables (ADR-0003)
+                    # Check root targets, drive roots, root wildcards, home, and environment path variables
                     if ($pathVal -match '^[/\\]+(\*.*)?$' -or
                         $pathVal -match '^[a-zA-Z]:[/\\]*(\*.*)?$' -or
                         $pathVal -match '^~[/\\]*(\*.*)?$' -or
@@ -295,7 +295,7 @@ process {
                 $curNode = $parentNode
             }
 
-            # Block recursive deletions OR root deletions regardless of -Force (ADR-0003)
+            # Block recursive deletions OR root deletions regardless of -Force
             if ($hasRecurse -or $targetRoot) {
                 Write-Error "Safety Violation: Prohibited recursive or root deletion '$($cmdAst.Extent.Text)' detected." -ErrorAction Continue
                 exit 1

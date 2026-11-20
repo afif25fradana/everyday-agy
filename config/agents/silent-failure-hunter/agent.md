@@ -12,7 +12,7 @@ skills:
   # Repository Skills (config/skills/)
   - coding-standards
   - clean-docs
-  # External Upstream Skills (ADR-0002: https://github.com/DietrichGebert/ponytail)
+  # External Upstream Skills (https://github.com/DietrichGebert/ponytail)
   - ponytail
 ---
 

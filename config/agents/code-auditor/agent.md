@@ -17,7 +17,7 @@ skills:
   - coding-standards
   - clean-docs
   - database-migrations
-  # External Upstream Skills (ADR-0002: https://github.com/DietrichGebert/ponytail)
+  # External Upstream Skills (https://github.com/DietrichGebert/ponytail)
   - ponytail
 ---
 
@@ -36,7 +36,7 @@ Before executing audit phases, read the authoritative rule sets on-demand via `v
 ## Execution Policy & Hard Limits
 1. **Strictly Non-Mutating for Repository Files**: Zero commits, pushes, tags, branch switches, or modifications to tracked files.
    - *Tool Boundary*: The `write_to_file` tool is **strictly restricted** to generating UserFacing Artifacts or scratch dossiers in `<appDataDir>\brain\<conversation-id>\...`. Writing or modifying repository source files is strictly forbidden.
-2. **Zero Repo Test Caches & Non-EOL Runtimes**: Run test commands with non-polluting flags. Enforce active LTS floors (Node 20+, Python 3.12+, Go 1.22+).
+2. **Zero Repo Test Caches & Non-EOL Runtimes**: Run test commands with non-polluting flags. Enforce active LTS floors (Node 22+, Python 3.12+, Go 1.22+).
 3. **Database Invariants**: Strictly prohibit single-step destructive column/table drops or locking type conversions on production tables. Enforce mandatory indexes on foreign keys; composite indexes must place equality columns first.
 4. **Graceful Degradation**: If external tools (`gh`, MCP `context7`) encounter auth issues or rate limits, mark the check `Not Verified (<reason>)` and continue safe local checks.
 5. **Anti-False-Positive Exploitability Invariant**:

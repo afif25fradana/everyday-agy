@@ -9,11 +9,11 @@
 <!-- dev-tooling -->
 # Environment & Tooling
 - Verified tools: rtk, git, gh (authed), node, npm, python, pip, java (JBR 25), code, opencode, rg, ast-grep, fzf, ffmpeg, adb.
-- Shells: Windows PowerShell 5.1 & PowerShell 7.6 (pwsh). Prefer pwsh. The harness runner defaults to PowerShell 5.1, where `&&`/`||` are parser errors; use `;` or `if`.
-- Linux / WSL: Arch Linux is available via WSL2 (`wsl` or `wsl -d archlinux`).
+- Shells: Windows PowerShell 5.1 & PowerShell 7.6 (pwsh). Prefer pwsh. The harness runner defaults to PowerShell 5.1, where `&&`/`||` are parser errors; use `;` or `if`. Always execute PowerShell scripts via `-File <script>.ps1` (never `-Command` or inline script evaluation).
+- Linux / WSL: Arch Linux is available via WSL2 (`wsl` or `wsl -d archlinux`). Note: commands running inside WSL2 bypass Windows PowerShell AST safety hooks; treat WSL2 commands as sensitive and verify syntax beforehand.
 - Missing: pnpm, yarn, bun, uv, go, cargo, docker, kubectl, terraform, aws, az, gcloud, jq, make. Do not assume or install without asking.
 - Execution: Prefix external tools (git, npm, npx, pip, rg) with `rtk` if available. Do not prefix `gh` or PowerShell cmdlets. Fallback: run raw or `rtk proxy <cmd>` if output is truncated or if `rtk` is not installed.
-- Search: Prefer `rtk rg` or `ast-grep` (batch independent searches in parallel within the same turn); explicitly ignore `node_modules`, `dist`, `build`, `.next`, and `vendor`.
+- Search: Prioritize native workspace search tools (`grep_search`, `find_by_name`) first for routine file and pattern discovery to avoid child-process IPC overhead and terminal hangs. When CLI searching with ripgrep, mandate an explicit trailing directory target: `rtk rg "<pattern>" .` (never omit the target path). Prefer `rtk rg` or `ast-grep` (batch independent searches in parallel within the same turn); explicitly ignore `node_modules`, `dist`, `build`, `.next`, and `vendor`.
 <!-- dev-tooling -->
 
 <!-- context7 -->
@@ -39,7 +39,7 @@
 
 <!-- workflow-guardrails -->
 # Workflow & Safety Guardrails
-1. Investigate First & Zero-Read Triage: Size task blast radius using zero-read metadata (`rtk git status`, `rtk rg -l`, `rtk rg -c`, `task_state.md`) before calling `read_file`. For Tier 0/1, inspect directly. For Tier 2/3, Parent Agent (possessing `invoke_subagent`) must act as Lead Orchestrator per `/orchestrator`: insulate Parent context from application source code and delegate deep inspection to subagents (possessing `view_file`). On Tier 2/3, Parent is strictly barred from calling `read_file`/`view_file` on application source code and barred from calling mutating tools (`edit_file`/`write_file`/`replace_file_content`/`write_to_file`) on workspace files (Parent write tools on Tier 2/3 restricted strictly to `<appDataDir>\brain\<conversation-id>\*.md` artifacts and scratch). Dispatch specialists using the Lean 3-Slot XML brief (`<OBJECTIVE>`, `<SCOPE>`, `<DELIVERABLE>`). For multi-file changes, consult `/orchestrator` for execution lifecycle and `audit-dev` for skeptical verification.
+1. Investigate First & Zero-Read Triage: Size task blast radius using zero-read metadata (`rtk git status`, `rtk rg -l "<pattern>" .`, `rtk rg -c "<pattern>" .`, `task_state.md`) before calling `read_file`. For Tier 0/1, inspect directly. For Tier 2/3, Parent Agent (possessing `invoke_subagent`) must act as Lead Orchestrator per `/orchestrator`: insulate Parent context from application source code and delegate deep inspection to subagents. On Tier 2/3, Parent is strictly barred from calling `read_file` on application source code and barred from calling mutating tools (`edit_file`/`write_file`) on workspace files (Parent write tools on Tier 2/3 restricted strictly to `<appDataDir>\brain\<conversation-id>\*.md` artifacts and scratch). Dispatch specialists using the Lean 3-Slot XML brief (`<OBJECTIVE>`, `<SCOPE>`, `<DELIVERABLE>`). For multi-file changes, consult `/orchestrator` for execution lifecycle and `audit-dev` for skeptical verification.
 2. Checkpoint-Gated Autonomous Execution & Approval Gates: Read-only inspection never needs approval. Before modifying files in git repos, establish a verified rollback checkpoint (`New-AuditCheckpoint.ps1`). Approval gating scales by blast radius:
    - Tier 0 (`trivial`: `<= 2` files, `<= 3` exec or `<= 5` doc lines, zero logic/state/schema mutation): Execute autonomously after checkpoint -> verify -> pause at `[TRIVIAL REVIEW]` before commit.
    - Tier 1 (`small`: single-module bugfix or contained enhancement): Execute autonomously after checkpoint -> Failure-First TDD (RED -> GREEN) -> 5-Axis verification -> pause at Gate 2 (`gate2_handoff.md`) before commit.

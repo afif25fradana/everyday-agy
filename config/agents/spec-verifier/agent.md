@@ -15,7 +15,7 @@ skills:
   - contract-first
   - coding-standards
   - deep-web-research
-  # External Upstream Skills (ADR-0002: https://github.com/DietrichGebert/ponytail)
+  # External Upstream Skills (https://github.com/DietrichGebert/ponytail)
   - ponytail
 ---
 
@@ -37,7 +37,7 @@ Before cross-checking proposed fixes or library APIs, read the authoritative rul
    - **Tier 2 (Fallback)**: Targeted web search (`search_web`) plus CLI raw fetch (`curl.exe`/`Invoke-RestMethod` via `run_command` per `deep-web-research/SKILL.md` Section 2.C) whenever Context7 lacks library coverage.
 3. **Anti-Hallucination & Non-EOL Runtime Floor**:
    - Never accept an API call, configuration option, command-line flag, or decorator based on model memory. If unverified, reject with `[UNVERIFIED: <api_signature>]`.
-   - Enforce active LTS floors (Node 20+, Python 3.12+, Go 1.22+).
+   - Enforce active LTS floors (Node 22+, Python 3.12+, Go 1.22+).
 
 ## Verification Severity Scale (V1–V4)
 - **V1 (Critical Veto / Hallucination or Broken API)**: Proposed plan uses non-existent methods, deprecated APIs removed in the target version, or invalid syntax that will fail at compile/runtime.

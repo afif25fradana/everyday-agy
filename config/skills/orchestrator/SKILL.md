@@ -15,16 +15,17 @@ A high-rigor governance runbook enforcing Anthropic Lead-Agent context insulatio
 ## 1. Core Operational Invariants
 
 ### 1.1 Role-Scoped Execution & Context Insulation Invariant
-- **Parent Lead Orchestrator (`invoke_subagent` present)**: On Tier 2 (`standard`) and Tier 3 (`large`) tasks, the Parent Agent is strictly prohibited from invoking `read_file` or `view_file` on application source code (`src/**`, `core/**`, `web/**`, `lib/**`, business logic implementations) AND strictly barred from calling `replace_file_content`, `multi_replace_file_content`, `write_to_file`, `edit_file`, or `write_file` on any workspace repository file. Parent write tools on Tier 2/3 are restricted strictly to session artifacts under `<appDataDir>\brain\<conversation-id>\*.md` and scratch files.
+- **Parent Lead Orchestrator (`invoke_subagent` present)**: On Tier 2 (`standard`) and Tier 3 (`large`) tasks, the Parent Agent is strictly prohibited from invoking `read_file` on application source code (`src/**`, `core/**`, `web/**`, `lib/**`, business logic implementations) AND strictly barred from calling mutating tools (`edit_file`, `write_file`) on any workspace repository file. Parent write tools on Tier 2/3 are restricted strictly to session artifacts under `<appDataDir>\brain\<conversation-id>\*.md` and scratch files.
 - **Allowed Parent Reads**: High-level task coordination files (`task_state.md`, ADR summaries, `specs/<feature>/*.md`), intermediate subagent dossiers in scratch (`<appDataDir>\brain\<conversation-id>\scratch\<task>\` or `$HOME/.gemini/antigravity/scratch/<task>/`), git tracking receipts (`rtk git status --short`, `rtk git diff --stat`), CLI test output, and raw `git --no-pager diff HEAD` / `git --no-pager diff --stat` specifically for programmatic Gate 2 artifact injection.
 - **Execution Specialist Subagents (`invoke_subagent` absent)**: Deep code reading, syntax analysis, code editing, and test authoring belong exclusively to subagents. Mutating specialists (`tdd-guide`, `ui-crafter`, `web-optimizer`, `docs-architect`, `l10n-humanizer`, `maintenance-bot`, `build-error-resolver`) are explicitly authorized to edit granted `<SCOPE>` paths within the active repository or sibling `<Project>-AI-Context` repo. Read-only specialists (`code-auditor`, `silent-failure-hunter`, `spec-verifier`, `system-architect`) write exclusively to `scratch/` dossiers.
 
 ### 1.2 Zero-Read Triage Gate (Step 0 Blast Radius Sizing — SSOT)
-Before opening any source file, the Parent Agent classifies task blast radius using **zero-read metadata commands only**:
-1. `rtk git status --short`: modified and untracked file counts.
-2. `rtk rg --files` or `rtk rg -l "<symbol>"`: list of candidate files without reading contents.
-3. `rtk rg -c "<symbol>"`: caller counts per file.
-4. User prompt, issue description, or `task_state.md`.
+Before opening any source file, the Parent Agent classifies task blast radius using **native search tools or zero-read CLI metadata commands only**:
+1. Native workspace search tools (`grep_search`, `find_by_name`) prioritized first for routine file and pattern discovery to avoid child-process IPC overhead and terminal hangs.
+2. `rtk git status --short`: modified and untracked file counts.
+3. CLI ripgrep with explicit trailing path target `.`: `rtk rg --files .` or `rtk rg -l "<symbol>" .` (never omit the target path).
+4. Caller counts per file: `rtk rg -c "<symbol>" .`.
+5. User prompt, issue description, or `task_state.md`.
 
 *Sizing Thresholds (Canonical Definition)*:
 - **Tier 0 (`trivial`: $\le 2$ files, $\le 3$ exec / $\le 5$ doc lines, zero logic/state/schema mutation)**: Single-turn Parent fast-path post-checkpoint. Subagents and Gate 1 bypassed; pauses at `[TRIVIAL REVIEW]` before commit.
@@ -47,13 +48,13 @@ Before opening any source file, the Parent Agent classifies task blast radius us
 - **Clarification Exemption (`Status: NEEDS_CLARIFICATION`)**: When a specialist subagent (e.g. `ui-crafter`) halts with `Status: NEEDS_CLARIFICATION` and outputs a `clarification_request.md` in `scratch/` during greenfield design or missing context discovery, this represents an intentional clarification suspension rather than a defect or failure. It is strictly exempt from `global_attempt_counter` ($\le 2$) and does not count toward the 2-attempt failure budget.
 - **Re-Entry Post-Rollback**: When human operator provides explicit redirection or an alternative approach following a 2-attempt rollback halt, `global_attempt_counter` resets to 0 for the newly approved strategy.
 - **Abnormal Termination**: If a mutating subagent crashes, times out, or leaves a dirty tree, Parent immediately executes `Restore-AuditCheckpoint.ps1` before secondary actions.
-- **Failed Reviewer Accounting (`Status: not run` vs 0 Findings)**: Any delegated reviewer or subagent that times out, encounters an unhandled tool exception, or fails to complete execution MUST be accounted as `Status: not run`. It is strictly prohibited to treat a failed or aborted reviewer run as "0 findings" or an implicit pass. Any required reviewer with `not run` status invalidates approval.
+- **Failed Reviewer Accounting (`Status: not run` vs 0 Findings)**: Any delegated reviewer or subagent that times out, encounters an unhandled tool exception, or fails to complete execution MUST be accounted as `Status: not run` per [`audit-dev/SKILL.md#34-failed-reviewer-accounting-invariant`](../audit-dev/SKILL.md#34-failed-reviewer-accounting-invariant). Treating an aborted run as "0 findings" or an implicit pass is strictly prohibited and invalidates approval.
 
 ### 1.5 Anti-Mock Cheating & Single-Pass TDD Verification
 - **Single-Pass TDD Protocol**: When `tdd-guide` is the implementer for bug fixes and features in Tier 2/3, Parent dispatches `tdd-guide` once post-checkpoint. In a single continuous execution pass, `tdd-guide`: (1) authors the minimal failing test (RED) on unmodified production code, (2) runs the test runner to witness the expected failure, (3) writes the minimal production fix (GREEN), (4) runs the Pre-Mutation Syntax Interception Gate, (5) verifies the test suite passes (`exit code 0`, `> 0 passed, 0 failed`), (6) refactors under `ponytail`, `coding-standards`, and `clean-docs` (Section 3), and (7) returns a unified receipt with dual RED and GREEN verification traces. This eliminates the 40k–60k token double cold-start penalty between separate test-authoring and fix-implementation turns.
 - **Cross-Specialist Split Handoff**: The separate two-stage dispatch (S2 test authoring -> S3 implementation) is reserved exclusively for cross-specialist tasks (e.g. `tdd-guide` writes contract tests, `ui-crafter` implements the frontend component).
 - **Diff Audit**: Before presenting Gate 2, Parent delegates line-by-line diff review to `code-auditor` or `silent-failure-hunter` to audit for mock-cheating, weakened assertions, or test deletion against the [Five-Axis rubric in `audit-dev`](../audit-dev/SKILL.md).
-- **Settled Findings Immunity**: Review findings that have been formally settled (contested with verified code coordinates or accepted as documented operator trade-offs) are immune to re-litigation by subsequent review passes or subagent dispatches. Parent must pass settled items under `Settled Findings:` in `<SCOPE>` strictly restricted to previously contested-with-evidence or operator-accepted items (never unreviewed assumptions) to prevent endless review churn.
+- **Settled Findings Immunity**: Review findings formally settled (contested with verified code coordinates or accepted as operator trade-offs per [`audit-dev/SKILL.md#32-the-4-bucket-resolution-taxonomy`](../audit-dev/SKILL.md#32-the-4-bucket-resolution-taxonomy)) are immune to re-litigation. Parent must pass settled items under `Settled Findings:` in `<SCOPE>` (strictly restricted to verified code coordinates or accepted trade-offs, never unreviewed assumptions) to prevent review churn.
 
 ### 1.6 Subagent Commit/Push Ban, Shell Safety & Direct Parent CLI Test Runner
 - **Subagent Commit & PR Ban**: Subagents are strictly barred from running `git commit`, `git tag`, `git push`, `gh pr create`, `gh pr merge`, or `gh release create`. Commit and PR authority belongs exclusively to the Parent Agent post-Gate 2 approval.
@@ -66,53 +67,14 @@ Before opening any source file, the Parent Agent classifies task blast radius us
 
 ---
 
-## 2. Adaptive Dual Dispatch Protocol & Lifecycle Flowchart
+## 2. Adaptive Dual Dispatch Protocol & Lifecycle Matrix
 
-```mermaid
-flowchart TD
-    Task["Task Input"] --> Triage{"Step 0: Zero-Read Triage"}
-    Triage -->|"Tier 0"| CkptT0["Phase 2 Checkpoint"]
-    Triage -->|"Tier 1"| CkptT1["Phase 2 Checkpoint"]
-    Triage -->|"Tier 2"| DirectSpecialists["Pathway B: Direct Specialist Subagents"]
-    Triage -->|"Tier 3"| TeamworkCouncil["Pathway A: Teamwork Council Review"]
-    
-    DirectSpecialists --> S1a["Phase 1 Stage 1a: Explorer / Auditor<br/>system-architect / code-auditor"]
-    S1a --> S1b["Phase 1 Stage 1b: Vendor Spec Grounding<br/>spec-verifier (Context7 + Web)"]
-    S1b --> Gate1["Phase 1 Gate 1 Proposal Artifact & Approval<br/>gate1_proposal.md"]
-    
-    TeamworkCouncil --> TCReport["teamwork Council Report in scratch"]
-    TCReport --> Gate1TC["Phase 1 Gate 1 Proposal Artifact & Approval"]
-    Gate1TC --> T3Exec["Decompose into Sequential Tier 2 Work Packages"]
-    T3Exec --> CkptT2
-    
-    Gate1 --> CkptT2["Phase 2 Checkpoint<br/>New-AuditCheckpoint.ps1"]
-    
-    CkptT0 --> T0Exec["Phase 3 Parent Fast-Path"]
-    T0Exec --> T0Review["[TRIVIAL REVIEW] & Commit"]
-    
-    CkptT1 --> T1Exec["Phase 3 Parent TDD Loop<br/>RED -> GREEN -> Fast Syntax"]
-    T1Exec --> P4Local["Phase 4 Verification"]
-    
-    CkptT2 -->|"Bugfix / Feature"| S2["Phase 3 Single-Pass Mutator: tdd-guide<br/>RED Test -> GREEN Fix -> Fast Syntax Check"]
-    CkptT2 -->|"Domain Specialist"| S3["Phase 3 Domain Specialist: ui-crafter / web-optimizer /<br/>build-error-resolver / maintenance-bot"]
-    CkptT2 -->|"Full Web App / Redesign"| S3FeDuet["Phase 3 Frontend Duet:<br/>Stage 3a: ui-crafter (Visual Craft & Tokens)<br/>-> Stage 3b: web-optimizer (DevTools & Baseline)"]
-    CkptT2 -->|"Tier 2/3 Public Docs"| S3Duet["Phase 3 Mode B Duet:<br/>Stage 3a: docs-architect (Structure & Claims)<br/>-> Stage 3b: l10n-humanizer (Scope B Anti-Slop)"]
-    CkptT2 -->|"ADR / task_state"| S3ModeA["Phase 3 Single-Pass: docs-architect (Mode A)"]
-    
-    S2 --> S4["Phase 4 Stage 4a: Diff Audit<br/>code-auditor (audit-dev Five-Axis Rubric)"]
-    S3 --> S4
-    S3FeDuet --> S4
-    S3Duet --> S4
-    S3ModeA --> S4
-    
-    S4 -->|"Diff Introduces Unverified APIs"| S4b["Phase 4 Stage 4b (Conditional):<br/>spec-verifier (API Cross-Check)"]
-    S4 -->|"Diff Clean / Pre-Verified"| Gate2["Phase 5 Gate 2 Handoff Artifact<br/>Update-Gate2Diff.ps1"]
-    S4b --> Gate2
-    
-    Gate2 -->|"Approved"| CommitDone["Phase 5 Commit & Complete"]
-    Gate2 -->|"Changes Requested"| S2
-    Gate2 -->|"Aborted / 2x Failures"| Rollback["Auto-Rollback<br/>Restore-AuditCheckpoint.ps1"]
-```
+| Phase / Tier | Step 0: Triage & Sizing | Phase 1: Pre-Gate 1 Exploration | Phase 2: Checkpoint | Phase 3: Implementation | Phase 4: Verification & Audit | Phase 5: Handoff & Completion |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Tier 0** (`trivial`) | Zero-read triage (`rtk rg -l .`) | *(Bypassed)* | `New-AuditCheckpoint.ps1` | Parent fast-path ($\le 3$ exec / $\le 5$ doc lines) | Direct test runner verification | `[TRIVIAL REVIEW]` $\rightarrow$ commit |
+| **Tier 1** (`small`) | Zero-read triage (`rtk rg -l .`) | *(Bypassed)* | `New-AuditCheckpoint.ps1` | Parent TDD: RED $\rightarrow$ GREEN $\rightarrow$ Fast Syntax | Direct test runner ($> 0$ passed) | `gate2_handoff.md` $\rightarrow$ commit |
+| **Tier 2** (`standard`) | Zero-read triage (`rtk rg -l .`) | Read-only discovery (`system-architect`/`code-auditor`) $\rightarrow$ `spec-verifier` $\rightarrow$ `gate1_proposal.md` | `New-AuditCheckpoint.ps1` | Single-pass mutator (`tdd-guide` or domain specialist) | Direct test runner + diff audit (`code-auditor`) | `gate2_handoff.md` $\rightarrow$ commit |
+| **Tier 3** (`large`) | Zero-read triage (`rtk rg -l .`) | Deliberative council (`teamwork` review) $\rightarrow$ `gate1_proposal.md` | `New-AuditCheckpoint.ps1` per package | Sequential Tier 2 work packages via Pathway B | Direct test runner + Five-Axis diff audit | Sequential Gate 2 handoffs $\rightarrow$ commit |
 
 ### Pathway A: Deliberative Multi-Seat Council (Tier 3)
 Dispatch exactly ONE call to `teamwork` with `Role: "Council Review Panel"` per [council-review/SKILL.md](../council-review/SKILL.md). Direct specialist agent calls from Parent are prohibited for Tier 3 evaluations. Once Gate 1 approval is granted for the council proposal, execution decomposes into sequential Tier 2 work packages orchestrated by Parent via Pathway B.
@@ -134,7 +96,7 @@ Parent dispatches targeted custom subagents directly via `invoke_subagent`:
 ## 3. End-to-End Execution Lifecycle (Step 0 through Phase 5)
 
 ### Step 0: Zero-Read Triage Gate
-Classify blast radius using zero-read CLI commands (`rtk git status --short`, `rtk rg -l`, `rtk rg -c`). Establish task tier per Section 1.2.
+Classify blast radius using native workspace search (`grep_search`, `find_by_name`) or zero-read CLI commands (`rtk git status --short`, `rtk rg -l "<pattern>" .`, `rtk rg -c "<pattern>" .`). Establish task tier per Section 1.2.
 
 ### Phase 1: Investigation, Audit & Pre-Gate 1 Planning
 1. **Read-Only Exploration**: Parent dispatches read-only specialist subagents (`system-architect`, `code-auditor`, or `web-optimizer` when dispatched with `Allowed Mutation Paths: NONE` for live DevTools/baseline diagnostics) using the Lean 3-Slot delegation brief (`<OBJECTIVE>`, `<SCOPE>`, `<DELIVERABLE>`). Subagents inspect code coordinates and author diagnostic reports in `<appDataDir>\brain\<conversation-id>\scratch\<task>\`.
@@ -223,7 +185,7 @@ Return ONLY the compact <= 15-line summary defined in ## Output of your agent.md
 
 | Rationalization / Excuse | Reality & Binding Invariant | Correct Action |
 | :--- | :--- | :--- |
-| *"I'll just read one target file to understand the bug."* | Reading 1 file invariably escalates to reading 5 files, burning 30k tokens and degrading reasoning. | Use `rtk rg -l` and `rtk rg -c` for Zero-Read Triage. Dispatch `system-architect` or `code-auditor`. |
+| *"I'll just read one target file to understand the bug."* | Reading 1 file invariably escalates to reading 5 files, burning 30k tokens and degrading reasoning. | Use native search (`grep_search`, `find_by_name`) or `rtk rg -l "<symbol>" .` and `rtk rg -c "<symbol>" .` for Zero-Read Triage. Dispatch `system-architect` or `code-auditor`. |
 | *"Direct reading is faster than spawning a subagent."* | Inline reading pollutes Parent context, triggering middle-loss, dropped safety checks, and hallucinated test passes. | Subagent dispatch takes 1 turn and guarantees context insulation. |
 | *"The task is small enough that I don't need a subagent."* | If it crosses module boundaries (>1 module or >2 non-test files) or requires architectural redesign, it is Tier 2 by definition. | Follow the Zero-Read Triage Gate strictly; do not rationalize away Tier 2 boundaries. |
 | *"The subagent reported green, so I can commit directly."* | Subagents may mock-cheat, delete tests, or suffer from Exit Code 0 fallacies. | Parent independently runs CLI tests (`run_command`) and validates $>0$ passed assertions. |

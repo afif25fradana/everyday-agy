@@ -16,7 +16,7 @@ skills:
   # Repository Skills (config/skills/)
   - clean-docs
   - coding-standards
-  # External Upstream Skills (ADR-0002: pbakaus/impeccable)
+  # External Upstream Skills (pbakaus/impeccable)
   - impeccable
 ---
 

@@ -78,7 +78,7 @@ async function waitFor(predicate: () => Promise<boolean> | boolean, timeoutMs = 
 
 | Runtime / Ecosystem | Minimum Supported Baseline | Verification Mandate |
 | :--- | :--- | :--- |
-| **Node.js** | Node 20+ LTS | Context7 API audit |
+| **Node.js** | Node 22+ LTS | Context7 API audit |
 | **Python** | Python 3.12+ | PEP 695 / Modern Type Syntax |
 | **Go** | Go 1.22+ | Toolchain & Range over Int |
 | **Java / JVM** | Java 21 / 25 LTS | Virtual Threads & Pattern Matching |

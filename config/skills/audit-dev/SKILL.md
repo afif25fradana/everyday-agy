@@ -36,7 +36,7 @@ Every code modification or architectural proposal is evaluated against these fiv
 - **State Transition Completeness**: Do finite-state machines, lifecycle hooks, or async flows account for cancelled, aborted, or re-entered states?
 - **Caller Blast Radius**: Trace all upstream callers (`rtk rg "<symbol>"`) to ensure signature or semantic changes do not break downstream consumers.
 - **Async & Concurrency Ordering**: Ensure absence of race conditions, deadlocks, or un-awaited promises.
-- **Modern Runtime LTS Floors**: Reject deprecated APIs; enforce non-EOL runtimes (Python 3.12+, Node 20+, Go 1.22+).
+- **Modern Runtime LTS Floors**: Reject deprecated APIs; enforce non-EOL runtimes (Python 3.12+, Node 22+, Go 1.22+).
 - **Preservation of Defensive Logic**: Never remove existing timeouts, retry budgets, null guards, or calibrated thresholds without explicit justification.
 
 ### Axis 2: Security & Attack Surface (Concrete Exploitability Proof)

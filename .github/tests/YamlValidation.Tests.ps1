@@ -160,7 +160,7 @@ Assert-Test -Name "Custom agent directories discovered under config/agents" -Con
 $agentFrontmatters = @{}
 $inheritCount = 0
 $flashCount = 0
-$inheritMcpCount = 0
+$inheritMcpAgents = @()
 
 foreach ($a in $agents) {
     $agentFile = Join-Path $a.FullName "agent.md"
@@ -181,7 +181,7 @@ foreach ($a in $agents) {
         $agentFrontmatters[$a.Name] = $frontmatter
         if ($frontmatter -match '(?m)^model:\s+inherit\s*$') { $inheritCount++ }
         if ($frontmatter -match '(?m)^model:\s+flash\s*$') { $flashCount++ }
-        if ($frontmatter -match '(?m)^inheritMcp:\s+true\s*$') { $inheritMcpCount++ }
+        if ($frontmatter -match '(?m)^inheritMcp:\s+true\s*$') { $inheritMcpAgents += $a.Name }
         $syntaxResult = Test-YamlBlockSyntax -Content $frontmatter -FilePath $agentFile
         Assert-Test -Name "Agent frontmatter syntax ($($a.Name))" -Condition ($syntaxResult.Success) -Details ($syntaxResult.Error)
 
@@ -210,7 +210,10 @@ foreach ($a in $agents) {
 
 Assert-Test -Name "Custom agent fleet count equals 11" -Condition ($agents.Count -eq 11) -Details "Found $($agents.Count) agents"
 Assert-Test -Name "Agent model split matches 9 inherit / 2 flash" -Condition ($inheritCount -eq 9 -and $flashCount -eq 2) -Details "Found $inheritCount inherit / $flashCount flash"
-Assert-Test -Name "Agent inheritMcp: true count matches 6" -Condition ($inheritMcpCount -eq 6) -Details "Found $inheritMcpCount agents with inheritMcp: true"
+$expectedMcpAgents = @("build-error-resolver", "code-auditor", "spec-verifier", "system-architect", "ui-crafter", "web-optimizer")
+$actualMcpSorted = ($inheritMcpAgents | Sort-Object) -join ","
+$expectedMcpSorted = ($expectedMcpAgents | Sort-Object) -join ","
+Assert-Test -Name "Agent inheritMcp: true exact set matches 6 agents" -Condition ($actualMcpSorted -eq $expectedMcpSorted) -Details "Expected [$expectedMcpSorted], got [$actualMcpSorted]"
 
 $webPluginSkills = @(
     "chrome-devtools",

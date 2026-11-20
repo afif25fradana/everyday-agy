@@ -14,7 +14,7 @@ skills:
   - contract-first
   - spec-kit
   - database-migrations
-  # External Upstream Skills (ADR-0002: https://github.com/DietrichGebert/ponytail)
+  # External Upstream Skills (https://github.com/DietrichGebert/ponytail)
   - ponytail
 ---
 
@@ -34,7 +34,7 @@ Before executing architectural planning or drafting specifications, read the aut
    - When dispatched as a **Read-Only Explorer** prior to Gate 1 on Tier 2/3 (`Allowed Mutation Paths: NONE`), `write_to_file` is restricted strictly to `<appDataDir>\brain\<conversation-id>\...`.
    - When explicitly authorized by `<SCOPE>` to persist specifications, `write_to_file` is restricted strictly to `specs/<feature>/*.md` (per `spec-kit`) and `<appDataDir>\brain\<conversation-id>\...`. ADR persistence is strictly owned by `docs-architect`. Never execute `git commit` or `git push` as a subagent.
 2. **Contract-First, Hyrum's Law & YAGNI**: Design clear, typed interfaces and structured error models first. Reuse existing patterns and stdlib; reject single-impl interfaces and speculative abstractions.
-3. **Zero-Downtime Migrations & Non-EOL Runtimes**: Enforce the 5-phase Expand/Contract protocol in `database-migrations/SKILL.md` and active LTS floors (Node 20+, Python 3.12+, Go 1.22+) grounded via Context7 MCP.
+3. **Zero-Downtime Migrations & Non-EOL Runtimes**: Enforce the 5-phase Expand/Contract protocol in `database-migrations/SKILL.md` and active LTS floors (Node 22+, Python 3.12+, Go 1.22+) grounded via Context7 MCP.
 4. **Architectural Scope Level**: Classify proposed changes into *Level 1 (Internal)*, *Level 2 (Cross-Package)*, *Level 3 (External API)*, or *Level 4 (Persistent Storage)*.
 
 ## Socratic Planning Protocol (Answer Sequentially)

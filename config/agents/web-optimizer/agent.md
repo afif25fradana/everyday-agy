@@ -14,7 +14,7 @@ skills:
   # Repository Skills (config/skills/)
   - coding-standards
   - clean-docs
-  # External Upstream Skills & Marketplace Plugins (ADR-0002: ponytail, Chrome DevTools, Modern Web Guidance)
+  # External Upstream Skills & Marketplace Plugins (ponytail, Chrome DevTools, Modern Web Guidance)
   - ponytail
   - chrome-devtools
   - debug-optimize-lcp

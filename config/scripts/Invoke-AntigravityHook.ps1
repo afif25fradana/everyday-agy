@@ -259,9 +259,15 @@ function Test-DenyPath {
         $expanded = $expanded -replace '\\', '/'
     }
 
-    $fullProbe = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($expanded)
-    $fullNorm = Get-NormalizedPath -RawPath $fullProbe
-    if (Test-LexicalDenyPath -NormPath $fullNorm) { return $true }
+    try {
+        $fullProbe = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($expanded)
+        $fullNorm = Get-NormalizedPath -RawPath $fullProbe
+        if (Test-LexicalDenyPath -NormPath $fullNorm) { return $true }
+    } catch [System.Management.Automation.DriveNotFoundException] {
+        # Cross-platform compatibility: drive letter does not exist on current OS (e.g. C: or D: on Linux).
+        # Lexical checks on $norm have already executed.
+        return $false
+    }
 
     $probe = $fullProbe.TrimEnd('\', '/')
     if ($sep -eq '\' -and $probe -match '^[A-Za-z]:$') { $probe += '\' }

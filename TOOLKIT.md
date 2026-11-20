@@ -50,20 +50,6 @@ npm install -g @ast-grep/cli
 |---|:---:|---|---|
 | **context7** | `Streamable HTTP` | Real-time external library documentation and official API contract queries. | [https://context7.com](https://context7.com)<br>`https://mcp.context7.com/mcp` |
 
-### Copy-Paste Snippet for `~/.gemini/config/mcp_config.json`:
-```json
-{
-  "mcpServers": {
-    "context7": {
-      "url": "https://mcp.context7.com/mcp",
-      "headers": {
-        "Authorization": "Bearer <YOUR_CONTEXT7_API_KEY>"
-      }
-    }
-  }
-}
-```
-
 ---
 
 ## 3. Custom Skills Catalog
@@ -134,24 +120,25 @@ These skills and plugins live in their own upstream repositories with dedicated 
 
 ## 6. Native Antigravity Runtime Hooks
 
-Native event handlers configured in `config/hooks.json` and routed via `config/scripts/Invoke-AntigravityHook.ps1` (ADR-0003):
+Native event handlers configured in `config/hooks.json` use hybrid routing (ADR-0003): file access and search operations run through `config/scripts/invoke-antigravity-hook.mjs` for cross-platform deny-path checks and diff triggers, while shell commands route to `config/scripts/Invoke-AntigravityHook.ps1` for PowerShell AST safety analysis:
 
 | Hook Event | Matcher | Enforcement & Safety Gates |
 |---|---|---|
-| **PreToolUse** | `run_command` | Parses commands via PowerShell AST (`Test-PowerShellCommandSafety.ps1`) and blocks dangerous shell operations (`rm -rf`, `git push --force`, `git clean -fdx`). |
-| **PreToolUse** | `view_file`<br>`read_file`<br>`replace_file_content`<br>`multi_replace_file_content`<br>`edit_file`<br>`write_to_file`<br>`write_file`<br>`create_file` | Enforces credential and secret deny-path rules only (`Test-DenyPath`: `.env*` except `.env.example`/`.env.sample`/`.env.template`, `~/.ssh`, `~/.aws`, `~/.gnupg`, `*.key`, `*.pem`, Antigravity `mcp/**`) across both parent agent tools (`read_file`, `edit_file`, `write_file`, `create_file`) and subagent tools (`view_file`, `replace_file_content`, `multi_replace_file_content`, `write_to_file`); does not restrict workspace or role boundaries. |
-| **PostToolUse** | `write_to_file`<br>`write_file`<br>`create_file`<br>`replace_file_content`<br>`multi_replace_file_content`<br>`edit_file` | Injects git diffs automatically via `Update-Gate2Diff.ps1` when `gate2_handoff.md` contains `{{VERBATIM_GIT_DIFF}}` or `{{VERBATIM_GIT_DIFFSTAT}}` across both parent agent (`write_file`, `create_file`, `edit_file`) and subagent (`write_to_file`, `replace_file_content`, `multi_replace_file_content`) file writes. |
+| **PreToolUse** *(PowerShell AST)* | `run_command` | Routed via `Invoke-AntigravityHook.ps1`: parses commands via PowerShell AST (`Test-PowerShellCommandSafety.ps1`) and blocks dangerous shell operations (`rm -rf`, `git push --force`, `git clean -fdx`). |
+| **PreToolUse** *(Node.js Router)* | `view_file`<br>`read_file`<br>`edit_file`<br>`replace_file_content`<br>`multi_replace_file_content`<br>`write_file`<br>`write_to_file`<br>`create_file`<br>`apply_diff`<br>`grep_search` | Routed via `invoke-antigravity-hook.mjs`: enforces credential and secret deny-path rules (`.env*` except `.env.example`/`.env.sample`/`.env.template`, `~/.ssh`, `~/.aws`, `~/.gnupg`, `*.key`, `*.pem`, Antigravity `mcp/**`, `mcp_config*.json`, `mcp_oauth_tokens*.json`) with ancestor symlink/junction traversal (depth $\le 8$), NTFS ADS stripping, and Win32 path normalization across parent and subagent tools; does not restrict workspace or role boundaries. |
+| **PostToolUse** *(Node.js Router)* | `edit_file`<br>`replace_file_content`<br>`multi_replace_file_content`<br>`write_file`<br>`write_to_file`<br>`create_file`<br>`apply_diff` | Routed via `invoke-antigravity-hook.mjs`: spawns `Update-Gate2Diff.ps1` (respecting `POWERSHELL_BIN`) to inject git diffs automatically when `gate2_handoff.md` contains `{{VERBATIM_GIT_DIFF}}` or `{{VERBATIM_GIT_DIFFSTAT}}` across parent and subagent file mutations. |
 
 ---
 
 ## 7. Consolidated Infrastructure Scripts (`config/scripts/`)
 
-Five core PowerShell infrastructure scripts consolidated under `config/scripts/` to separate runtime safety, diff injection, and checkpoint rollback mechanisms from markdown skills (ADR-0003):
+Consolidated infrastructure scripts under `config/scripts/` separate runtime safety, diff injection, and checkpoint rollback mechanisms from markdown skills (ADR-0003):
 
 | Script Name | Invocation Context | Core Responsibility |
 |---|---|---|
-| **`Invoke-AntigravityHook.ps1`** | Antigravity engine runtime (`PreToolUse` & `PostToolUse` via `config/hooks.json`) | Central hook router: dispatches tool events, forwards `run_command` payloads to `Test-PowerShellCommandSafety.ps1`, checks file operations against `Test-DenyPath`, triggers `Update-Gate2Diff.ps1` on `gate2_handoff.md`, strips UTF-8 BOM, maintains rotating log (`hooks.log`), and returns deterministic JSON stdout. |
+| **`invoke-antigravity-hook.mjs`** | Antigravity engine runtime (`PreToolUse` & `PostToolUse` via `config/hooks.json`) | Cross-platform hook router: enforces PreToolUse credential deny-paths for file and search tools via ancestor traversal (`fs.lstatSync` + `fs.readlinkSync`, depth $\le 8$), NTFS ADS stripping, and Win32 path normalization; triggers PostToolUse diff updates on `gate2_handoff.md` by spawning `Update-Gate2Diff.ps1` with `POWERSHELL_BIN` override support; maintains rotating log (`hooks.log`). |
+| **`Invoke-AntigravityHook.ps1`** | Antigravity engine runtime (`PreToolUse` via `config/hooks.json`) | Shell command hook router: dispatches `run_command` payloads to `Test-PowerShellCommandSafety.ps1` for AST validation, allows untagged and teamwork `invoke_subagent` calls to pass through, strips UTF-8 BOM, maintains rotating log (`hooks.log`), and returns deterministic JSON stdout. |
 | **`Test-PowerShellCommandSafety.ps1`** | Pre-tool execution via `Invoke-AntigravityHook.ps1` (or manual test/validation runs) | PowerShell AST command validator: inspects command lines via `[System.Management.Automation.Language.Parser]::ParseInput` without running them. Blocks destructive cmdlets (`Remove-Item -Recurse`, `Format-*`, `Clear-Disk`), forced git operations (`git push --force`, `git clean -fdx`, uncheckpointed `git reset --hard`), secondary subshells, dynamic invocations (`iex`), and access to sensitive paths (`~/.ssh`, `~/.aws`, `~/.gnupg`). |
 | **`New-AuditCheckpoint.ps1`** | Orchestrator workflow before file mutations (Tier 0/1/2/3 checkpoints) | Atomic rollback checkpoint creator: in Git repositories, verifies a clean tracked working tree, force-updates branch `checkpoint-<task>`, and snapshots baseline untracked files (`untracked_baseline.txt`). In non-git directory modes, captures `<sha1>_<leaf>.bak` copies and SHA-256 checksums in `hashes.txt`. |
 | **`Restore-AuditCheckpoint.ps1`** | Orchestrator rollback recovery after test/build failures or operator rejection | Working tree restoration: in Git repositories, executes two-stage reset (mixed reset before hard reset) to prevent wiping newly staged files, fails closed if baseline is missing, removes only post-checkpoint untracked files, and safely unlinks NTFS directory junctions. In non-git directory modes, verifies SHA-256 integrity and restores original files. |
-| **`Update-Gate2Diff.ps1`** | PostToolUse event via `Invoke-AntigravityHook.ps1` on `gate2_handoff.md` generation | Git diff injector: stages untracked files temporarily (`git add -N`) in a fail-safe `try/finally` block, captures unified diffs and stat tables, replaces `{{VERBATIM_GIT_DIFF}}` and `{{VERBATIM_GIT_DIFFSTAT}}` literals, and sanitizes private keys, JWTs, and API tokens while preserving Git commit SHAs and checksums. |
+| **`Update-Gate2Diff.ps1`** | PostToolUse event via `invoke-antigravity-hook.mjs` on `gate2_handoff.md` generation | Git diff injector: stages untracked files temporarily (`git add -N`) in a fail-safe `try/finally` block, captures unified diffs and stat tables, replaces `{{VERBATIM_GIT_DIFF}}` and `{{VERBATIM_GIT_DIFFSTAT}}` literals, and sanitizes private keys, JWTs, and API tokens while preserving Git commit SHAs and checksums. |

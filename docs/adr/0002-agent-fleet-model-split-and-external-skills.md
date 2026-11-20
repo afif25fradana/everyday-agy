@@ -4,7 +4,7 @@
 Accepted
 
 ## Date
-2026-11-18
+2026-11-20
 
 ## Context
 As my `everyday-agy` dotfiles grew, I needed to keep the catalog lean. Importing massive external catalogs (like 300+ skill bundles) or vendoring community suites (`impeccable`, 6 `ponytail*` skills, and official Marketplace plugins) dumped roughly 44,000 lines of third-party JavaScript and JSON into Git, distorted GitHub language stats, and drifted from upstream releases.
@@ -35,7 +35,7 @@ I maintain an 11-agent custom subagent fleet in `config/agents/*/agent.md` (enfo
 ### 3. 16-Skill Tracked Catalog, Domain Partitioning, and Frontmatter Budget
 I maintain exactly 16 skills under `config/skills/` (enforced by `.github/workflows/ci.yml`), partitioned into independent skills rather than greedy `references/` trees that models load wholesale regardless of task:
 - **7 bespoke workflows**: `orchestrator`, `council-review`, `academic-council`, `audit-dev`, `sync-task-state`, `clean-docs`, and `deep-web-research`.
-- **9 engine-adapted ports**: `spec-kit` (wired to `system-architect`), `skill-creator` (adapted from Anthropic's `skill-creator` under Apache-2.0 into a lean pure-Markdown workflow with zero bundled scripts), `gh-workflow` (wired to `maintenance-bot` and `docs-architect`), `audit-context-building` and `differential-review` (ported from Trail of Bits from Claude `.js`/workflow calls to Antigravity subagent and scratch primitives, with `differential-review` structured under `references/`), `contract-first`, `database-migrations`, `coding-standards` (kept inline at 103 lines with Active LTS floors for Node 20+, Python 3.12+, Go 1.22+, and Java 21/25 rather than split across files), and `documentation-and-adrs`.
+- **9 engine-adapted ports**: `spec-kit` (wired to `system-architect`), `skill-creator` (adapted from Anthropic's `skill-creator` under Apache-2.0 into a lean pure-Markdown workflow with zero bundled scripts), `gh-workflow` (wired to `maintenance-bot` and `docs-architect`), `audit-context-building` and `differential-review` (ported from Trail of Bits from Claude `.js`/workflow calls to Antigravity subagent and scratch primitives, with `differential-review` structured under `references/`), `contract-first`, `database-migrations`, `coding-standards` (kept inline at 103 lines with Active LTS floors for Node 22+ LTS, Python 3.12+, Go 1.22+, and Java 21/25 rather than split across files), and `documentation-and-adrs`.
 - **Frontmatter constraints**: Every `SKILL.md` keeps `description:` on a single line `<= 128` characters and wraps values containing `: ` in quotes (enforced by CI and `YamlValidation.Tests.ps1`).
 
 ### 4. Decoupled Upstream Suites, Context7 HTTP Auth, and Verified CLI Tools

@@ -10,7 +10,7 @@ I tweak this setup constantly as I try new patterns and hit edge cases. Some par
 > **Heads up before you clone or run anything:** Do not blindly run `restore.ps1` on your machine. Even though it saves a timestamped backup first, it overwrites your global `~/.gemini/GEMINI.md` and `~/.gemini/config/` with my personal environment configurations:
 > - **Personal paths:** Deploys hardcoded paths (`D:\Github`) and user-specific working directory assumptions across operational rules.
 > - **WSL2 Arch Linux environment:** Assumes an active Arch Linux distribution under WSL2 (`wsl -d archlinux`) for Linux tool execution and fallback shells.
-> - **AST command hooks:** Installs strict runtime hook routing (`config/hooks.json`) and PowerShell AST safety filters (`config/scripts/Test-PowerShellCommandSafety.ps1`) that intercept shell executions, reject destructive primitives, and restrict sensitive file paths.
+> - **Runtime security hooks:** Installs runtime hook routing (`config/hooks.json`) that routes file and search operations through Node.js (`config/scripts/invoke-antigravity-hook.mjs`) and shell commands through PowerShell AST filters (`config/scripts/Test-PowerShellCommandSafety.ps1`) to reject destructive commands and restrict sensitive paths.
 >
 > If you just want the core ideas, point your own AI coding agent at this repository and ask it to distill or adapt the specific rules, hooks, or skills that fit your setup.
 
@@ -37,7 +37,7 @@ everyday-agy/
 ├── config/
 │   ├── GEMINI.md        # Tracked global operational rules deployed to ~/.gemini/GEMINI.md
 │   ├── hooks.json       # Native Antigravity PreToolUse/PostToolUse hook definitions
-│   ├── scripts/         # Native hook router, AST command safety, checkpoints & diffs (5 scripts)
+│   ├── scripts/         # Native hook router, AST command safety, checkpoints & diffs
 │   ├── agents/          # 11 specialized subagents with hybrid model tiering (ADR-0002)
 │   └── skills/          # 16 bespoke and engine-adapted workflow skills
 ├── docs/
@@ -52,7 +52,7 @@ The global rules file stays intentionally lean—focusing on active boundaries r
 - Checkpoint-gated execution: autonomous execution and verification for small fixes (Tier 0/1); explicit approval before multi-file or architectural changes (Tier 2/3, ADR-0001).
 - Rollback safety: maintain a clean git checkpoint before modifying files.
 - Lean chat: concise status responses (1 to 3 lines) pointing to structured artifacts for review payloads.
-- Security boundaries: deny paths (`.env`, `~/.ssh`, token MCP configs), native hook router enforcement (`config/hooks.json`, `config/scripts/Invoke-AntigravityHook.ps1`), regression and command interception tests (`.github/tests/*.Tests.ps1`), and quarantine for external inputs.
+- Security boundaries: deny paths (`.env`, `~/.ssh`, token MCP configs), hybrid hook routing (`config/hooks.json`, `config/scripts/invoke-antigravity-hook.mjs`, `config/scripts/Invoke-AntigravityHook.ps1`), regression and command interception tests (`.github/tests/*.Tests.ps1`), and quarantine for external inputs.
 
 ### Specialized Agent Roles (`config/agents/`)
 
@@ -99,19 +99,10 @@ These live documents cover orchestrator delegation, fleet model tiering, runtime
    ```
    *Runs a pre-flight credential scan and creates a timestamped backup in `~/.gemini/` before deploying repo-tracked files. External skills and third-party plugins in `~/.gemini/` are preserved.*
 3. Configure Model Context Protocol (MCP) authentication:
-   Add your Context7 token to `~/.gemini/config/mcp_config.json`:
-   ```json
-   {
-     "mcpServers": {
-       "context7": {
-         "url": "https://mcp.context7.com/mcp",
-         "headers": {
-           "Authorization": "Bearer <YOUR_CONTEXT7_API_KEY>"
-         }
-       }
-     }
-   }
+   ```powershell
+   npx -y ctx7 setup
    ```
+   *Installs and authenticates Context7 without manually editing `~/.gemini/config/mcp_config.json`.*
 4. Sync local modifications back to the repository:
    ```powershell
    powershell -ExecutionPolicy Bypass -File .\sync.ps1

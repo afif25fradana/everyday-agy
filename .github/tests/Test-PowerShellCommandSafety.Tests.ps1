@@ -260,7 +260,7 @@ $testCases = @(
     @{ Expected = "ALLOW"; Cmd = 'git checkout main'; Reason = "git checkout branch switch" },
     @{ Expected = "ALLOW"; Cmd = 'git checkout dev'; Reason = "git checkout dev branch switch" },
     @{ Expected = "ALLOW"; Cmd = 'git checkout feat/auth'; Reason = "git checkout slash branch switch" },
-    @{ Expected = "ALLOW"; Cmd = 'git checkout -B feat/branch'; Reason = "git checkout -B branch creation" },
+    @{ Expected = "ALLOW"; Cmd = 'git checkout -b feat/branch'; Reason = "git checkout -b branch creation" },
     @{ Expected = "ALLOW"; Cmd = 'git checkout --detach HEAD'; Reason = "git checkout --detach" },
     @{ Expected = "ALLOW"; Cmd = 'git checkout --orphan new-branch'; Reason = "git checkout --orphan branch" },
 
@@ -310,7 +310,46 @@ $testCases = @(
     @{ Expected = "ALLOW"; Cmd = 'git commit -am "fix -n flag docs"'; Reason = "git commit -am message containing -n" },
     @{ Expected = "ALLOW"; Cmd = 'git push -n origin main'; Reason = "git push -n dry-run" },
     @{ Expected = "ALLOW"; Cmd = 'git branch -M old-branch checkpoint-dest'; Reason = "git branch -M to checkpoint-* destination" },
-    @{ Expected = "ALLOW"; Cmd = 'git -h'; Reason = "git -h global help" }
+    @{ Expected = "ALLOW"; Cmd = 'git -h'; Reason = "git -h global help" },
+
+    # Dynamic Member Invocations & MemberName bindings
+    @{ Expected = "BLOCK"; Cmd = '[System.IO.Directory]::("Del"+"ete")("C:\test")'; Reason = "Dynamic ParenExpressionAst member invocation" },
+    @{ Expected = "BLOCK"; Cmd = '$m = "Delete"; [System.IO.File]::$m("C:\test.txt")'; Reason = "Dynamic VariableExpressionAst member invocation" },
+    @{ Expected = "BLOCK"; Cmd = '$t = [System.IO.Directory]; $t::("Del"+"ete")("C:\test")'; Reason = "Variable type dynamic member invocation" },
+    @{ Expected = "BLOCK"; Cmd = '(Get-Item C:\test).("Del"+"ete")()'; Reason = "Pipeline object dynamic member invocation" },
+    @{ Expected = "BLOCK"; Cmd = 'Get-ChildItem | ForEach-Object ("Del"+"ete")'; Reason = "Dynamic ForEach-Object positional member" },
+    @{ Expected = "BLOCK"; Cmd = '$m = "Delete"; Get-ChildItem | % -MemberName $m'; Reason = "Dynamic ForEach-Object -MemberName variable" },
+    @{ Expected = "BLOCK"; Cmd = 'Get-ChildItem | ForEach-Object -MemberName Delete'; Reason = "ForEach-Object -MemberName Delete" },
+    @{ Expected = "BLOCK"; Cmd = 'Get-ChildItem | % Delete'; Reason = "ForEach-Object positional Delete member" },
+    @{ Expected = "ALLOW"; Cmd = '[System.String]::Concat("a", "b")'; Reason = "Constant non-prohibited static method" },
+    @{ Expected = "ALLOW"; Cmd = 'Get-ChildItem | % FullName'; Reason = "ForEach-Object benign positional member" },
+    @{ Expected = "ALLOW"; Cmd = 'Get-ChildItem | ForEach-Object -MemberName FullName'; Reason = "ForEach-Object benign -MemberName" },
+
+    # Cmdlet Aliasing
+    @{ Expected = "BLOCK"; Cmd = 'Set-Alias -Name mydel -Value Remove-Item'; Reason = "Set-Alias definition" },
+    @{ Expected = "BLOCK"; Cmd = 'New-Alias -Name wipe -Value Remove-Item'; Reason = "New-Alias definition" },
+    @{ Expected = "BLOCK"; Cmd = 'sal wipe Clear-Disk'; Reason = "sal alias shorthand" },
+    @{ Expected = "BLOCK"; Cmd = 'nal wipe Remove-Item'; Reason = "nal alias shorthand" },
+
+    # Git Subcommands & Flags (--mirror, --prune, -B checkpoint restriction)
+    @{ Expected = "BLOCK"; Cmd = 'git push --mirror origin'; Reason = "git push --mirror destructive ref wipe" },
+    @{ Expected = "BLOCK"; Cmd = 'git push --prune origin'; Reason = "git push --prune remote branch deletion" },
+    @{ Expected = "BLOCK"; Cmd = 'git push origin --mirror'; Reason = "git push origin --mirror" },
+    @{ Expected = "BLOCK"; Cmd = 'git push origin --prune'; Reason = "git push origin --prune" },
+    @{ Expected = "BLOCK"; Cmd = 'git checkout -B main'; Reason = "git checkout -B non-checkpoint branch force-reset" },
+    @{ Expected = "BLOCK"; Cmd = 'git checkout -B feature/foo'; Reason = "git checkout -B non-checkpoint branch feature/foo" },
+    @{ Expected = "ALLOW"; Cmd = 'git checkout -B checkpoint-task1'; Reason = "git checkout -B checkpoint branch reset" },
+    @{ Expected = "ALLOW"; Cmd = 'git checkout -b feature/foo'; Reason = "git checkout -b non-force new branch" },
+
+    # Git -c and config security overrides
+    @{ Expected = "BLOCK"; Cmd = 'git -c core.pager=calc.exe log'; Reason = "git -c core.pager external process execution" },
+    @{ Expected = "BLOCK"; Cmd = 'git -c pager.log=calc.exe log'; Reason = "git -c pager.<cmd> external process execution" },
+    @{ Expected = "BLOCK"; Cmd = 'git -c credential.helper=calc.exe fetch'; Reason = "git -c credential.helper external execution" },
+    @{ Expected = "BLOCK"; Cmd = 'git -c diff.external=calc.exe diff'; Reason = "git -c diff.external external execution" },
+    @{ Expected = "BLOCK"; Cmd = 'git -c merge.tool=calc.exe mergetool'; Reason = "git -c merge.tool external execution" },
+    @{ Expected = "BLOCK"; Cmd = 'git -c filter.clean.clean=calc.exe status'; Reason = "git -c filter clean execution sink" },
+    @{ Expected = "BLOCK"; Cmd = 'git config core.pager calc.exe'; Reason = "git config core.pager external process execution" },
+    @{ Expected = "BLOCK"; Cmd = 'git config credential.helper calc.exe'; Reason = "git config credential.helper external execution" }
 )
 
 $passed = 0
@@ -592,7 +631,16 @@ try {
         @{ Tool = "edit_file"; Key = "Path"; Path = "D:\\repo\\DISPATCH.md"; Expected = "allow"; Label = "edit_file allowed for non-secret teamwork artifact" },
         @{ Tool = "view_file"; Key = "AbsolutePath"; Path = "C:\\"; Expected = "allow"; Label = "Windows root C:\ exits ancestor loop cleanly" },
         @{ Tool = "view_file"; Key = "AbsolutePath"; Path = "/"; Expected = "allow"; Label = "POSIX root / exits ancestor loop cleanly" },
-        @{ Tool = "view_file"; Key = "AbsolutePath"; Path = "C:\\repo\\bad|dir\\app.ts"; Expected = "allow"; Label = "Non-existent path with illegal Win32 char does not trigger fallback error" }
+        @{ Tool = "view_file"; Key = "AbsolutePath"; Path = "C:\\repo\\bad|dir\\app.ts"; Expected = "allow"; Label = "Non-existent path with illegal Win32 char does not trigger fallback error" },
+        @{ Tool = "read_file"; Key = "Path"; Path = "C:\\repo\\secret.pem."; Expected = "deny"; Label = "Win32 trailing period bypass secret.pem." },
+        @{ Tool = "edit_file"; Key = "Path"; Path = "C:\\repo\\.gemini\\config\\mcp_config.json "; Expected = "deny"; Label = "Win32 trailing space bypass mcp_config.json " },
+        @{ Tool = "view_file"; Key = "AbsolutePath"; Path = "~/.gemini/antigravity/mcp_oauth_tokens.json"; Expected = "deny"; Label = "view_file on ~/.gemini/antigravity/mcp_oauth_tokens.json" },
+        @{ Tool = "view_file"; Key = "AbsolutePath"; Path = "~/.gemini/antigravity/mcp_oauth_tokens_v2.json"; Expected = "deny"; Label = "view_file on ~/.gemini/antigravity/mcp_oauth_tokens_v2.json" },
+        @{ Tool = "read_file"; Key = "Path"; Path = "D:\\repo\\.agents\\mcp_config.json"; Expected = "deny"; Label = "read_file on workspace .agents/mcp_config.json" },
+        @{ Tool = "write_file"; Key = "Path"; Path = "D:\\repo\\.agents\\mcp_config.local.json"; Expected = "deny"; Label = "write_file on workspace .agents/mcp_config.local.json" },
+        @{ Tool = "grep_search"; Key = "SearchPath"; Path = "~/.ssh"; Expected = "deny"; Label = "grep_search targeting ~/.ssh" },
+        @{ Tool = "grep_search"; Key = "search_path"; Path = "C:\\repo\\.env"; Expected = "deny"; Label = "grep_search targeting .env" },
+        @{ Tool = "grep_search"; Key = "SearchPath"; Path = "D:\\repo\\src"; Expected = "allow"; Label = "grep_search targeting normal src" }
     )
 
     foreach ($g2 in $guard2Cases) {
@@ -652,6 +700,19 @@ try {
         $jRes = Invoke-HookCli -EventName "PreToolUse" -HomeOverride $isolatedHome -JsonInput $jPayload
         Assert-HookCondition -Name "Guard 2 ReparsePoint ($($jc.Tool)): $($jc.Label) -> $($jc.Expected)" -Condition ($jRes.ExitCode -eq 0 -and $jRes.SingleJson -and $jRes.Parsed.decision -eq $jc.Expected) -Details "out=$($jRes.StdOut)"
     }
+
+    # Guard 2 Fail-Closed on Junction Depth > 8
+    $deepDirA = Join-Path $juncStage "deepA"
+    $deepDirB = Join-Path $juncStage "deepB"
+    New-Item -ItemType Directory -Path $deepDirA, $deepDirB -Force | Out-Null
+    $deepLinkA = Join-Path $deepDirA "linkB"
+    $deepLinkB = Join-Path $deepDirB "linkA"
+    $null = New-Item -ItemType $linkType -Path $deepLinkA -Target $deepDirB -Force -ErrorAction Stop
+    $null = New-Item -ItemType $linkType -Path $deepLinkB -Target $deepDirA -Force -ErrorAction Stop
+    $deepPath = Join-Path $deepDirA "linkB/linkA/linkB/linkA/linkB/linkA/linkB/linkA/linkB/file.txt"
+    $deepPayload = @{ toolCall = @{ name = "read_file"; args = @{ Path = $deepPath } } } | ConvertTo-Json -Depth 5 -Compress
+    $deepRes = Invoke-HookCli -EventName "PreToolUse" -HomeOverride $isolatedHome -JsonInput $deepPayload
+    Assert-HookCondition -Name "Guard 2: Cyclic/excessive reparse depth (> 8) fails closed with deny" -Condition ($deepRes.ExitCode -eq 0 -and $deepRes.SingleJson -and $deepRes.Parsed.decision -eq "deny") -Details "out=$($deepRes.StdOut)"
 
     # Guard 3 removed: invoke_subagent passes through without 4-slot tag or model blocking
     $threeSlotPrompt = "<OBJECTIVE>Inspect parser edge cases</OBJECTIVE>`n<SCOPE>config/scripts/** (read-only)</SCOPE>`n<DELIVERABLE>Compact receipt</DELIVERABLE>"
@@ -1015,7 +1076,7 @@ try {
     $legacySiblingPreserved = (Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/docs/notes.txt")) -and (-not (Test-Path -LiteralPath (Join-Path $syncHome ".gemini/config/docs/adr")))
     Assert-HookCondition -Name "restore.ps1 preserves non-empty sibling files in ~/.gemini/docs and ~/.gemini/config/docs while pruning adr/" -Condition ($restoreSiblingExit -eq 0 -and $docsSiblingPreserved -and $legacySiblingPreserved) -Details "docsSibling=$docsSiblingPreserved legacySibling=$legacySiblingPreserved"
 } finally {
-    foreach ($jp in @($leafJunc, $rootJunc, $normalJunc, $bracketJunc, $relSshLink)) {
+    foreach ($jp in @($leafJunc, $rootJunc, $normalJunc, $bracketJunc, $relSshLink, $deepLinkA, $deepLinkB)) {
         if ($jp -and (Test-Path -LiteralPath $jp)) {
             try { [System.IO.Directory]::Delete($jp, $false) } catch {}
         }

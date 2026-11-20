@@ -1,6 +1,10 @@
 # Secret & Credential Guards
+.ssh/
+.aws/
+.gnupg/
 mcp_config.json
 mcp_config*.json
+mcp_oauth_tokens.json
 *.env
 *.env.*
 *.secret
@@ -8,6 +12,11 @@ mcp_config*.json
 *.token
 *.pem
 *.key
+*.crt
+*.der
+*.cer
+*.jks
+*.kdbx
 id_rsa*
 id_ed25519*
 id_ecdsa*

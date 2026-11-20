@@ -175,7 +175,9 @@ function Get-NormalizedPath {
             }
             continue
         }
-        $stack.Add($seg.ToLowerInvariant())
+        $cleanSeg = $seg.ToLowerInvariant().TrimEnd('.', ' ')
+        if ([string]::IsNullOrEmpty($cleanSeg)) { continue }
+        $stack.Add($cleanSeg)
     }
 
     return $prefix + ($stack -join '/')
@@ -186,7 +188,7 @@ function Test-LexicalDenyPath {
     if ([string]::IsNullOrWhiteSpace($NormPath)) { return $false }
 
     $parts = $NormPath -split '/'
-    $leaf = $parts[-1] -replace ':.*$', ''
+    $leaf = ($parts[-1] -replace ':.*$', '').TrimEnd('.', ' ')
     $parts[-1] = $leaf
     $normNoAds = $parts -join '/'
 
@@ -205,6 +207,12 @@ function Test-LexicalDenyPath {
     if ($normNoAds -match '(^|/)\.gemini/(?:config/|antigravity[^/]*/)?mcp_config[^/]*\.json$') {
         return $true
     }
+    if ($normNoAds -match '(^|/)\.gemini/(?:antigravity[^/]*/)?mcp_oauth_tokens[^/]*\.json$') {
+        return $true
+    }
+    if ($normNoAds -match '(^|/)\.agents/mcp_config[^/]*\.json$') {
+        return $true
+    }
     return $false
 }
 
@@ -213,7 +221,7 @@ function Test-DenyPath {
         [string]$RawPath,
         [int]$Depth = 0
     )
-    if ($Depth -gt 8) { return $false }
+    if ($Depth -gt 8) { return $true }
 
     $norm = Get-NormalizedPath -RawPath $RawPath
     if ([string]::IsNullOrWhiteSpace($norm)) { return $false }
@@ -251,11 +259,7 @@ function Test-DenyPath {
         $expanded = $expanded -replace '\\', '/'
     }
 
-    try {
-        $fullProbe = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($expanded)
-    } catch {
-        return $false
-    }
+    $fullProbe = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($expanded)
     $fullNorm = Get-NormalizedPath -RawPath $fullProbe
     if (Test-LexicalDenyPath -NormPath $fullNorm) { return $true }
 
@@ -338,7 +342,7 @@ try {
     $toolName = [string](Get-PropValue -Object $toolCall -Names @("name"))
     $toolArgs = Get-PropValue -Object $toolCall -Names @("args")
 
-    $pathPropKeys = @("AbsolutePath", "TargetFile", "Path", "FilePath", "file_path", "target_file", "absolute_path", "path")
+    $pathPropKeys = @("AbsolutePath", "TargetFile", "Path", "FilePath", "file_path", "target_file", "absolute_path", "path", "SearchPath", "search_path")
 
     if ($Event -eq "PostToolUse") {
         $rawError = Get-PropValue -Object $payload -Names @("error")
@@ -437,11 +441,15 @@ try {
             exit 0
         }
 
-        { $_ -in @("view_file", "read_file", "replace_file_content", "multi_replace_file_content", "edit_file", "write_to_file", "write_file", "create_file") } {
+        { $_ -in @("view_file", "read_file", "replace_file_content", "multi_replace_file_content", "edit_file", "write_to_file", "write_file", "create_file", "grep_search") } {
             $rawPath = Get-PropValue -Object $toolArgs -Names $pathPropKeys
             if ([string]::IsNullOrWhiteSpace([string]$rawPath)) {
-                Write-HookResponse @{ decision = "ask"; reason = "Missing target file path argument in $toolName payload." }
-                exit 0
+                if ($toolName -eq "grep_search") {
+                    $rawPath = "."
+                } else {
+                    Write-HookResponse @{ decision = "ask"; reason = "Missing target file path argument in $toolName payload." }
+                    exit 0
+                }
             }
             if (Test-DenyPath -RawPath ([string]$rawPath)) {
                 Write-HookResponse @{ decision = "deny"; reason = "Blocked by Security Hook: Access to credential or secret path '$rawPath' is prohibited." }

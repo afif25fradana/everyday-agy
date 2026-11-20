@@ -57,7 +57,7 @@ Before opening any source file, the Parent Agent classifies task blast radius us
 
 ### 1.6 Subagent Commit/Push Ban, Shell Safety & Direct Parent CLI Test Runner
 - **Subagent Commit & PR Ban**: Subagents are strictly barred from running `git commit`, `git tag`, `git push`, `gh pr create`, `gh pr merge`, or `gh release create`. Commit and PR authority belongs exclusively to the Parent Agent post-Gate 2 approval.
-- **AST Shell Validation**: Any non-standard mutating or file-deleting shell command executed by Parent or Subagent must first pass `Test-PowerShellCommandSafety.ps1` per `config/GEMINI.md#L64`.
+- **AST Shell Validation**: Any non-standard mutating or file-deleting shell command executed by Parent or Subagent is automatically intercepted and validated by `hooks.json` PreToolUse running `Test-PowerShellCommandSafety.ps1` per `config/GEMINI.md#L64` (manual CLI invocation is reserved as emergency fallback).
 - **Direct Parent Test Runner**: Parent must directly run the verification test command via `run_command`, verifying exit code 0 AND positive assertion count ($>0$ passed, $0$ failed). For testless repos, label `[TEST HARNESS: NONE]` and verify via static compilation/linter/build checks.
 
 ### 1.7 Pre-Mutation Syntax Interception (SWE-Agent Fast Syntax Gate — SSOT)
@@ -183,8 +183,8 @@ Upon receiving Gate 1 approval (or immediately following Step 0 for Tier 0/1):
 
 ### Phase 5: Gate 2 Programmatic Diff, Commit & Push
 1. **Gate 2 Packaging (`gate2_handoff.md`)**:
-   - Parent authors `<appDataDir>\brain\<conversation-id>/gate2_handoff.md` with placeholders `{{VERBATIM_GIT_DIFFSTAT}}` and `{{VERBATIM_GIT_DIFF}}`.
-   - Parent executes:
+   - Parent authors `<appDataDir>\brain\<conversation-id>/gate2_handoff.md` with placeholders `{{VERBATIM_GIT_DIFFSTAT}}` and `{{VERBATIM_GIT_DIFF}}`. `hooks.json` PostToolUse (Guard 4) automatically injects the git diff and diffstat on write.
+   - *Emergency Fallback*: If Guard 4 ever leaves diff placeholders unreplaced, manually execute:
      ```powershell
      powershell -ExecutionPolicy Bypass -File "$HOME\.gemini\config\scripts\Update-Gate2Diff.ps1" -ArtifactPath "<appDataDir>\brain\<conversation-id>\gate2_handoff.md"
      ```

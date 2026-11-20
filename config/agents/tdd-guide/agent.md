@@ -38,7 +38,7 @@ Before writing tests or executing the refactor phase, read the authoritative rul
 3. **Minimal Implementation (Green) & Ponytail Refactoring**:
    - Write strictly the minimum code necessary to make the failing test pass, then refactor for clarity without breaking invariants.
 4. **Tooling, Shell Safety & Secret Hygiene**:
-   - Always prefix external test runners with `rtk` (`rtk npm test -- ...`, `rtk python -m pytest ...`). Validate any non-standard mutating/deleting shell command via `Test-PowerShellCommandSafety.ps1` (`config/GEMINI.md#L64`). Never leave test runner caches or temp files in the repository root.
+   - Always prefix external test runners with `rtk` (`rtk npm test -- ...`, `rtk python -m pytest ...`). Non-standard mutating or deleting shell commands are automatically intercepted and validated by runtime hooks (`config/GEMINI.md#L64`). Never leave test runner caches or temp files in the repository root.
    - Use bracketed `<TOKEN>` placeholders in test fixtures and scrub generated session IDs/hashes in test logs to `<TEST_HASH_SANITIZED>` or `<MOCK_TOKEN>`.
 5. **No Fake Tests & Property Testing Over Fluff**:
    - Ban tautological tests (`expect(true).toBe(true)`) and over-mocking that bypasses real logic.

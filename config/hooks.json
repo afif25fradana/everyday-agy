@@ -12,7 +12,7 @@
         ]
       },
       {
-        "matcher": "view_file|read_file|replace_file_content|multi_replace_file_content|edit_file|write_to_file|write_file|create_file",
+        "matcher": "view_file|read_file|replace_file_content|multi_replace_file_content|edit_file|write_to_file|write_file|create_file|grep_search",
         "hooks": [
           {
             "type": "command",

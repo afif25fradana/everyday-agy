@@ -49,7 +49,8 @@ begin {
         'Start-Process', 'saps', 'start',
         'Invoke-CimMethod', 'icim', 'Invoke-WmiMethod', 'iwmi',
         'Invoke-Command', 'icm', 'Start-Job', 'sajb', 'Start-ThreadJob',
-        'Remove-WmiObject', 'rwmi', 'Remove-CimInstance', 'rcim'
+        'Remove-WmiObject', 'rwmi', 'Remove-CimInstance', 'rcim',
+        'Set-Alias', 'New-Alias', 'sal', 'nal'
     )
 }
 
@@ -162,18 +163,29 @@ process {
             exit 1
         }
 
-        # ForEach-Object / foreach / % Delete member execution
+        # ForEach-Object / foreach / % Delete or dynamic member execution
         if ($cmdName -in @('ForEach-Object', 'foreach', '%')) {
             for ($i = 1; $i -lt $targetElements.Count; $i++) {
                 $feEl = $targetElements[$i]
-                $feTok = Get-NormalizedTokenText $feEl.Extent.Text
-                if ($feTok -eq 'Delete') {
-                    Write-Error "Safety Violation: Prohibited dynamic member invocation '$($cmdAst.Extent.Text)' detected." -ErrorAction Continue
-                    exit 1
-                }
-                if ($feEl -is [System.Management.Automation.Language.CommandParameterAst] -and $null -ne $feEl.Argument) {
-                    $feArg = Get-NormalizedTokenText $feEl.Argument.Extent.Text
-                    if ($feArg -eq 'Delete') {
+                if ($feEl -is [System.Management.Automation.Language.CommandParameterAst]) {
+                    if ($feEl.ParameterName -match '^(?i)m(e(m(b(e(r(n(a(m(e)?)?)?)?)?)?)?)?)?$') {
+                        $targetNode = $null
+                        if ($null -ne $feEl.Argument) {
+                            $targetNode = $feEl.Argument
+                        } elseif ($i + 1 -lt $targetElements.Count) {
+                            $targetNode = $targetElements[$i + 1]
+                        }
+                        if ($null -ne $targetNode) {
+                            if ($targetNode -isnot [System.Management.Automation.Language.StringConstantExpressionAst] -or
+                                (Get-NormalizedTokenText $targetNode.Extent.Text) -eq 'Delete') {
+                                Write-Error "Safety Violation: Prohibited dynamic member invocation '$($cmdAst.Extent.Text)' detected." -ErrorAction Continue
+                                exit 1
+                            }
+                        }
+                    }
+                } elseif ($feEl -isnot [System.Management.Automation.Language.ScriptBlockExpressionAst]) {
+                    if ($feEl -isnot [System.Management.Automation.Language.StringConstantExpressionAst] -or
+                        (Get-NormalizedTokenText $feEl.Extent.Text) -eq 'Delete') {
                         Write-Error "Safety Violation: Prohibited dynamic member invocation '$($cmdAst.Extent.Text)' detected." -ErrorAction Continue
                         exit 1
                     }
@@ -296,7 +308,7 @@ process {
             $skipNext = $false
             $subCmd = $null
             $gitGlobalBools = @('--no-pager', '-p', '-P', '--paginate', '--bare', '--no-replace-objects', '--literal-pathspecs', '--no-optional-locks', '--no-lazy-fetch', '--no-advice', '-v', '--version')
-            $dangerousGitConfigRe = '(?i)^(core\.(hookspath|fsmonitor|sshcommand|askpass|editor)|clean\.requireforce|sequence\.editor|safe\.directory|alias\.)'
+            $dangerousGitConfigRe = '(?i)^(core\.(hookspath|fsmonitor|sshcommand|askpass|editor|pager)|pager(\.|$)|credential(\..+)?\.helper|diff\.(external|tool|.+\.command)|difftool(\.|$)|merge\.tool|mergetool(\.|$)|filter\..+\.(clean|smudge|process)|browser(\.|$)|clean\.requireforce|sequence\.editor|safe\.directory|alias\.)'
 
             for ($i = 1; $i -lt $targetElements.Count; $i++) {
                 if ($targetElements[$i] -is [System.Management.Automation.Language.VariableExpressionAst] -and $targetElements[$i].Splatted) {
@@ -400,7 +412,8 @@ process {
                     $hasForceFlag = [bool]($subTail | Where-Object { $_ -cmatch '^-[^-]*f' -or $_ -match '^(--force|--force-with-lease|--force-if-includes)(=.*)?$' })
                     $hasForceRefspec = [bool]($subTail | Where-Object { $_ -match '^\+\S+' })
                     $hasRemoteDeletion = [bool]($subTail | Where-Object { $_ -match '^:\S+' -or $_ -ceq '--delete' -or $_ -cmatch '^-[^-]*d' })
-                    if ($hasForceFlag -or $hasForceRefspec -or $hasRemoteDeletion) {
+                    $hasMirrorOrPrune = [bool]($subTail | Where-Object { $_ -match '(?i)^(--mirror|--prune)$' })
+                    if ($hasForceFlag -or $hasForceRefspec -or $hasRemoteDeletion -or $hasMirrorOrPrune) {
                         Write-Error "Safety Violation: Prohibited git push force or remote deletion detected." -ErrorAction Continue
                         exit 1
                     }
@@ -467,6 +480,14 @@ process {
                     $hasForce = [bool]($subTail | Where-Object { $_ -cmatch '^-[^-]*f' -or $_ -ceq '--force' })
                     $hasDoubleDash = [bool]($subTail | Where-Object { $_ -eq '--' })
                     [string[]]$positional = @($subTail | Where-Object { $_ -ne '--' -and $_ -notmatch '^-' })
+                    $hasCapitalB = [bool]($subTail | Where-Object { $_ -cmatch '^-[^-]*B' })
+                    if ($hasCapitalB) {
+                        $bTarget = if ($positional.Count -ge 1) { $positional[0] } else { '' }
+                        if ($bTarget -notmatch '^checkpoint-[A-Za-z0-9_-]+$') {
+                            Write-Error "Safety Violation: git checkout -B cannot overwrite arbitrary branch pointers." -ErrorAction Continue
+                            exit 1
+                        }
+                    }
                     $hasDotOrWildcard = ([bool]($positional | Where-Object { $_ -eq '.' -or $_ -eq '*' })) -and -not $isBranchCreate
                     $hasMultiPositional = ($positional.Count -ge 2) -and -not $isBranchCreate
                     $hasFileTarget = $false
@@ -504,7 +525,7 @@ process {
                     }
                 }
                 if ($subCmd -eq 'config') {
-                    if ([bool]($subTail | Where-Object { $_ -match '(?i)(core\.(hookspath|fsmonitor|sshcommand|askpass|editor)|clean\.requireforce|sequence\.editor|safe\.directory|alias\.)' })) {
+                    if ([bool]($subTail | Where-Object { $_ -match $dangerousGitConfigRe })) {
                         Write-Error "Safety Violation: Prohibited git config security override detected." -ErrorAction Continue
                         exit 1
                     }
@@ -537,6 +558,10 @@ process {
     # 3. Direct .NET destructive method invocations, process execution & dynamic reflection execution
     $memberExpressions = $ast.FindAll({ $args[0] -is [System.Management.Automation.Language.InvokeMemberExpressionAst] }, $true)
     foreach ($mem in $memberExpressions) {
+        if ($mem.Member -isnot [System.Management.Automation.Language.StringConstantExpressionAst]) {
+            Write-Error "Safety Violation: Prohibited dynamic member invocation '$($mem.Extent.Text)' detected." -ErrorAction Continue
+            exit 1
+        }
         $exprText = Get-NormalizedTokenText $mem.Expression.Extent.Text
         $memberVal = (Get-NormalizedTokenText $mem.Member.Extent.Text) -replace '^[\(\s]+|[\)\s]+$', ''
 

@@ -35,7 +35,7 @@ Before applying type or compiler fixes, read the authoritative rule sets via `vi
 3. **Stop Rule & Auto-Rollback**:
    - After two consecutive failed fix attempts on build or compiler errors, do NOT loop or re-run the same failing command. Execute `Restore-AuditCheckpoint.ps1` to revert the working tree cleanly, report the failure diagnostics, and escalate to the user or parent agent.
 4. **Execution & Shell Safety**:
-   - Always prefix external tools (`git`, `npm`, `npx`, `pip`, `rg`) with `rtk` (e.g. `rtk npx tsc --noEmit --pretty`, `rtk npm run build`). Validate any non-standard mutating shell command via `Test-PowerShellCommandSafety.ps1` (`config/GEMINI.md#L64`).
+   - Always prefix external tools (`git`, `npm`, `npx`, `pip`, `rg`) with `rtk` (e.g. `rtk npx tsc --noEmit --pretty`, `rtk npm run build`). Non-standard mutating shell commands are automatically intercepted and validated by runtime hooks (`config/GEMINI.md#L64`).
 5. **Context7 Documentation Grounding**:
    - If an error stems from library upgrades, typing mismatches, or deprecated third-party APIs, query Context7 MCP (`resolve-library-id` -> `query-docs`) before guessing type definitions.
 6. **Git Safety Checkpoint**:

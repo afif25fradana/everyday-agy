@@ -417,7 +417,7 @@ if ($hooksExist) {
 
         $expectedPre = @(
             "run_command",
-            "view_file|read_file|replace_file_content|multi_replace_file_content|edit_file|write_to_file|write_file|create_file"
+            "view_file|read_file|replace_file_content|multi_replace_file_content|edit_file|write_to_file|write_file|create_file|grep_search"
         )
         $expectedPost = @(
             "write_to_file|write_file|create_file|replace_file_content|multi_replace_file_content|edit_file"
@@ -575,6 +575,17 @@ $hasGitignoreGuards = ($gitignoreText -match '(?m)^id_ed25519\*\s*$') -and
     ($gitignoreText -match '(?m)^\*\.p12\s*$') -and
     ($gitignoreText -match '(?m)^\*\.pfx\s*$')
 Assert-Test -Name ".gitignore includes id_ed25519*, id_ecdsa*, *.p12, and *.pfx secret guards" -Condition $hasGitignoreGuards
+
+$hasExpandedGitignoreGuards = ($gitignoreText -match '(?m)^\.ssh/\s*$') -and
+    ($gitignoreText -match '(?m)^\.aws/\s*$') -and
+    ($gitignoreText -match '(?m)^\.gnupg/\s*$') -and
+    ($gitignoreText -match '(?m)^mcp_oauth_tokens\.json\s*$') -and
+    ($gitignoreText -match '(?m)^\*\.crt\s*$') -and
+    ($gitignoreText -match '(?m)^\*\.der\s*$') -and
+    ($gitignoreText -match '(?m)^\*\.cer\s*$') -and
+    ($gitignoreText -match '(?m)^\*\.jks\s*$') -and
+    ($gitignoreText -match '(?m)^\*\.kdbx\s*$')
+Assert-Test -Name ".gitignore includes .ssh/, .aws/, .gnupg/, mcp_oauth_tokens.json, and certificate/keyring guards" -Condition $hasExpandedGitignoreGuards
 
 $ciRaw = Get-Content -LiteralPath $ciWorkflowPath -Raw -Encoding utf8
 $ciHardened = ($ciRaw -match 'git\s+-c\s+core\.quotePath=false\s+ls-files') -and

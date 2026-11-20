@@ -392,8 +392,14 @@ if ($hooksExist) {
                     }
                     foreach ($h in @($group.hooks)) {
                         $cmd = [string]$h.command
-                        if ($cmd -notmatch '^powershell\s+-NoProfile\s+-NonInteractive\s+-ExecutionPolicy\s+Bypass\s+-File\s+\./scripts/Invoke-AntigravityHook\.ps1\s+-Event\s+PreToolUse\s*$') {
-                            $allCommandsValid = $false
+                        if ($group.matcher -eq "run_command") {
+                            if ($cmd -notmatch '^powershell\s+-NoProfile\s+-NonInteractive\s+-ExecutionPolicy\s+Bypass\s+-File\s+\./scripts/Invoke-AntigravityHook\.ps1\s+-Event\s+PreToolUse\s*$') {
+                                $allCommandsValid = $false
+                            }
+                        } else {
+                            if ($cmd -notmatch '^node\s+\./scripts/invoke-antigravity-hook\.mjs\s+PreToolUse\s*$') {
+                                $allCommandsValid = $false
+                            }
                         }
                     }
                 }
@@ -407,7 +413,7 @@ if ($hooksExist) {
                     }
                     foreach ($h in @($group.hooks)) {
                         $cmd = [string]$h.command
-                        if ($cmd -notmatch '^powershell\s+-NoProfile\s+-NonInteractive\s+-ExecutionPolicy\s+Bypass\s+-File\s+\./scripts/Invoke-AntigravityHook\.ps1\s+-Event\s+PostToolUse\s*$') {
+                        if ($cmd -notmatch '^node\s+\./scripts/invoke-antigravity-hook\.mjs\s+PostToolUse\s*$') {
                             $allCommandsValid = $false
                         }
                     }
@@ -417,10 +423,10 @@ if ($hooksExist) {
 
         $expectedPre = @(
             "run_command",
-            "view_file|read_file|replace_file_content|multi_replace_file_content|edit_file|write_to_file|write_file|create_file|grep_search"
+            "view_file|read_file|edit_file|replace_file_content|multi_replace_file_content|write_file|write_to_file|create_file|apply_diff|grep_search"
         )
         $expectedPost = @(
-            "write_to_file|write_file|create_file|replace_file_content|multi_replace_file_content|edit_file"
+            "edit_file|replace_file_content|multi_replace_file_content|write_file|write_to_file|create_file|apply_diff"
         )
         $hasExactPre = ($preMatchers.Count -eq 2) -and ($expectedPre[0] -in $preMatchers) -and ($expectedPre[1] -in $preMatchers) -and ("invoke_subagent" -notin $preMatchers)
         $hasExactPost = ($postMatchers.Count -eq 1) -and ($expectedPost[0] -in $postMatchers)
@@ -428,7 +434,7 @@ if ($hooksExist) {
         Assert-Test -Name "config/hooks.json defines exact 2 PreToolUse matchers (no invoke_subagent)" -Condition $hasExactPre -Details ("Found: " + ($preMatchers -join ", "))
         Assert-Test -Name "config/hooks.json defines exact 1 PostToolUse matcher" -Condition $hasExactPost -Details ("Found: " + ($postMatchers -join ", "))
         Assert-Test -Name "config/hooks.json matcher groups define at least 1 hook handler" -Condition $allGroupsHaveHooks
-        Assert-Test -Name "config/hooks.json handlers invoke ./scripts/Invoke-AntigravityHook.ps1 correctly" -Condition $allCommandsValid
+        Assert-Test -Name "config/hooks.json handlers invoke hook scripts correctly" -Condition $allCommandsValid
     }
 }
 
@@ -438,7 +444,8 @@ $expectedScripts = @(
     "Test-PowerShellCommandSafety.ps1",
     "New-AuditCheckpoint.ps1",
     "Restore-AuditCheckpoint.ps1",
-    "Update-Gate2Diff.ps1"
+    "Update-Gate2Diff.ps1",
+    "invoke-antigravity-hook.mjs"
 )
 foreach ($scriptName in $expectedScripts) {
     $scriptPath = Join-Path $configScriptsDir $scriptName
@@ -446,10 +453,15 @@ foreach ($scriptName in $expectedScripts) {
     Assert-Test -Name "config/scripts/$scriptName exists" -Condition $scriptExists -Details "Missing $scriptPath"
 
     if ($scriptExists) {
-        $parseErrors = $null
-        [System.Management.Automation.Language.Parser]::ParseFile($scriptPath, [ref]$null, [ref]$parseErrors) | Out-Null
-        $astValid = (-not $parseErrors) -or ($parseErrors.Count -eq 0)
-        Assert-Test -Name "$scriptName passes PowerShell AST parse" -Condition $astValid -Details ("$parseErrors")
+        if ($scriptName.EndsWith(".mjs")) {
+            $nodeCheck = Start-Process -FilePath "node" -ArgumentList "--check `"$scriptPath`"" -NoNewWindow -Wait -PassThru
+            Assert-Test -Name "$scriptName passes node --check" -Condition ($nodeCheck.ExitCode -eq 0) -Details "Exit code: $($nodeCheck.ExitCode)"
+        } else {
+            $parseErrors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($scriptPath, [ref]$null, [ref]$parseErrors) | Out-Null
+            $astValid = (-not $parseErrors) -or ($parseErrors.Count -eq 0)
+            Assert-Test -Name "$scriptName passes PowerShell AST parse" -Condition $astValid -Details ("$parseErrors")
+        }
     }
 }
 

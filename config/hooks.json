@@ -12,11 +12,11 @@
         ]
       },
       {
-        "matcher": "view_file|read_file|replace_file_content|multi_replace_file_content|edit_file|write_to_file|write_file|create_file|grep_search",
+        "matcher": "view_file|read_file|edit_file|replace_file_content|multi_replace_file_content|write_file|write_to_file|create_file|apply_diff|grep_search",
         "hooks": [
           {
             "type": "command",
-            "command": "powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File ./scripts/Invoke-AntigravityHook.ps1 -Event PreToolUse",
+            "command": "node ./scripts/invoke-antigravity-hook.mjs PreToolUse",
             "timeout": 15
           }
         ]
@@ -24,11 +24,11 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "write_to_file|write_file|create_file|replace_file_content|multi_replace_file_content|edit_file",
+        "matcher": "edit_file|replace_file_content|multi_replace_file_content|write_file|write_to_file|create_file|apply_diff",
         "hooks": [
           {
             "type": "command",
-            "command": "powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File ./scripts/Invoke-AntigravityHook.ps1 -Event PostToolUse",
+            "command": "node ./scripts/invoke-antigravity-hook.mjs PostToolUse",
             "timeout": 30
           }
         ]

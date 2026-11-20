@@ -25,7 +25,7 @@ jobs:
       - name: Verify essential root and configuration files
         shell: bash
         run: |
-          for file in config/GEMINI.md config/hooks.json config/scripts/Invoke-AntigravityHook.ps1 README.md TOOLKIT.md LICENSE sync.ps1 restore.ps1; do
+          for file in config/GEMINI.md config/hooks.json config/scripts/Invoke-AntigravityHook.ps1 config/scripts/invoke-antigravity-hook.mjs README.md TOOLKIT.md LICENSE sync.ps1 restore.ps1; do
             if [ ! -f "$file" ]; then
               echo "Error: Required file $file is missing!" >&2
               exit 1
@@ -46,10 +46,22 @@ jobs:
             Write-Host "[PASS] Syntax verified: $($_.Name)"
           }
 
+      - name: Verify JavaScript script syntax
+        shell: bash
+        run: |
+          node --check config/scripts/invoke-antigravity-hook.mjs
+          echo "[PASS] Syntax verified: invoke-antigravity-hook.mjs"
+
       - name: Run PowerShell AST Command Safety Test Suite (pwsh)
         shell: pwsh
         run: |
           pwsh -NoProfile -ExecutionPolicy Bypass -File ".github/tests/Test-PowerShellCommandSafety.Tests.ps1"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run Security Hooks Test Suite (pwsh)
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -ExecutionPolicy Bypass -File ".github/tests/SecurityHooks.Tests.ps1"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Run Audit Checkpoint & Rollback Test Suite (pwsh)
@@ -77,6 +89,8 @@ jobs:
             }
           }
           powershell -NoProfile -ExecutionPolicy Bypass -File ".github/tests/Test-PowerShellCommandSafety.Tests.ps1"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          powershell -NoProfile -ExecutionPolicy Bypass -File ".github/tests/SecurityHooks.Tests.ps1"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           powershell -NoProfile -ExecutionPolicy Bypass -File ".github/tests/AuditCheckpoint.Tests.ps1"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
